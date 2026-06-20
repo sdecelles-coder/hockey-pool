@@ -6,7 +6,7 @@ Lance : python -m streamlit run app.py
 - Contrats: nhl_contracts.json (bouton 'Update All contracts' -> update_contracts.py)
 
 Jointure : playerId (stats) == nhl_id (contrats).
-Tous les joueurs sont affichés ; contrat vide si pas de contrat actif.
+Tous les joueurs sont affichés ; contrat/âge vides si pas de contrat actif.
 Recherche par nom + filtre équipe dans chaque onglet.
 """
 
@@ -94,6 +94,7 @@ def build_df(player_type):
             "Nom": p["name"],
             "Équipe": p.get("team"),
             "Pos": p.get("position"),
+            "Âge": p.get("age"),
             "GP": p.get("gp"),
             "Cap Hit": c.get("cap_hit_value", 0) if c else 0,
             "Signing": c.get("signing_status") or "—",
@@ -186,7 +187,7 @@ tab_s, tab_g = st.tabs(["⚡ Patineurs", "🥅 Gardiens"])
 with tab_s:
     render_tab(
         "skater", "sk", "Pts",
-        ["Nom", "Équipe", "Pos", "GP",
+        ["Nom", "Équipe", "Pos", "Âge", "GP",
          "Cap Hit", "Signing", "Expiry", "Clauses",
          "G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"],
     )
@@ -194,7 +195,7 @@ with tab_s:
 with tab_g:
     render_tab(
         "goalie", "go", "V",
-        ["Nom", "Équipe", "Pos", "GP",
+        ["Nom", "Équipe", "Pos", "Âge", "GP",
          "Cap Hit", "Signing", "Expiry", "Clauses",
          "V", "D", "DPr", "Moy", "%Arr", "BL"],
     )

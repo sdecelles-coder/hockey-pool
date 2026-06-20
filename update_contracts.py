@@ -88,6 +88,7 @@ def parse_player(p):
         "nhl_id": p.get("nhl_id"),
         "name": f"{p.get('p_fn', '')} {p.get('p_ln', '')}".strip(),
         "pos": p.get("pos"),
+        "age": p.get("age"),
         "cap_hit_value": int(p["cap_hit"]) if p.get("cap_hit") else 0,
         "signing_status": p.get("sts_sign"),
         "expiry_status": p.get("sts_exp"),

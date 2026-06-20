@@ -5,7 +5,7 @@ Lancé par une tâche planifiée Windows chaque matin."""
 import json
 import re
 import unicodedata
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 import requests
 
@@ -26,6 +26,18 @@ def make_slug(full_name: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", s)   # tout le reste -> tiret
     return s.strip("-")
 
+def calc_age(birth_date_str):
+    """'1997-01-13' -> âge en années aujourd'hui."""
+    if not birth_date_str:
+        return None
+    try:
+        y, m, d = map(int, birth_date_str.split("-"))
+        born = date(y, m, d)
+        today = date.today()
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    except (ValueError, AttributeError):
+        return None
+    
 def current_team(team_abbrevs: str) -> str:
     """'ANA,CGY' -> 'CGY' (dernière = équipe actuelle)."""
     if not team_abbrevs:
@@ -60,14 +72,16 @@ def fetch_all(endpoint: str, sort_prop: str) -> list:
 def collect_skaters() -> list:
     summary = fetch_all("skater/summary", "points")
     realtime = fetch_all("skater/realtime", "hits")
+    bios = fetch_all("skater/bios", "points")
 
-    # index realtime par playerId pour fusion rapide
     rt = {r["playerId"]: r for r in realtime}
+    bio = {b["playerId"]: b for b in bios}
 
     out = []
     for p in summary:
         pid = p.get("playerId")
         extra = rt.get(pid, {})
+        binfo = bio.get(pid, {})
         name = p.get("skaterFullName", "")
         out.append({
             "playerId": pid,
@@ -77,6 +91,7 @@ def collect_skaters() -> list:
             "team": current_team(p.get("teamAbbrevs")),
             "teams_all": p.get("teamAbbrevs"),
             "position": p.get("positionCode"),
+            "age": calc_age(binfo.get("birthDate")),
             "gp": p.get("gamesPlayed"),
             "goals": p.get("goals"),
             "assists": p.get("assists"),
@@ -91,17 +106,23 @@ def collect_skaters() -> list:
 
 def collect_goalies() -> list:
     rows = fetch_all("goalie/summary", "wins")
+    bios = fetch_all("goalie/bios", "wins")
+    bio = {b["playerId"]: b for b in bios}
+
     out = []
     for g in rows:
+        pid = g.get("playerId")
+        binfo = bio.get(pid, {})
         name = g.get("goalieFullName", "")
         out.append({
-            "playerId": g.get("playerId"),
+            "playerId": pid,
             "name": name,
             "puckpedia_slug": make_slug(name),
             "type": "goalie",
             "team": current_team(g.get("teamAbbrevs")),
             "teams_all": g.get("teamAbbrevs"),
             "position": "G",
+            "age": calc_age(binfo.get("birthDate")),
             "gp": g.get("gamesPlayed"),
             "wins": g.get("wins"),
             "losses": g.get("losses"),
@@ -112,7 +133,6 @@ def collect_goalies() -> list:
             "saves": g.get("saves"),
         })
     return out
-
 
 def main():
     print(f"[{datetime.now():%Y-%m-%d %H:%M}] Collecte stats NHL...")
