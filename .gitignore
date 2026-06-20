@@ -1,0 +1,21 @@
+# Données générées (régénérables, pas besoin de versionner)
+nhl_stats.json
+nhl_contracts.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Scripts de test temporaires
+test_*.py
+blob.json
