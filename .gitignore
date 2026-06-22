@@ -8,7 +8,6 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
-env/
 
 # OS / éditeurs
 .DS_Store
