@@ -3,11 +3,25 @@
 Lancé par une tâche planifiée Windows chaque matin."""
 
 import json
+import os
 import re
 import unicodedata
 from datetime import datetime, timezone, date
 
 import requests
+import urllib3
+from dotenv import load_dotenv
+
+# Charger les variables du fichier .env
+load_dotenv()
+
+# Gérer la configuration de la vérification SSL (True par défaut)
+verify_ssl_env = os.getenv("VERIFY_SSL", "true").lower()
+VERIFY_SSL = verify_ssl_env == "true"
+
+# Désactiver les avertissements de sécurité visuels dans le terminal si SSL est désactivé
+if not VERIFY_SSL:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 SEASON = "20252026"
 GAME_TYPE = 2  # 2 = saison régulière
@@ -58,7 +72,8 @@ def fetch_all(endpoint: str, sort_prop: str) -> list:
             "limit": limit,
             "cayenneExp": f"seasonId={SEASON} and gameTypeId={GAME_TYPE}",
         }
-        r = requests.get(f"{STATS_BASE}/{endpoint}", params=params, timeout=TIMEOUT)
+        # Ajout du paramètre verify=VERIFY_SSL ici
+        r = requests.get(f"{STATS_BASE}/{endpoint}", params=params, timeout=TIMEOUT, verify=VERIFY_SSL)
         r.raise_for_status()
         payload = r.json()
         data = payload.get("data", [])

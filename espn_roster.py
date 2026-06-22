@@ -16,9 +16,18 @@ import unicodedata
 from datetime import datetime, timezone
 
 import requests
+import urllib3
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Gérer la configuration de la vérification SSL (True par défaut)
+verify_ssl_env = os.getenv("VERIFY_SSL", "true").lower()
+VERIFY_SSL = verify_ssl_env == "true"
+
+# Désactiver les avertissements de sécurité visuels dans le terminal si SSL est désactivé
+if not VERIFY_SSL:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LEAGUE_ID = os.getenv("ESPN_LEAGUE_ID")
 SEASON = os.getenv("ESPN_SEASON")
@@ -52,8 +61,10 @@ def fetch_rosters():
         )
 
     cookies = {"SWID": SWID, "espn_s2": ESPN_S2}
+    
+    # Ajout du paramètre verify=VERIFY_SSL ici
     r = requests.get(BASE, params={"view": ["mTeam", "mRoster"]},
-                     cookies=cookies, headers=HEADERS, timeout=20)
+                     cookies=cookies, headers=HEADERS, timeout=20, verify=VERIFY_SSL)
     r.raise_for_status()
     data = r.json()
 
