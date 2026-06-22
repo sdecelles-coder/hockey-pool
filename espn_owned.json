@@ -1,0 +1,906 @@
+{
+  "updated_at": "2026-06-22T01:43:52.049861+00:00",
+  "my_team_id": 12,
+  "owned": {
+    "nikita kucherov": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Nikita Kucherov"
+    },
+    "brady tkachuk": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Brady Tkachuk"
+    },
+    "mikko rantanen": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Mikko Rantanen"
+    },
+    "mitch marner": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Mitch Marner"
+    },
+    "connor bedard": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Connor Bedard"
+    },
+    "dylan cozens": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Dylan Cozens"
+    },
+    "rasmus dahlin": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Rasmus Dahlin"
+    },
+    "josh morrissey": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Josh Morrissey"
+    },
+    "alexander nikishin": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Alexander Nikishin"
+    },
+    "filip gustavsson": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Filip Gustavsson"
+    },
+    "igor shesterkin": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Igor Shesterkin"
+    },
+    "zeev buium": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Zeev Buium"
+    },
+    "yaroslav askarov": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Yaroslav Askarov"
+    },
+    "beckett sennecke": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Beckett Sennecke"
+    },
+    "emmitt finnie": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Emmitt Finnie"
+    },
+    "mike matheson": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Mike Matheson"
+    },
+    "joel eriksson ek": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Joel Eriksson Ek"
+    },
+    "erik karlsson": {
+      "pool_team": "Pittsburgh Penguins",
+      "is_mine": false,
+      "espn_name": "Erik Karlsson"
+    },
+    "jack eichel": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Jack Eichel"
+    },
+    "brayden point": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Brayden Point"
+    },
+    "adam fantilli": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Adam Fantilli"
+    },
+    "logan stankoven": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Logan Stankoven"
+    },
+    "jason robertson": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Jason Robertson"
+    },
+    "dylan guenther": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Dylan Guenther"
+    },
+    "seth jarvis": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Seth Jarvis"
+    },
+    "noah dobson": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Noah Dobson"
+    },
+    "adam fox": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Adam Fox"
+    },
+    "pavel mintyukov": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Pavel Mintyukov"
+    },
+    "mikhail sergachev": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Mikhail Sergachev"
+    },
+    "jordan binnington": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Jordan Binnington"
+    },
+    "frank nazar": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Frank Nazar"
+    },
+    "marco kasper": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Marco Kasper"
+    },
+    "alexander zharovsky": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Alexander Zharovsky"
+    },
+    "arturs silovs": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Arturs Silovs"
+    },
+    "dylan larkin": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Dylan Larkin"
+    },
+    "jakub dobes": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "Jakub Dobes"
+    },
+    "david reinbacher": {
+      "pool_team": "Montreal Canadiens",
+      "is_mine": false,
+      "espn_name": "David Reinbacher"
+    },
+    "sam reinhart": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Sam Reinhart"
+    },
+    "martin necas": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Martin Necas"
+    },
+    "dylan strome": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Dylan Strome"
+    },
+    "kyle connor": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Kyle Connor"
+    },
+    "logan cooley": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Logan Cooley"
+    },
+    "brad marchand": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Brad Marchand"
+    },
+    "zach werenski": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Zach Werenski"
+    },
+    "simon edvinsson": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Simon Edvinsson"
+    },
+    "jakob chychrun": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Jakob Chychrun"
+    },
+    "sergei bobrovsky": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Sergei Bobrovsky"
+    },
+    "kevin lankinen": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Kevin Lankinen"
+    },
+    "alexander romanov": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Alexander Romanov"
+    },
+    "stuart skinner": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Stuart Skinner"
+    },
+    "jackson smith": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Jackson Smith"
+    },
+    "evgeni malkin": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Evgeni Malkin"
+    },
+    "dmitry orlov": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Dmitry Orlov"
+    },
+    "brandon bussi": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Brandon Bussi"
+    },
+    "mark stone": {
+      "pool_team": "Buffalo Sabres",
+      "is_mine": false,
+      "espn_name": "Mark Stone"
+    },
+    "william nylander": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "William Nylander"
+    },
+    "matt boldy": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Matt Boldy"
+    },
+    "wyatt johnston": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Wyatt Johnston"
+    },
+    "lucas raymond": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Lucas Raymond"
+    },
+    "matthew tkachuk": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Matthew Tkachuk"
+    },
+    "kirill marchenko": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Kirill Marchenko"
+    },
+    "pavel dorofeyev": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Pavel Dorofeyev"
+    },
+    "brandt clarke": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Brandt Clarke"
+    },
+    "shayne gostisbehere": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Shayne Gostisbehere"
+    },
+    "john carlson": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "John Carlson"
+    },
+    "nikita zadorov": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Nikita Zadorov"
+    },
+    "andrei vasilevskiy": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Andrei Vasilevskiy"
+    },
+    "dustin wolf": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Dustin Wolf"
+    },
+    "alex debrincat": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Alex DeBrincat"
+    },
+    "nick schmaltz": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Nick Schmaltz"
+    },
+    "alexandre texier": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Alexandre Texier"
+    },
+    "josh manson": {
+      "pool_team": "Quebec Nordic",
+      "is_mine": true,
+      "espn_name": "Josh Manson"
+    },
+    "nathan mackinnon": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Nathan MacKinnon"
+    },
+    "juraj slafkovsky": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Juraj Slafkovsky"
+    },
+    "tage thompson": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Tage Thompson"
+    },
+    "jack hughes": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Jack Hughes"
+    },
+    "leo carlsson": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Leo Carlsson"
+    },
+    "alex tuch": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Alex Tuch"
+    },
+    "victor hedman": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Victor Hedman"
+    },
+    "luke hughes": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Luke Hughes"
+    },
+    "shea theodore": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Shea Theodore"
+    },
+    "sam rinzel": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Sam Rinzel"
+    },
+    "lukas dostal": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Lukas Dostal"
+    },
+    "darcy kuemper": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Darcy Kuemper"
+    },
+    "bowen byram": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Bowen Byram"
+    },
+    "marco rossi": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Marco Rossi"
+    },
+    "logan mailloux": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Logan Mailloux"
+    },
+    "nico hischier": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Nico Hischier"
+    },
+    "carter hart": {
+      "pool_team": "Chicago Blackhawks",
+      "is_mine": false,
+      "espn_name": "Carter Hart"
+    },
+    "auston matthews": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Auston Matthews"
+    },
+    "artemi panarin": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Artemi Panarin"
+    },
+    "john tavares": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "John Tavares"
+    },
+    "jake guentzel": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Jake Guentzel"
+    },
+    "cutter gauthier": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Cutter Gauthier"
+    },
+    "michael misa": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Michael Misa"
+    },
+    "nazem kadri": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Nazem Kadri"
+    },
+    "quinn hughes": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Quinn Hughes"
+    },
+    "brandon montour": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Brandon Montour"
+    },
+    "joey daccord": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Joey Daccord"
+    },
+    "logan thompson": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Logan Thompson"
+    },
+    "pyotr kochetkov": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Pyotr Kochetkov"
+    },
+    "sam dickinson": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Sam Dickinson"
+    },
+    "oliver ekmanlarsson": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Oliver Ekman-Larsson"
+    },
+    "filip forsberg": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Filip Forsberg"
+    },
+    "filip hronek": {
+      "pool_team": "Tampa Bay Lightning",
+      "is_mine": false,
+      "espn_name": "Filip Hronek"
+    },
+    "leon draisaitl": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Leon Draisaitl"
+    },
+    "nick suzuki": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Nick Suzuki"
+    },
+    "brandon hagel": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Brandon Hagel"
+    },
+    "tom wilson": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Tom Wilson"
+    },
+    "ivan demidov": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Ivan Demidov"
+    },
+    "adrian kempe": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Adrian Kempe"
+    },
+    "jj peterka": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "JJ Peterka"
+    },
+    "moritz seider": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Moritz Seider"
+    },
+    "brock faber": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Brock Faber"
+    },
+    "jackson lacombe": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Jackson LaCombe"
+    },
+    "jacob fowler": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Jacob Fowler"
+    },
+    "mackenzie blackwood": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Mackenzie Blackwood"
+    },
+    "leevi merilainen": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Leevi Merilainen"
+    },
+    "cole hutson": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Cole Hutson"
+    },
+    "will cuylle": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Will Cuylle"
+    },
+    "scott wedgewood": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Scott Wedgewood"
+    },
+    "mattias samuelsson": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Mattias Samuelsson"
+    },
+    "jeremy swayman": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Jeremy Swayman"
+    },
+    "mika zibanejad": {
+      "pool_team": "Los Angeles Kings",
+      "is_mine": false,
+      "espn_name": "Mika Zibanejad"
+    },
+    "kirill kaprizov": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Kirill Kaprizov"
+    },
+    "clayton keller": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Clayton Keller"
+    },
+    "macklin celebrini": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Macklin Celebrini"
+    },
+    "mark scheifele": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Mark Scheifele"
+    },
+    "matthew knies": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Matthew Knies"
+    },
+    "drake batherson": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Drake Batherson"
+    },
+    "sean monahan": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Sean Monahan"
+    },
+    "charlie mcavoy": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Charlie McAvoy"
+    },
+    "aaron ekblad": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Aaron Ekblad"
+    },
+    "artyom levshunov": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Artyom Levshunov"
+    },
+    "mackenzie weegar": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "MacKenzie Weegar"
+    },
+    "connor hellebuyck": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Connor Hellebuyck"
+    },
+    "ilya sorokin": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Ilya Sorokin"
+    },
+    "jet greaves": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Jet Greaves"
+    },
+    "rasmus andersson": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Rasmus Andersson"
+    },
+    "morgan geekie": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Morgan Geekie"
+    },
+    "jordan spence": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Jordan Spence"
+    },
+    "braeden bowman": {
+      "pool_team": "Anaheim Ducks",
+      "is_mine": false,
+      "espn_name": "Braeden Bowman"
+    },
+    "david pastrnak": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "David Pastrnak"
+    },
+    "sidney crosby": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Sidney Crosby"
+    },
+    "cole caufield": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Cole Caufield"
+    },
+    "ryan leonard": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Ryan Leonard"
+    },
+    "dylan holloway": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Dylan Holloway"
+    },
+    "kiefer sherwood": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Kiefer Sherwood"
+    },
+    "zack bolduc": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Zack Bolduc"
+    },
+    "cale makar": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Cale Makar"
+    },
+    "evan bouchard": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Evan Bouchard"
+    },
+    "miro heiskanen": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Miro Heiskanen"
+    },
+    "lane hutson": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Lane Hutson"
+    },
+    "jake oettinger": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Jake Oettinger"
+    },
+    "zayne parekh": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Zayne Parekh"
+    },
+    "john gibson": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "John Gibson"
+    },
+    "gabe perreault": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Gabe Perreault"
+    },
+    "anton lundell": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Anton Lundell"
+    },
+    "zach hyman": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Zach Hyman"
+    },
+    "james hagens": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "James Hagens"
+    },
+    "victor eklund": {
+      "pool_team": "Colorado Avalanche",
+      "is_mine": false,
+      "espn_name": "Victor Eklund"
+    },
+    "connor mcdavid": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Connor McDavid"
+    },
+    "jt miller": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "J.T. Miller"
+    },
+    "tim stutzle": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Tim Stutzle"
+    },
+    "jesper bratt": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Jesper Bratt"
+    },
+    "matvei michkov": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Matvei Michkov"
+    },
+    "william eklund": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "William Eklund"
+    },
+    "thomas harley": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Thomas Harley"
+    },
+    "jake sanderson": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Jake Sanderson"
+    },
+    "matthew schaefer": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Matthew Schaefer"
+    },
+    "jesper wallstedt": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Jesper Wallstedt"
+    },
+    "ivan barbashev": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Ivan Barbashev"
+    },
+    "aliaksei protas": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Aliaksei Protas"
+    },
+    "jake walman": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Jake Walman"
+    },
+    "valeri nichushkin": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Valeri Nichushkin"
+    },
+    "karel vejmelka": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Karel Vejmelka"
+    },
+    "spencer knight": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Spencer Knight"
+    },
+    "darren raddysh": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Darren Raddysh"
+    },
+    "anton frondell": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Anton Frondell"
+    },
+    "porter martone": {
+      "pool_team": "Ottawa Senators",
+      "is_mine": false,
+      "espn_name": "Porter Martone"
+    }
+  }
+}
