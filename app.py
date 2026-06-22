@@ -104,16 +104,34 @@ def norm_name(name):
 # ----------------------------------------------------------------------
 # Chargement
 # ----------------------------------------------------------------------
+import os
+
 stats = load_json(STATS_FILE, None)
+
+# Génération automatique des stats si le fichier est absent (ex. après un clone
+# où nhl_stats.json n'aurait pas été versionné). Évite l'erreur bloquante.
+if stats is None:
+    st.warning(f"`{STATS_FILE}` introuvable — génération automatique des stats "
+               "NHL en cours (10–20 secondes)…")
+    try:
+        import update_stats
+        with st.spinner("Récupération des stats depuis l'API NHL…"):
+            update_stats.main()
+        st.success("Stats générées. Rechargement…")
+        st.rerun()
+    except Exception as e:
+        st.error(
+            f"Échec de la génération automatique : {e}\n\n"
+            f"Lance manuellement `python update_stats.py` dans un terminal, "
+            "puis recharge la page."
+        )
+        st.stop()
+
 contracts_db = load_json(CONTRACTS_FILE, {"contracts": {}})
 cache = contracts_db.get("contracts", {})
 
 espn_db = er.load_owned()
 owned = espn_db.get("owned", {})
-
-if stats is None:
-    st.error(f"`{STATS_FILE}` introuvable. Lance d'abord `python update_stats.py`.")
-    st.stop()
 
 players = stats.get("players", [])
 
