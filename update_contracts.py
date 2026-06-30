@@ -178,7 +178,14 @@ def _fetch_all_parsed(progress_cb=None):
 
 
 def update_contracts(progress_cb=None):
+    if not _PLAYWRIGHT_AVAILABLE:
+        raise RuntimeError(
+            "Playwright non installé sur cet environnement. "
+            "Les contrats sont mis à jour automatiquement chaque nuit via GitHub Actions."
+        )
     parsed_by_id, errors, no_id = _fetch_all_parsed(progress_cb)
+    if not parsed_by_id:
+        raise RuntimeError(f"Aucun contrat récupéré — fichier non modifié. Erreurs : {errors}")
     save_cache(parsed_by_id)
     return {
         "scraped": len(parsed_by_id),
