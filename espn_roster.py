@@ -10,30 +10,24 @@ Résultat mis en cache dans espn_owned.json.
 """
 
 import json
-import os
 import re
 import unicodedata
 from datetime import datetime, timezone
 
 import requests
 import urllib3
-from dotenv import load_dotenv
+import config
 
-load_dotenv()
+VERIFY_SSL = config.get("VERIFY_SSL", "true").lower() == "true"
 
-# Gérer la configuration de la vérification SSL (True par défaut)
-verify_ssl_env = os.getenv("VERIFY_SSL", "true").lower()
-VERIFY_SSL = verify_ssl_env == "true"
-
-# Désactiver les avertissements de sécurité visuels dans le terminal si SSL est désactivé
 if not VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-LEAGUE_ID = os.getenv("ESPN_LEAGUE_ID")
-SEASON = os.getenv("ESPN_SEASON")
-MY_TEAM_ID = int(os.getenv("ESPN_TEAM_ID", "0"))
-SWID = os.getenv("ESPN_SWID")
-ESPN_S2 = os.getenv("ESPN_S2")
+LEAGUE_ID = config.get("ESPN_LEAGUE_ID")
+SEASON = config.get("ESPN_SEASON")
+MY_TEAM_ID = int(config.get("ESPN_TEAM_ID", "0"))
+SWID = config.get("ESPN_SWID")
+ESPN_S2 = config.get("ESPN_S2")
 
 OWNED_FILE = "espn_owned.json"
 BASE = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/fhl"

@@ -1,6 +1,5 @@
-# Données générées (régénérables, pas besoin de versionner)
-nhl_stats.json
-nhl_contracts.json
+# Secrets locaux Streamlit (ne jamais committer)
+.streamlit/secrets.toml
 
 # Python
 __pycache__/
@@ -19,7 +18,6 @@ Thumbs.db
 test_*.py
 blob.json
 
-# espn
-espn_owned.json
+# Données personnelles (non versionnées)
 draft_plan.json
 lineup.json

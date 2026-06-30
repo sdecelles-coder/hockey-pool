@@ -3,23 +3,16 @@
 Lancé par une tâche planifiée Windows chaque matin."""
 
 import json
-import os
 import re
 import unicodedata
 from datetime import datetime, timezone, date
 
 import requests
 import urllib3
-from dotenv import load_dotenv
+import config
 
-# Charger les variables du fichier .env
-load_dotenv()
+VERIFY_SSL = config.get("VERIFY_SSL", "true").lower() == "true"
 
-# Gérer la configuration de la vérification SSL (True par défaut)
-verify_ssl_env = os.getenv("VERIFY_SSL", "true").lower()
-VERIFY_SSL = verify_ssl_env == "true"
-
-# Désactiver les avertissements de sécurité visuels dans le terminal si SSL est désactivé
 if not VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
