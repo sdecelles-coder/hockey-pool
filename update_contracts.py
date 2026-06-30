@@ -18,30 +18,18 @@ import time
 from datetime import datetime, timezone
 from urllib.parse import quote
 
-import cloudscraper
+from playwright.sync_api import sync_playwright
 
 CONTRACTS_FILE = "nhl_contracts.json"
 PAGE_SIZE = 100
 DELAY_SEC = 1.0
-TIMEOUT = 30
+TIMEOUT = 30_000  # ms pour Playwright
 API_BASE = "https://puckpedia.com/players/api?q="
-
-_scraper = None
-
-
-def get_scraper():
-    global _scraper
-    if _scraper is None:
-        _scraper = cloudscraper.create_scraper(
-            browser={"browser": "chrome", "platform": "windows", "desktop": True}
-        )
-    return _scraper
-
 
 def build_url(role, page, size=PAGE_SIZE):
     q = {
         "player_active": ["1"],
-        "player_role": role,            # "1" = tous les joueurs
+        "player_role": role,
         "sortBy": "cap_hit",
         "sortDirection": "DESC",
         "curPage": page,
@@ -53,37 +41,59 @@ def build_url(role, page, size=PAGE_SIZE):
 
 
 def _as_list(p):
-    """Normalise data['p'] : liste, ou dict {'100': {...}} (quirk PHP json_encode)."""
     if isinstance(p, dict):
         return list(p.values())
     return p
 
 
 def fetch_role(role, progress_cb=None, label=""):
-    """Récupère tous les joueurs d'un rôle via pagination."""
+    """Récupère tous les joueurs d'un rôle via pagination (Playwright)."""
     out = []
-    r = get_scraper().get(build_url(role, 1), timeout=TIMEOUT)
-    r.raise_for_status()
-    data = r.json()["data"]
-    out.extend(_as_list(data["p"]))
-    total = data["meta"]["count"]
-    pages = math.ceil(total / PAGE_SIZE)
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        context = browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/131.0.0.0 Safari/537.36"
+            )
+        )
 
-    if progress_cb:
-        progress_cb(1, pages, f"{label} page 1/{pages}")
+        def fetch(url):
+            page = context.new_page()
+            try:
+                resp = page.goto(url, timeout=TIMEOUT)
+                if resp.status != 200:
+                    raise Exception(f"HTTP {resp.status}")
+                # La réponse JSON est dans une balise <pre>
+                try:
+                    text = page.inner_text("pre")
+                except Exception:
+                    text = page.evaluate("() => document.body.innerText")
+                return json.loads(text)
+            finally:
+                page.close()
 
-    for page in range(2, pages + 1):
-        time.sleep(DELAY_SEC)
-        r = get_scraper().get(build_url(role, page), timeout=TIMEOUT)
-        r.raise_for_status()
-        out.extend(_as_list(r.json()["data"]["p"]))
+        data = fetch(build_url(role, 1))["data"]
+        out.extend(_as_list(data["p"]))
+        total = data["meta"]["count"]
+        pages = math.ceil(total / PAGE_SIZE)
+
         if progress_cb:
-            progress_cb(page, pages, f"{label} page {page}/{pages}")
+            progress_cb(1, pages, f"{label} page 1/{pages}")
+
+        for p in range(2, pages + 1):
+            time.sleep(DELAY_SEC)
+            d = fetch(build_url(role, p))["data"]
+            out.extend(_as_list(d["p"]))
+            if progress_cb:
+                progress_cb(p, pages, f"{label} page {p}/{pages}")
+
+        browser.close()
     return out, total
 
 
 def parse_player(p):
-    """Extrait les champs utiles d'un joueur PuckPedia."""
     return {
         "nhl_id": p.get("nhl_id"),
         "name": f"{p.get('p_fn', '')} {p.get('p_ln', '')}".strip(),
@@ -119,7 +129,6 @@ def save_cache(contracts):
 
 
 def _fetch_all_parsed(progress_cb=None):
-    """Récupère et parse tous les joueurs. Retourne {nhl_id: parsed} + erreurs."""
     all_players = []
     errors = []
     try:
@@ -144,8 +153,7 @@ def _fetch_all_parsed(progress_cb=None):
     return parsed_by_id, errors, no_id
 
 
-def update_contracts(force=False, progress_cb=None, sample=None):
-    """Rafraîchit TOUS les contrats (remplace le cache complet)."""
+def update_contracts(progress_cb=None):
     parsed_by_id, errors, no_id = _fetch_all_parsed(progress_cb)
     save_cache(parsed_by_id)
     return {
@@ -157,10 +165,6 @@ def update_contracts(force=False, progress_cb=None, sample=None):
 
 
 def update_contracts_for(player_ids, progress_cb=None):
-    """Ne met à jour QUE les joueurs ciblés ; conserve le reste du cache.
-
-    player_ids : itérable de nhl_id (int ou str).
-    """
     targets = {str(pid) for pid in player_ids if pid is not None}
     parsed_by_id, errors, no_id = _fetch_all_parsed(progress_cb)
 
@@ -186,7 +190,7 @@ def update_contracts_for(player_ids, progress_cb=None):
 
 
 if __name__ == "__main__":
-    print("Récupération complète des contrats PuckPedia...")
+    print("Récupération complète des contrats PuckPedia (Playwright)...")
 
     def cb(done, total, msg):
         print(f"  {msg}")
