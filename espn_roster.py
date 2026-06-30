@@ -18,20 +18,7 @@ import requests
 import urllib3
 import config
 
-VERIFY_SSL = config.get("VERIFY_SSL", "true").lower() == "true"
-
-if not VERIFY_SSL:
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-LEAGUE_ID = config.get("ESPN_LEAGUE_ID")
-SEASON = config.get("ESPN_SEASON")
-MY_TEAM_ID = int(config.get("ESPN_TEAM_ID", "0"))
-SWID = config.get("ESPN_SWID")
-ESPN_S2 = config.get("ESPN_S2")
-
 OWNED_FILE = "espn_owned.json"
-BASE = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/fhl"
-        f"/seasons/{SEASON}/segments/0/leagues/{LEAGUE_ID}")
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 
@@ -48,17 +35,28 @@ def norm_name(name):
 
 def fetch_rosters():
     """Retourne {nom_normalisé: {'pool_team', 'is_mine', 'espn_name'}}."""
-    if not (LEAGUE_ID and SWID and ESPN_S2):
+    league_id = config.get("ESPN_LEAGUE_ID")
+    season    = config.get("ESPN_SEASON")
+    my_team_id = int(config.get("ESPN_TEAM_ID", "0"))
+    swid      = config.get("ESPN_SWID")
+    espn_s2   = config.get("ESPN_S2")
+    verify_ssl = config.get("VERIFY_SSL", "true").lower() == "true"
+
+    if not verify_ssl:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    if not (league_id and swid and espn_s2):
         raise RuntimeError(
             "Configuration ESPN manquante. Vérifie le fichier .env "
             "(ESPN_LEAGUE_ID, ESPN_SWID, ESPN_S2)."
         )
 
-    cookies = {"SWID": SWID, "espn_s2": ESPN_S2}
-    
-    # Ajout du paramètre verify=VERIFY_SSL ici
-    r = requests.get(BASE, params={"view": ["mTeam", "mRoster"]},
-                     cookies=cookies, headers=HEADERS, timeout=20, verify=VERIFY_SSL)
+    base = (f"https://lm-api-reads.fantasy.espn.com/apis/v3/games/fhl"
+            f"/seasons/{season}/segments/0/leagues/{league_id}")
+    cookies = {"SWID": swid, "espn_s2": espn_s2}
+
+    r = requests.get(base, params={"view": ["mTeam", "mRoster"]},
+                     cookies=cookies, headers=HEADERS, timeout=20, verify=verify_ssl)
     r.raise_for_status()
     data = r.json()
 
@@ -66,7 +64,7 @@ def fetch_rosters():
     for team in data.get("teams", []):
         tid = team.get("id")
         tname = team.get("name") or f"{team.get('location','')} {team.get('nickname','')}".strip()
-        is_mine = tid == MY_TEAM_ID
+        is_mine = tid == my_team_id
         for entry in team.get("roster", {}).get("entries", []):
             player = entry.get("playerPoolEntry", {}).get("player", {})
             full = player.get("fullName", "")
@@ -77,15 +75,15 @@ def fetch_rosters():
                     "is_mine": is_mine,
                     "espn_name": full,
                 }
-    return owned
+    return owned, int(config.get("ESPN_TEAM_ID", "0"))
 
 
 def update_owned():
     """Récupère et sauvegarde les rosters dans espn_owned.json."""
-    owned = fetch_rosters()
+    owned, my_team_id = fetch_rosters()
     out = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
-        "my_team_id": MY_TEAM_ID,
+        "my_team_id": my_team_id,
         "owned": owned,
     }
     with open(OWNED_FILE, "w", encoding="utf-8") as f:
