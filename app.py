@@ -636,7 +636,7 @@ def render_draft_tab():
                             pool_for(p.get("name"))[0]) if pool_for(p.get("name"))[0] else "—",
                         "Pos": p.get("position"),
                         "Âge": int(p["age"]) if p.get("age") is not None else None,
-                        "Cap Hit": info.get("cap_hit_value", 0),
+                        "Cap Hit": f"${info.get('cap_hit_value', 0):,.0f}" if info.get("cap_hit_value") else "—",
                         "GP": p.get("gp"),
                         "Valeur": info.get("value"),
                         "Valeur/$M": info.get("value_per_m"),
@@ -662,7 +662,7 @@ def render_draft_tab():
                     "Gardé": st.column_config.CheckboxColumn(
                         "★ Gardé", help="Protéger ce joueur (max 8)",
                         disabled=not draft_mode),
-                    "Cap Hit": st.column_config.NumberColumn("Cap Hit", format="$%d"),
+                    "Cap Hit": st.column_config.TextColumn("Cap Hit"),
                     "Âge": st.column_config.NumberColumn("Âge", format="%d"),
                 }
                 if "HIT" in stat_cols:
