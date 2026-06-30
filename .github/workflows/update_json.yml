@@ -32,11 +32,16 @@ jobs:
 
       - name: Mettre à jour espn_owned.json
         run: |
-          echo "ESPN_LEAGUE_ID présent: $( [ -n "$ESPN_LEAGUE_ID" ] && echo OUI || echo NON )"
-          echo "ESPN_SWID présent:      $( [ -n "$ESPN_SWID" ] && echo OUI || echo NON )"
-          echo "ESPN_S2 présent:        $( [ -n "$ESPN_S2" ] && echo OUI || echo NON )"
+          python -c "
+          import os, sys
+          missing = [k for k in ['ESPN_LEAGUE_ID','ESPN_SEASON','ESPN_TEAM_ID','ESPN_SWID','ESPN_S2'] if not os.environ.get(k)]
+          if missing:
+              print('SECRETS MANQUANTS:', missing)
+              sys.exit(1)
+          print('Tous les secrets ESPN sont presents')
+          "
           python espn_roster.py
-        continue-on-error: true  # ne bloque pas si les cookies ESPN sont expirés
+        continue-on-error: true  # ne bloque pas si les cookies ESPN sont expires
         env:
           ESPN_LEAGUE_ID: ${{ secrets.ESPN_LEAGUE_ID }}
           ESPN_SEASON:    ${{ secrets.ESPN_SEASON }}
