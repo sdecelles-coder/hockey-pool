@@ -107,6 +107,9 @@ def norm_name(name):
 # ----------------------------------------------------------------------
 import os
 
+# Streamlit Community Cloud tourne sous /home/appuser — pas de Chromium disponible
+IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
+
 stats = load_json(STATS_FILE, None)
 
 # Génération automatique des stats si le fichier est absent (ex. après un clone
@@ -259,8 +262,11 @@ hc1.caption(
 )
 if hc2.button("📊 Stats", width="stretch", help="Mettre à jour les stats NHL"):
     run_stats_update()
-if hc3.button("🔄 Contrats", type="primary", width="stretch",
-              help="Update All contracts (PuckPedia)"):
+if IS_CLOUD:
+    hc3.button("🔄 Contrats", width="stretch", disabled=True,
+               help="Mis à jour automatiquement chaque nuit (GitHub Actions)")
+elif hc3.button("🔄 Contrats", type="primary", width="stretch",
+                help="Update All contracts (PuckPedia)"):
     run_full_update()
 if hc4.button("🏒 Pool", width="stretch", help="Update pool (ESPN)"):
     run_pool_update()
