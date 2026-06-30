@@ -31,7 +31,11 @@ jobs:
           VERIFY_SSL: "true"
 
       - name: Mettre à jour espn_owned.json
-        run: python espn_roster.py
+        run: |
+          echo "ESPN_LEAGUE_ID présent: $( [ -n "$ESPN_LEAGUE_ID" ] && echo OUI || echo NON )"
+          echo "ESPN_SWID présent:      $( [ -n "$ESPN_SWID" ] && echo OUI || echo NON )"
+          echo "ESPN_S2 présent:        $( [ -n "$ESPN_S2" ] && echo OUI || echo NON )"
+          python espn_roster.py
         continue-on-error: true  # ne bloque pas si les cookies ESPN sont expirés
         env:
           ESPN_LEAGUE_ID: ${{ secrets.ESPN_LEAGUE_ID }}
