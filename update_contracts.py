@@ -14,6 +14,7 @@ Deux modes :
 
 import json
 import math
+import shutil
 import time
 from datetime import datetime, timezone
 from urllib.parse import quote
@@ -25,6 +26,16 @@ PAGE_SIZE = 100
 DELAY_SEC = 1.0
 TIMEOUT = 30_000  # ms pour Playwright
 API_BASE = "https://puckpedia.com/players/api?q="
+
+
+def _chromium_path():
+    """Retourne le chemin du binaire Chromium disponible sur le système, ou None."""
+    for name in ("chromium-browser", "chromium", "google-chrome-stable", "google-chrome"):
+        path = shutil.which(name)
+        if path:
+            return path
+    return None
+
 
 def build_url(role, page, size=PAGE_SIZE):
     q = {
@@ -50,7 +61,11 @@ def fetch_role(role, progress_cb=None, label=""):
     """Récupère tous les joueurs d'un rôle via pagination (Playwright)."""
     out = []
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
+        sys_chrome = _chromium_path()
+        browser = pw.chromium.launch(
+            headless=True,
+            executable_path=sys_chrome,  # None = utilise le binaire Playwright
+        )
         context = browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

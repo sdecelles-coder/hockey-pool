@@ -219,11 +219,19 @@ def run_full_update():
     def cb(done, total, msg):
         bar.progress(done / total if total else 1.0, text=msg)
 
-    with st.spinner("Récupération de tous les contrats…"):
-        summary = uc.update_contracts(progress_cb=cb)
-    bar.empty()
-    st.success(f"Terminé : {summary['scraped']} contrats récupérés.")
-    st.rerun()
+    try:
+        with st.spinner("Récupération de tous les contrats…"):
+            summary = uc.update_contracts(progress_cb=cb)
+        bar.empty()
+        st.success(f"Terminé : {summary['scraped']} contrats récupérés.")
+        st.rerun()
+    except Exception as e:
+        bar.empty()
+        st.warning(
+            f"Mise à jour manuelle impossible sur cet environnement : `{e}`\n\n"
+            "Les contrats sont mis à jour **automatiquement chaque nuit** via GitHub Actions. "
+            "Recharge la page pour voir les données les plus récentes."
+        )
 
 
 def run_pool_update():
