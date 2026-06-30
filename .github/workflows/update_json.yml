@@ -1,9 +1,11 @@
-name: Mise à jour des stats NHL
+name: Mise à jour quotidienne JSON
 
 on:
   schedule:
-    - cron: '0 11 * * *'  # 6h00 EST (UTC-5) = 11h00 UTC
-  workflow_dispatch:       # Déclenchement manuel depuis l'onglet Actions
+    # 5h15 heure de Montréal (EDT été = UTC-4 → 9h15 UTC)
+    # En hiver (EST = UTC-5) la tâche tournera à 4h15 AM — acceptable
+    - cron: '15 9 * * *'
+  workflow_dispatch:  # déclenchement manuel depuis l'onglet Actions
 
 jobs:
   update:
@@ -21,7 +23,7 @@ jobs:
           python-version: '3.11'
 
       - name: Installer les dépendances
-        run: pip install -r Requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Mettre à jour nhl_stats.json
         run: python update_stats.py
@@ -30,7 +32,7 @@ jobs:
 
       - name: Mettre à jour espn_owned.json
         run: python espn_roster.py
-        continue-on-error: true   # Ne pas bloquer si les cookies ESPN sont expirés
+        continue-on-error: true  # ne bloque pas si les cookies ESPN sont expirés
         env:
           ESPN_LEAGUE_ID: ${{ secrets.ESPN_LEAGUE_ID }}
           ESPN_SEASON:    ${{ secrets.ESPN_SEASON }}
@@ -41,7 +43,7 @@ jobs:
 
       - name: Mettre à jour nhl_contracts.json (PuckPedia)
         run: python update_contracts.py
-        continue-on-error: true   # PuckPedia peut bloquer les bots
+        continue-on-error: true  # PuckPedia peut bloquer les bots ponctuellement
         env:
           VERIFY_SSL: "true"
 
@@ -50,5 +52,5 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add nhl_stats.json espn_owned.json nhl_contracts.json
-          git diff --staged --quiet || git commit -m "chore: mise à jour stats NHL [skip ci]"
+          git diff --staged --quiet || git commit -m "chore: màj automatique JSON $(date -u +'%Y-%m-%d') [skip ci]"
           git push
