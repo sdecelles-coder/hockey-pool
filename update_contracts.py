@@ -19,7 +19,11 @@ import time
 from datetime import datetime, timezone
 from urllib.parse import quote
 
-from playwright.sync_api import sync_playwright
+try:
+    from playwright.sync_api import sync_playwright
+    _PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    _PLAYWRIGHT_AVAILABLE = False
 
 CONTRACTS_FILE = "nhl_contracts.json"
 PAGE_SIZE = 100
@@ -59,6 +63,11 @@ def _as_list(p):
 
 def fetch_role(role, progress_cb=None, label=""):
     """Récupère tous les joueurs d'un rôle via pagination (Playwright)."""
+    if not _PLAYWRIGHT_AVAILABLE:
+        raise RuntimeError(
+            "Playwright non installé. "
+            "Lance : pip install playwright && python -m playwright install chromium"
+        )
     out = []
     with sync_playwright() as pw:
         sys_chrome = _chromium_path()

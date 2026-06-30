@@ -23,7 +23,7 @@ jobs:
           python-version: '3.11'
 
       - name: Installer les dépendances
-        run: pip install -r requirements.txt && python -m playwright install chromium --with-deps
+        run: pip install -r requirements.txt && pip install playwright && python -m playwright install chromium --with-deps
 
       - name: Mettre à jour nhl_stats.json
         run: python update_stats.py
