@@ -26,6 +26,7 @@ import streamlit as st
 import update_contracts as uc
 import espn_roster as er
 import draft_engine as de
+import update_stats as us
 
 STATS_FILE = "nhl_stats.json"
 CONTRACTS_FILE = "nhl_contracts.json"
@@ -202,6 +203,16 @@ def build_df(player_type):
 # ----------------------------------------------------------------------
 # Actions d'update
 # ----------------------------------------------------------------------
+def run_stats_update():
+    with st.spinner("Récupération des stats depuis l'API NHL…"):
+        try:
+            us.main()
+        except Exception as e:
+            st.error(f"Échec stats : {e}")
+            return
+    st.rerun()
+
+
 def run_full_update():
     bar = st.progress(0.0, text="Appel API PuckPedia…")
 
@@ -230,7 +241,7 @@ def run_pool_update():
 # En-tête compact
 # ----------------------------------------------------------------------
 st.markdown("#### 🏒 NHL — Stats, Contrats & Pool")
-hc1, hc2, hc3 = st.columns([4, 1.3, 1.3])
+hc1, hc2, hc3, hc4 = st.columns([4, 1.3, 1.3, 1.3])
 hc1.caption(
     f"**{len(players)}** joueurs · **{len(cache)}** contrats · "
     f"**{len(owned)}** pool — "
@@ -238,10 +249,12 @@ hc1.caption(
     f"Contrats {fmt_age(contracts_db.get('updated_at'))} · "
     f"Pool {fmt_age(espn_db.get('updated_at'))}"
 )
-if hc2.button("🔄 Contrats", type="primary", width="stretch",
+if hc2.button("📊 Stats", width="stretch", help="Mettre à jour les stats NHL"):
+    run_stats_update()
+if hc3.button("🔄 Contrats", type="primary", width="stretch",
               help="Update All contracts (PuckPedia)"):
     run_full_update()
-if hc3.button("🏒 Pool", width="stretch", help="Update pool (ESPN)"):
+if hc4.button("🏒 Pool", width="stretch", help="Update pool (ESPN)"):
     run_pool_update()
 
 
