@@ -413,10 +413,191 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
 
 
 # ----------------------------------------------------------------------
+# Onglet Agents libres & Prospects
+# ----------------------------------------------------------------------
+def render_fa_tab():
+    """Joueurs libres à surveiller + prospects (non possédés dans le pool)."""
+
+    sk_sc = de.compute_scores(players_with_cap("skater"), "skater", min_gp=1,
+                               youth_weight=0.15, ref_age=27)
+    go_sc = de.compute_scores(players_with_cap("goalie"), "goalie", min_gp=1,
+                               youth_weight=0.15, ref_age=27)
+    all_sc = de.assign_tiers(sk_sc + go_sc)
+    score_by_id = {str(p["playerId"]): p for p in all_sc}
+
+    rows_fa = []
+    for p in players:
+        c = contract_for(p.get("playerId"))
+        pool_team, is_mine = pool_for(p.get("name"))
+        sc = score_by_id.get(str(p.get("playerId")), {})
+        expiry_year = (c.get("expiry_year") or "") if c else ""
+        expiry_status = (c.get("expiry_status") or "") if c else ""
+        row = {
+            "_owned": pool_team is not None,
+            "_mine": is_mine,
+            "_expiry_year": expiry_year,
+            "_type": p.get("type", ""),
+            "Nom": p["name"],
+            "NHL Team": p.get("team", ""),
+            "Pool Team": pool_abbr(pool_team) if pool_team else "—",
+            "Pos": p.get("position", ""),
+            "Âge": int(p["age"]) if p.get("age") is not None else None,
+            "GP": p.get("gp") or 0,
+            "Cap Hit": (c.get("cap_hit_value") or 0) if c else 0,
+            "FA": expiry_status,
+            "Expiry": expiry_label(c) if c else "—",
+            "Clauses": (c.get("clauses") or "—") if c else "—",
+            "Tier": sc.get("tier", "—"),
+            "Valeur": sc.get("value"),
+            "G": p.get("goals") if p.get("type") == "skater" else None,
+            "A": p.get("assists") if p.get("type") == "skater" else None,
+            "Pts": p.get("points") if p.get("type") == "skater" else None,
+            "+/-": p.get("plus_minus") if p.get("type") == "skater" else None,
+            "PPP": p.get("ppp") if p.get("type") == "skater" else None,
+            "SOG": p.get("sog") if p.get("type") == "skater" else None,
+            "V": p.get("wins") if p.get("type") == "goalie" else None,
+            "Moy": p.get("gaa") if p.get("type") == "goalie" else None,
+            "%Arr": p.get("sv_pct") if p.get("type") == "goalie" else None,
+            "BL": p.get("shutouts") if p.get("type") == "goalie" else None,
+        }
+        rows_fa.append(row)
+
+    adf = pd.DataFrame(rows_fa)
+
+    _fmt_fa = {
+        "Cap Hit": lambda v: f"${v / 1_000_000:.2f}M" if v else "—",
+        "Valeur": lambda v: f"{v:.1f}" if pd.notna(v) else "—",
+        "Moy": lambda v: f"{v:.2f}" if pd.notna(v) else "—",
+        "%Arr": lambda v: f"{v:.3f}" if pd.notna(v) else "—",
+    }
+
+    def _show(df_show, display_cols, height=500):
+        if df_show.empty:
+            st.info("Aucun joueur avec ces critères.")
+            return
+        ok_disp = [c for c in display_cols if c in df_show.columns]
+        ok_style = ok_disp + [c for c in ("_mine", "_owned") if c in df_show.columns]
+        styled = (df_show[ok_style].style
+                  .apply(row_style, axis=1)
+                  .format(_fmt_fa, na_rep="—"))
+        st.dataframe(styled, hide_index=True, width="stretch", height=height,
+                     column_order=ok_disp,
+                     column_config={"_mine": None, "_owned": None})
+
+    # ------------------------------------------------------------------
+    # Section 1 : Agents libres
+    # ------------------------------------------------------------------
+    st.markdown("### 🆓 Agents libres à surveiller")
+    st.caption(
+        "Joueurs dont le contrat expire en 2025-2026 ou 2026-2027, "
+        "non possédés dans le pool — triés par Valeur (z-scores pondérés)."
+    )
+
+    with st.expander("⚙️ Filtres", expanded=True):
+        fa1, fa2, fa3, fa4 = st.columns(4)
+        saison_opts = sorted(
+            {r["_expiry_year"] for r in rows_fa if r["_expiry_year"]}, reverse=True
+        )
+        default_saisons = [s for s in saison_opts if s in {"2025-2026", "2026-2027"}]
+        saisons = fa1.multiselect(
+            "Saison d'expiry", saison_opts, default=default_saisons, key="fa_saisons"
+        )
+        fa_statut = fa2.multiselect(
+            "Type FA", ["UFA", "RFA"], default=["UFA", "RFA"], key="fa_statut"
+        )
+        fa_ptype = fa3.selectbox(
+            "Type joueur", ["Tous", "Patineurs", "Gardiens"], key="fa_ptype"
+        )
+        fa_hide = fa4.checkbox("Masquer possédés", value=True, key="fa_hide")
+
+    mask = pd.Series(True, index=adf.index)
+    if saisons:
+        mask &= adf["_expiry_year"].isin(saisons)
+    if fa_statut:
+        mask &= adf["FA"].isin(fa_statut)
+    fa_df = adf[mask].copy()
+    if fa_hide:
+        fa_df = fa_df[~fa_df["_owned"]]
+    if fa_ptype == "Patineurs":
+        fa_df = fa_df[fa_df["_type"] == "skater"]
+    elif fa_ptype == "Gardiens":
+        fa_df = fa_df[fa_df["_type"] == "goalie"]
+    fa_df = fa_df.sort_values("Valeur", ascending=False, na_position="last")
+
+    if fa_ptype == "Gardiens":
+        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+                   "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur",
+                   "V", "Moy", "%Arr", "BL"]
+    elif fa_ptype == "Patineurs":
+        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+                   "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur",
+                   "G", "A", "Pts", "+/-", "PPP", "SOG"]
+    else:
+        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+                   "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur"]
+
+    _show(fa_df, fa_cols, height=min(700, max(150, 45 * len(fa_df) + 40)))
+    st.caption(
+        f"{len(fa_df)} agents libres "
+        f"— {int(fa_df['_owned'].sum()) if not fa_df.empty else 0} déjà possédés"
+    )
+
+    st.divider()
+
+    # ------------------------------------------------------------------
+    # Section 2 : Prospects
+    # ------------------------------------------------------------------
+    st.markdown("### 🌱 Prospects à surveiller")
+    st.caption(
+        "Jeunes joueurs non possédés dans le pool, triés par Valeur "
+        "(bonus jeunesse : +0.15/an sous 27 ans inclus)."
+    )
+
+    with st.expander("⚙️ Filtres", expanded=True):
+        p1, p2, p3, p4 = st.columns(4)
+        max_age = p1.slider("Âge maximum", 18, 26, 23, key="pro_max_age")
+        pro_ptype = p2.selectbox(
+            "Type joueur", ["Tous", "Patineurs", "Gardiens"], key="pro_ptype"
+        )
+        pro_hide = p3.checkbox("Masquer possédés", value=True, key="pro_hide")
+        pro_min_gp = p4.slider("GP minimum", 0, 40, 5, key="pro_min_gp")
+
+    pro_df = adf[
+        adf["Âge"].notna() & (adf["Âge"] <= max_age) & (adf["GP"] >= pro_min_gp)
+    ].copy()
+    if pro_hide:
+        pro_df = pro_df[~pro_df["_owned"]]
+    if pro_ptype == "Patineurs":
+        pro_df = pro_df[pro_df["_type"] == "skater"]
+    elif pro_ptype == "Gardiens":
+        pro_df = pro_df[pro_df["_type"] == "goalie"]
+    pro_df = pro_df.sort_values("Valeur", ascending=False, na_position="last")
+
+    if pro_ptype == "Gardiens":
+        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+                    "Cap Hit", "FA", "Expiry", "Tier", "Valeur",
+                    "V", "Moy", "%Arr", "BL"]
+    elif pro_ptype == "Patineurs":
+        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+                    "Cap Hit", "FA", "Expiry", "Tier", "Valeur",
+                    "G", "A", "Pts", "+/-", "PPP", "SOG"]
+    else:
+        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+                    "Cap Hit", "FA", "Expiry", "Tier", "Valeur"]
+
+    _show(pro_df, pro_cols, height=min(700, max(150, 45 * len(pro_df) + 40)))
+    st.caption(
+        f"{len(pro_df)} prospects (≤ {max_age} ans, ≥ {pro_min_gp} GP) "
+        f"— {int(pro_df['_owned'].sum()) if not pro_df.empty else 0} déjà possédés"
+    )
+
+
+# ----------------------------------------------------------------------
 # Onglets
 # ----------------------------------------------------------------------
-tab_s, tab_g, tab_d, tab_c = st.tabs(
-    ["⚡ Patineurs", "🥅 Gardiens", "🎯 Équipe & Repêchage", "🥊 Confrontations"])
+tab_s, tab_g, tab_d, tab_c, tab_fa, tab_aide = st.tabs(
+    ["⚡ Patineurs", "🥅 Gardiens", "🎯 Équipe & Repêchage", "🥊 Confrontations",
+     "🔍 Agents libres & Prospects", "📐 Comment ça marche ?"])
 
 with tab_s:
     render_tab(
@@ -467,7 +648,7 @@ def render_draft_tab():
     with st.expander("⚙️ Réglages (poids, cap, seuil GP)", expanded=False):
         cap_limit = st.number_input("Cap salarial ($)", value=DEFAULT_CAP,
                                     step=1_000_000, format="%d")
-        min_gp = st.slider("GP minimum pour scorer", 1, 60, 20)
+        min_gp = st.slider("GP minimum z-score", 1, 60, 20)
         cj = st.columns(2)
         youth_w = cj[0].number_input("Poids jeunesse (bonus/an sous l'âge réf.)",
                                      0.0, 2.0, 0.15, 0.05)
@@ -1101,3 +1282,104 @@ def render_conf_tab():
 
 with tab_c:
     render_conf_tab()
+
+with tab_fa:
+    render_fa_tab()
+
+
+# ----------------------------------------------------------------------
+# Onglet Aide — explication du z-score
+# ----------------------------------------------------------------------
+def render_aide_tab():
+    st.header("Comment fonctionne le score de valeur ?")
+
+    st.markdown("""
+Le score affiché dans les colonnes **Valeur** et **Valeur/$M** est un **z-score composite**.
+Voici ce que ça veut dire et comment c'est calculé.
+""")
+
+    st.subheader("1. C'est quoi un z-score ?")
+    st.markdown("""
+Un z-score mesure **à combien d'écarts-types de la moyenne** se trouve un joueur pour une
+statistique donnée. Il répond à la question : *est-ce que ce joueur est vraiment meilleur
+que la moyenne, et de combien ?*
+
+**Formule :**
+""")
+    st.latex(r"z = \frac{x - \mu}{\sigma}")
+    st.markdown("""
+- **x** = la statistique brute du joueur (ex. 35 buts)
+- **μ** (mu) = la moyenne de tous les joueurs scorés
+- **σ** (sigma) = l'écart-type de tous les joueurs scorés
+
+Un z-score de **+2** signifie que le joueur est 2 écarts-types *au-dessus* de la moyenne
+— il fait partie du top ~2 % pour cette stat.
+Un z-score de **−1** signifie qu'il est 1 écart-type *en-dessous*.
+""")
+
+    st.subheader("2. Exemple concret — les buts")
+
+    data_exemple = {
+        "Joueur": ["McDavid", "Girard", "Joueur moyen", "4e trio"],
+        "Buts (x)": [64, 12, 24, 6],
+        "Moyenne μ": [24, 24, 24, 24],
+        "Écart-type σ": [14, 14, 14, 14],
+        "z-score buts": ["+2.86", "−0.86", "0.00", "−1.29"],
+    }
+    st.dataframe(data_exemple, hide_index=True, use_container_width=False)
+
+    st.markdown("""
+McDavid à +2.86 est nettement au-dessus ; le joueur moyen est exactement à 0 ;
+le 4e trio à −1.29 est sous la moyenne.
+""")
+
+    st.subheader("3. Pourquoi combiner plusieurs stats ?")
+    st.markdown("""
+On calcule un z-score pour **chaque catégorie** (buts, passes, PPP, hits, +/−, etc.),
+puis on les **pondère** et on les **additionne** pour obtenir un score unique.
+
+**Exemple avec 3 catégories (poids égaux = 1) :**
+
+| Stat | z-score | Poids |
+|------|---------|-------|
+| Buts | +1.5    | × 1   |
+| PPP  | +2.0    | × 2   |
+| Hits | −0.5    | × 1   |
+
+**Score composite = (1.5 × 1) + (2.0 × 2) + (−0.5 × 1) = 6.5**
+
+Les poids permettent de donner plus d'importance aux catégories qui comptent davantage
+dans ton pool (ex. PPP pondéré à 2× dans l'onglet *Équipe & Repêchage*).
+""")
+
+    st.subheader("4. Le seuil GP minimum z-score")
+    st.markdown("""
+Seuls les joueurs ayant atteint le **GP minimum** fixé entrent dans le calcul de la
+moyenne (μ) et de l'écart-type (σ).
+
+**Pourquoi ?** Un joueur qui a joué 3 matchs peut afficher 2 buts en 3 GP
+(= 0.67 buts/match), ce qui semblerait fantastique mais n'est pas représentatif.
+En l'excluant, on évite qu'il fausse la moyenne de référence et le classement.
+
+> Réglage par défaut : **20 GP**. Tu peux l'ajuster dans l'onglet *Équipe & Repêchage*
+> ou *Confrontations* selon la phase de saison.
+""")
+
+    st.subheader("5. Valeur/$M — l'efficacité salariale")
+    st.markdown("""
+La colonne **Valeur/$M** divise simplement le score composite par le cap hit du joueur
+en millions de dollars :
+
+""")
+    st.latex(r"\text{Valeur/\$M} = \frac{\text{Score composite}}{\text{Cap hit (M\$)}}")
+    st.markdown("""
+Un joueur à **score 8** avec un cap de **2 M$** donne Valeur/$M = **4.0**.
+Un joueur à **score 12** avec un cap de **9 M$** donne Valeur/$M = **1.3**.
+
+Le premier est bien meilleur *marché* même s'il a un score brut plus faible.
+C'est l'indicateur clé pour juger les contrats dans ton pool.
+""")
+
+
+with tab_aide:
+    render_aide_tab()
