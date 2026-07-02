@@ -15,8 +15,10 @@ Coloration : Nordic bleu 60%, autres managers gris 80%, libres transparents.
 Filtres combinables au-dessus de chaque tableau.
 """
 
+import concurrent.futures
 import json
 import re
+import time
 import unicodedata
 from datetime import datetime, timezone
 
@@ -110,6 +112,66 @@ import os
 # Streamlit Community Cloud tourne sous /home/appuser — pas de Chromium disponible
 IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
 
+REFRESH_TIMEOUT = 30
+
+# ---------- Auto-refresh au chargement (réveil Streamlit Community Cloud) -----
+if "_auto_refreshed" not in st.session_state:
+    _status_box = st.status("⏳ Actualisation automatique des données…", expanded=True)
+    with _status_box:
+        _ph_stats = st.empty()
+        _ph_pool = st.empty()
+        _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
+        _ph_pool.write("🏒 **Pool ESPN** : récupération en cours…")
+
+        def _task_stats():
+            us.main()
+
+        def _task_pool():
+            er.update_owned()
+
+        _rf_res = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as _ex:
+            _futures = {
+                _ex.submit(_task_stats): ("stats", _ph_stats, "📊 Stats NHL"),
+                _ex.submit(_task_pool): ("pool", _ph_pool, "🏒 Pool ESPN"),
+            }
+            _done, _not_done = concurrent.futures.wait(
+                list(_futures.keys()), timeout=REFRESH_TIMEOUT
+            )
+            for _f in _done:
+                _key, _ph, _lbl = _futures[_f]
+                try:
+                    _f.result()
+                    _rf_res[_key] = "ok"
+                    _ph.write(f"✅ **{_lbl}** : à jour")
+                except Exception as _e:
+                    _rf_res[_key] = "error"
+                    _ph.write(f"❌ **{_lbl}** : erreur — {_e}")
+            for _f in _not_done:
+                _key, _ph, _lbl = _futures[_f]
+                _rf_res[_key] = "timeout"
+                _ph.write(
+                    f"⚠️ **{_lbl}** : délai {REFRESH_TIMEOUT} s dépassé "
+                    "— données précédentes conservées"
+                )
+                _f.cancel()
+
+        if all(v == "ok" for v in _rf_res.values()):
+            _status_box.update(
+                label="✅ Données actualisées", state="complete", expanded=False
+            )
+        else:
+            _status_box.update(
+                label="⚠️ Actualisation partielle — voir détails",
+                state="error",
+                expanded=True,
+            )
+
+    time.sleep(1.2)
+    st.session_state["_auto_refreshed"] = True
+    st.session_state["_refresh_results"] = _rf_res
+    st.rerun()
+
 stats = load_json(STATS_FILE, None)
 
 # Génération automatique des stats si le fichier est absent (ex. après un clone
@@ -138,6 +200,19 @@ espn_db = er.load_owned()
 owned = espn_db.get("owned", {})
 
 players = stats.get("players", [])
+
+# Toasts de confirmation après l'auto-refresh
+if "_refresh_results" in st.session_state:
+    _res_toast = st.session_state.pop("_refresh_results")
+    _toast_labels = {"stats": "📊 Stats NHL", "pool": "🏒 Pool ESPN"}
+    for _k, _v in _res_toast.items():
+        _n = _toast_labels.get(_k, _k)
+        if _v == "ok":
+            st.toast(f"{_n} : données à jour", icon="✅")
+        elif _v == "timeout":
+            st.toast(f"{_n} : délai {REFRESH_TIMEOUT} s dépassé — données conservées", icon="⚠️")
+        else:
+            st.toast(f"{_n} : erreur lors de la mise à jour", icon="❌")
 
 
 # ----------------------------------------------------------------------
@@ -253,13 +328,32 @@ def run_pool_update():
 # ----------------------------------------------------------------------
 st.markdown("#### 🏒 NHL — Stats, Contrats & Pool")
 hc1, hc2, hc3, hc4 = st.columns([4, 1.3, 1.3, 1.3])
+
+# Vérification ancienneté des contrats
+_contracts_age_h = None
+if contracts_db.get("updated_at"):
+    try:
+        _cdt = datetime.fromisoformat(contracts_db["updated_at"])
+        _contracts_age_h = (datetime.now(timezone.utc) - _cdt).total_seconds() / 3600
+    except Exception:
+        pass
+
 hc1.caption(
     f"**{len(players)}** joueurs · **{len(cache)}** contrats · "
     f"**{len(owned)}** pool — "
     f"Stats {fmt_age(stats.get('updated_at'))} · "
-    f"Contrats {fmt_age(contracts_db.get('updated_at'))} · "
-    f"Pool {fmt_age(espn_db.get('updated_at'))}"
+    f"Contrats {fmt_age(contracts_db.get('updated_at'))}"
+    + (" ⚠️" if _contracts_age_h is not None and _contracts_age_h > 25 else "")
+    + f" · Pool {fmt_age(espn_db.get('updated_at'))}"
 )
+
+if _contracts_age_h is not None and _contracts_age_h > 25:
+    st.warning(
+        f"⚠️ Les données de contrats ont **{int(_contracts_age_h)} h** — "
+        "elles sont normalement mises à jour chaque nuit via GitHub Actions. "
+        "Si le problème persiste, vérifier le workflow CI/CD dans GitHub.",
+        icon="🔔",
+    )
 if hc2.button("📊 Stats", width="stretch", help="Mettre à jour les stats NHL"):
     run_stats_update()
 if IS_CLOUD:
