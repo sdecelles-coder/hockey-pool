@@ -213,7 +213,7 @@ def update_contracts_for(player_ids, progress_cb=None):
 
 
 if __name__ == "__main__":
-    print("Récupération complète des contrats PuckPedia (Playwright)...")
+    print("Récupération complète des contrats PuckPedia (requests)...")
 
     def cb(done, total, msg):
         print(f"  {msg}")

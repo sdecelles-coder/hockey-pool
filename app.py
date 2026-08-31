@@ -17,6 +17,7 @@ Filtres combinables au-dessus de chaque tableau.
 
 import concurrent.futures
 import json
+import os
 import re
 import time
 import unicodedata
@@ -33,6 +34,14 @@ import roster_status as rs
 
 STATS_FILE = "nhl_stats.json"
 CONTRACTS_FILE = "nhl_contracts.json"
+
+# PuckPedia (Cloudflare) renvoie 403 aux IP des serveurs Streamlit Community
+# Cloud : le fetch en direct des contrats y est donc impossible. Sur Cloud, on
+# s'appuie uniquement sur le job GitHub Actions nocturne (qui commit
+# nhl_contracts.json). En local, le fetch fonctionne normalement.
+# Détection : Streamlit Community Cloud exécute l'app sous l'utilisateur
+# « appuser » (HOME=/home/appuser).
+IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
 
 COLOR_MINE = "rgba(0, 114, 206, 0.60)"     # bleu Nordique
 COLOR_OTHER = "rgba(128, 128, 128, 0.80)"  # gris
@@ -120,7 +129,12 @@ if "_auto_refreshed" not in st.session_state:
         _ph_roster = st.empty()
         _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
         _ph_pool.write("🏒 **Pool ESPN** : récupération en cours…")
-        _ph_contracts.write("🔄 **Contrats** : récupération en cours…")
+        # Sur Cloud, PuckPedia renvoie 403 : on ne tente pas le fetch en direct
+        # (les contrats sont rafraîchis chaque nuit via GitHub Actions).
+        if IS_CLOUD:
+            _ph_contracts.write("🌙 **Contrats** : mis à jour chaque nuit (GitHub Actions)")
+        else:
+            _ph_contracts.write("🔄 **Contrats** : récupération en cours…")
 
         def _task_stats():
             us.main()
@@ -136,8 +150,10 @@ if "_auto_refreshed" not in st.session_state:
             _futures = {
                 _ex.submit(_task_stats): ("stats", _ph_stats, "📊 Stats NHL"),
                 _ex.submit(_task_pool): ("pool", _ph_pool, "🏒 Pool ESPN"),
-                _ex.submit(_task_contracts): ("contracts", _ph_contracts, "🔄 Contrats"),
             }
+            if not IS_CLOUD:
+                _futures[_ex.submit(_task_contracts)] = (
+                    "contracts", _ph_contracts, "🔄 Contrats")
             _done, _not_done = concurrent.futures.wait(
                 list(_futures.keys()), timeout=REFRESH_TIMEOUT
             )
@@ -377,6 +393,16 @@ def run_stats_update():
 
 
 def run_full_update():
+    # Sur Cloud, PuckPedia renvoie 403 : inutile de tenter, on informe.
+    if IS_CLOUD:
+        st.info(
+            "Sur Streamlit Cloud, PuckPedia bloque les mises à jour en direct "
+            "(403). Les contrats sont rafraîchis **automatiquement chaque nuit** "
+            "via GitHub Actions — cache actuel : "
+            f"{fmt_age(contracts_db.get('updated_at'))}."
+        )
+        return
+
     bar = st.progress(0.0, text="Appel API PuckPedia…")
 
     def cb(done, total, msg):
@@ -393,7 +419,9 @@ def run_full_update():
         st.warning(
             f"Impossible de récupérer les contrats depuis PuckPedia : `{e}`\n\n"
             "Les données de contrats en cache sont conservées "
-            f"(dernière mise à jour {fmt_age(contracts_db.get('updated_at'))})."
+            f"(dernière mise à jour {fmt_age(contracts_db.get('updated_at'))}). "
+            "Elles sont de toute façon rafraîchies automatiquement chaque nuit "
+            "via GitHub Actions."
         )
 
 
@@ -433,10 +461,16 @@ hc1.caption(
 )
 
 if _contracts_age_h is not None and _contracts_age_h > 25:
+    _retry_hint = (
+        "Le job GitHub Actions nocturne a probablement échoué ; il réessaiera "
+        "la nuit prochaine (ou relance-le manuellement depuis l'onglet Actions)."
+        if IS_CLOUD else
+        "La récupération PuckPedia a probablement échoué — utilise le bouton "
+        "🔄 Contrats pour réessayer."
+    )
     st.warning(
         f"⚠️ Les données de contrats ont **{int(_contracts_age_h)} h** — "
-        "la récupération automatique depuis PuckPedia à l'ouverture a probablement échoué. "
-        "Utilise le bouton 🔄 Contrats pour réessayer.",
+        + _retry_hint,
         icon="🔔",
     )
 if hc2.button("📊 Stats", width="stretch", help="Mettre à jour les stats NHL"):
@@ -1557,7 +1591,15 @@ def render_retired_tab():
                 "Âge": int(p["age"]) if p.get("age") is not None else None,
                 "GP (an dernier)": p.get("gp"),
             })
-        rdf = pd.DataFrame(rows).sort_values(["Décision", "Nom"]).reset_index(drop=True)
+        # Tri STABLE par nom : la ligne éditée ne saute jamais de place. Un tri
+        # par « Décision » réordonnait le tableau à chaque changement ; combiné au
+        # delta d'édition que st.data_editor mémorise par POSITION de ligne, la
+        # modif se réappliquait à la mauvaise ligne au rerun (→ instabilité).
+        rdf = pd.DataFrame(rows).sort_values("Nom").reset_index(drop=True)
+        # Clé versionnée : après chaque décision appliquée on incrémente la
+        # révision, ce qui recrée l'éditeur à neuf et purge tout delta d'édition
+        # résiduel (sinon réappliqué à la mauvaise ligne au rerun suivant).
+        _rev = st.session_state.get("_ret_ed_rev", 0)
         ed = st.data_editor(
             rdf, hide_index=True, width="stretch",
             height=min(700, 45 * len(rdf) + 60),
@@ -1569,7 +1611,7 @@ def render_retired_tab():
                     help="Confirme (Retraité), écarte (Actif) ou laisse à confirmer"),
             },
             disabled=["Nom", "Pos", "Équipe", "Âge", "GP (an dernier)"],
-            key="retired_editor",
+            key=f"retired_editor_{_rev}",
         )
         changed = False
         for i in range(len(ed)):
@@ -1579,6 +1621,7 @@ def render_retired_tab():
                 rs.set_manual(pid, new_dec)
                 changed = True
         if changed:
+            st.session_state["_ret_ed_rev"] = _rev + 1
             st.rerun()
 
         n_conf = sum(1 for v in manual.values() if v == "retired")
@@ -1600,6 +1643,8 @@ def render_retired_tab():
         chosen = a1.selectbox("Joueur", list(opts.keys()), key="ret_add_sel")
         if a2.button("Marquer retraité", width="stretch", key="ret_add_btn"):
             rs.set_manual(opts[chosen], "retired")
+            # Nouvelle ligne dans le tableau -> purge le delta d'édition (positions décalées).
+            st.session_state["_ret_ed_rev"] = st.session_state.get("_ret_ed_rev", 0) + 1
             st.rerun()
 
 
