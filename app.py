@@ -107,11 +107,6 @@ def norm_name(name):
 # ----------------------------------------------------------------------
 # Chargement
 # ----------------------------------------------------------------------
-import os
-
-# Streamlit Community Cloud tourne sous /home/appuser — pas de Chromium disponible
-IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
-
 REFRESH_TIMEOUT = 30
 
 # ---------- Auto-refresh au chargement (réveil Streamlit Community Cloud) -----
@@ -120,8 +115,10 @@ if "_auto_refreshed" not in st.session_state:
     with _status_box:
         _ph_stats = st.empty()
         _ph_pool = st.empty()
+        _ph_contracts = st.empty()
         _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
         _ph_pool.write("🏒 **Pool ESPN** : récupération en cours…")
+        _ph_contracts.write("🔄 **Contrats** : récupération en cours…")
 
         def _task_stats():
             us.main()
@@ -129,11 +126,15 @@ if "_auto_refreshed" not in st.session_state:
         def _task_pool():
             er.update_owned()
 
+        def _task_contracts():
+            uc.update_contracts()
+
         _rf_res = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as _ex:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as _ex:
             _futures = {
                 _ex.submit(_task_stats): ("stats", _ph_stats, "📊 Stats NHL"),
                 _ex.submit(_task_pool): ("pool", _ph_pool, "🏒 Pool ESPN"),
+                _ex.submit(_task_contracts): ("contracts", _ph_contracts, "🔄 Contrats"),
             }
             _done, _not_done = concurrent.futures.wait(
                 list(_futures.keys()), timeout=REFRESH_TIMEOUT
@@ -306,9 +307,9 @@ def run_full_update():
     except Exception as e:
         bar.empty()
         st.warning(
-            f"Mise à jour manuelle impossible sur cet environnement : `{e}`\n\n"
-            "Les contrats sont mis à jour **automatiquement chaque nuit** via GitHub Actions. "
-            "Recharge la page pour voir les données les plus récentes."
+            f"Impossible de récupérer les contrats depuis PuckPedia : `{e}`\n\n"
+            "Les données de contrats en cache sont conservées "
+            f"(dernière mise à jour {fmt_age(contracts_db.get('updated_at'))})."
         )
 
 
@@ -350,17 +351,14 @@ hc1.caption(
 if _contracts_age_h is not None and _contracts_age_h > 25:
     st.warning(
         f"⚠️ Les données de contrats ont **{int(_contracts_age_h)} h** — "
-        "elles sont normalement mises à jour chaque nuit via GitHub Actions. "
-        "Si le problème persiste, vérifier le workflow CI/CD dans GitHub.",
+        "la récupération automatique depuis PuckPedia à l'ouverture a probablement échoué. "
+        "Utilise le bouton 🔄 Contrats pour réessayer.",
         icon="🔔",
     )
 if hc2.button("📊 Stats", width="stretch", help="Mettre à jour les stats NHL"):
     run_stats_update()
-if IS_CLOUD:
-    hc3.button("🔄 Contrats", width="stretch", disabled=True,
-               help="Mis à jour automatiquement chaque nuit (GitHub Actions)")
-elif hc3.button("🔄 Contrats", type="primary", width="stretch",
-                help="Update All contracts (PuckPedia)"):
+if hc3.button("🔄 Contrats", type="primary", width="stretch",
+              help="Update All contracts (PuckPedia)"):
     run_full_update()
 if hc4.button("🏒 Pool", width="stretch", help="Update pool (ESPN)"):
     run_pool_update()
