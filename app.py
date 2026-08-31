@@ -336,6 +336,20 @@ def expiry_label(c):
     return etype or "—"
 
 
+def players_with_cap(player_type):
+    """Liste des joueurs d'un type, enrichis du cap_hit depuis les contrats."""
+    out = []
+    for p in players:
+        if p.get("type") != player_type:
+            continue
+        c = contract_for(p.get("playerId"))
+        q = dict(p)
+        q["cap_hit_value"] = c.get("cap_hit_value", 0) if c else 0
+        q["signing_status"] = c.get("signing_status") if c else None
+        out.append(q)
+    return out
+
+
 def build_df(player_type):
     rows = []
     for p in players:
@@ -344,6 +358,7 @@ def build_df(player_type):
         c = contract_for(p.get("playerId"))
         pool_team, is_mine = pool_for(p.get("name"))
         base = {
+            "_pid": str(p.get("playerId")),
             "_mine": is_mine,
             "_owned": pool_team is not None,
             "_new": is_new(p.get("playerId")),
@@ -606,6 +621,12 @@ def apply_filters(df, key_prefix, player_type):
 
 def render_tab(player_type, key_prefix, sort_col, display_cols):
     df = build_df(player_type)
+    # Valeur / Valeur/$M (z-scores composites) mappées par playerId
+    scored = de.compute_scores(players_with_cap(player_type), player_type, min_gp=1)
+    val_by_id = {str(p["playerId"]): p for p in scored}
+    df["Valeur"] = df["_pid"].map(lambda i: val_by_id.get(i, {}).get("value"))
+    df["Valeur/$M"] = df["_pid"].map(lambda i: val_by_id.get(i, {}).get("value_per_m"))
+
     view = apply_filters(df, key_prefix, player_type)
     if sort_col in view.columns:
         view = view.sort_values(sort_col, ascending=False)
@@ -615,11 +636,18 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
     def _int(v):
         return f"{int(v)}" if pd.notna(v) else "—"
 
+    def _float2(v):
+        return f"{v:.2f}" if pd.notna(v) else "—"
+
     fmt = {"Cap Hit": lambda v: f"${v:,.0f}" if v else "—"}
     if "Âge" in display_cols:
         fmt["Âge"] = _int
-    if "HIT" in display_cols:
-        fmt["HIT"] = _int
+    for col in ("G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"):
+        if col in display_cols:
+            fmt[col] = _int
+    for col in ("Valeur", "Valeur/$M"):
+        if col in display_cols:
+            fmt[col] = _float2
     styled = (view[style_cols].style
               .apply(row_style, axis=1)
               .format(fmt))
@@ -697,11 +725,16 @@ def render_fa_tab():
 
     adf = pd.DataFrame(rows_fa)
 
+    def _int_fa(v):
+        return f"{int(v)}" if pd.notna(v) else "—"
+
     _fmt_fa = {
         "Cap Hit": lambda v: f"${v / 1_000_000:.2f}M" if v else "—",
-        "Valeur": lambda v: f"{v:.1f}" if pd.notna(v) else "—",
+        "Valeur": lambda v: f"{v:.2f}" if pd.notna(v) else "—",
         "Moy": lambda v: f"{v:.2f}" if pd.notna(v) else "—",
         "%Arr": lambda v: f"{v:.3f}" if pd.notna(v) else "—",
+        "G": _int_fa, "A": _int_fa, "Pts": _int_fa, "+/-": _int_fa,
+        "PIM": _int_fa, "PPP": _int_fa, "SOG": _int_fa, "HIT": _int_fa,
     }
 
     def _show(df_show, display_cols, height=500):
@@ -839,7 +872,7 @@ with tab_s:
     render_tab(
         "skater", "sk", "Pts",
         ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
-         "Cap Hit", "Signing", "Expiry", "Clauses",
+         "Cap Hit", "Valeur", "Valeur/$M", "Signing", "Expiry", "Clauses",
          "G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"],
     )
 
@@ -847,7 +880,7 @@ with tab_g:
     render_tab(
         "goalie", "go", "V",
         ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
-         "Cap Hit", "Signing", "Expiry", "Clauses",
+         "Cap Hit", "Valeur", "Valeur/$M", "Signing", "Expiry", "Clauses",
          "V", "D", "DPr", "Moy", "%Arr", "BL"],
     )
 
@@ -856,20 +889,6 @@ with tab_g:
 # Onglet Repêchage
 # ----------------------------------------------------------------------
 DEFAULT_CAP = 102_000_000
-
-
-def players_with_cap(player_type):
-    """Liste des joueurs d'un type, enrichis du cap_hit depuis les contrats."""
-    out = []
-    for p in players:
-        if p.get("type") != player_type:
-            continue
-        c = contract_for(p.get("playerId"))
-        q = dict(p)
-        q["cap_hit_value"] = c.get("cap_hit_value", 0) if c else 0
-        q["signing_status"] = c.get("signing_status") if c else None
-        out.append(q)
-    return out
 
 
 def status_label(s):
@@ -1001,8 +1020,13 @@ def render_draft_tab():
                 })
             mdf = pd.DataFrame(rows).sort_values("Statut")
             st.dataframe(mdf, hide_index=True, width="stretch",
-                         column_config={"Cap Hit": st.column_config.NumberColumn(
-                             "Cap Hit", format="$%d")})
+                         column_config={
+                             "Cap Hit": st.column_config.NumberColumn(
+                                 "Cap Hit", format="$%d"),
+                             "Valeur": st.column_config.NumberColumn(
+                                 "Valeur", format="%.2f"),
+                             "Valeur/$M": st.column_config.NumberColumn(
+                                 "Valeur/$M", format="%.2f")})
 
     st.divider()
 
@@ -1085,9 +1109,13 @@ def render_draft_tab():
                         disabled=not draft_mode),
                     "Cap Hit": st.column_config.TextColumn("Cap Hit"),
                     "Âge": st.column_config.NumberColumn("Âge", format="%d"),
+                    "Valeur": st.column_config.NumberColumn("Valeur", format="%.2f"),
+                    "Valeur/$M": st.column_config.NumberColumn(
+                        "Valeur/$M", format="%.2f"),
                 }
-                if "HIT" in stat_cols:
-                    cfg["HIT"] = st.column_config.NumberColumn("HIT", format="%d")
+                for col in ("G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"):
+                    if col in stat_cols:
+                        cfg[col] = st.column_config.NumberColumn(col, format="%d")
                 return cfg
 
             def handle_edits(original, edited, label):
@@ -1331,10 +1359,17 @@ def render_draft_tab():
             def _int2(v):
                 return f"{int(v)}" if pd.notna(v) else "—"
 
+            def _float2(v):
+                return f"{v:.2f}" if pd.notna(v) else "—"
+
             fmt = {"Cap Hit": lambda v: f"${v:,.0f}" if v else "—",
                    "Âge": _int2}
-            if "HIT" in disp_cols:
-                fmt["HIT"] = _int2
+            for col in ("G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"):
+                if col in disp_cols:
+                    fmt[col] = _int2
+            for col in ("Valeur", "Valeur/$M"):
+                if col in disp_cols:
+                    fmt[col] = _float2
 
             styled_av = (df[disp_cols + ["_taken", "_new", "_retired", "_suspected"]].style
                          .apply(grey_taken, axis=1)
