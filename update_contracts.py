@@ -36,8 +36,26 @@ HEADERS = {
     )
 }
 
+# PuckPedia encode chaque saison par un id entier :
+#   2025-2026 -> 162, 2026-2027 -> 163, 2030-2031 -> 167, ...
+#   soit id = (année de début de saison) - SEASON_ID_BASE.
+# La saison "contrat" NHL bascule le 1er juillet ; avant on code en dur "162"
+# (2025-2026), ce qui renvoyait les contrats d'une saison périmée (ex. l'ancien
+# ELC de Brandt Clarke au lieu de sa prolongation). On calcule donc la saison
+# courante à partir de la date.
+SEASON_ID_BASE = 1863  # 2025 - 162
 
-def build_url(role, page, size=PAGE_SIZE):
+
+def current_season_id(today=None):
+    """Id PuckPedia de la saison de contrat courante (bascule le 1er juillet)."""
+    d = today or datetime.now(timezone.utc)
+    start_year = d.year if d.month >= 7 else d.year - 1
+    return start_year - SEASON_ID_BASE
+
+
+def build_url(role, page, size=PAGE_SIZE, season=None):
+    if season is None:
+        season = current_season_id()
     q = {
         "player_active": ["1"],
         "player_role": role,
@@ -45,8 +63,8 @@ def build_url(role, page, size=PAGE_SIZE):
         "sortDirection": "DESC",
         "curPage": page,
         "pageSize": size,
-        "focus_season": "162",
-        "stat_season": "162",
+        "focus_season": str(season),
+        "stat_season": str(season),
     }
     return API_BASE + quote(json.dumps(q))
 
@@ -55,6 +73,16 @@ def _as_list(p):
     if isinstance(p, dict):
         return list(p.values())
     return p
+
+
+def _to_int(v):
+    """Convertit un cap_hit PuckPedia (entier ou décimal, ex. '11567857.14') en int."""
+    if not v:
+        return 0
+    try:
+        return int(round(float(v)))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _fetch(url):
@@ -92,7 +120,7 @@ def parse_player(p):
         "name": f"{p.get('p_fn', '')} {p.get('p_ln', '')}".strip(),
         "pos": p.get("pos"),
         "age": p.get("age"),
-        "cap_hit_value": int(p["cap_hit"]) if p.get("cap_hit") else 0,
+        "cap_hit_value": _to_int(p.get("cap_hit")),
         "signing_status": p.get("sts_sign"),
         "expiry_status": p.get("sts_exp"),
         "expiry_year": p.get("exp"),
