@@ -267,7 +267,7 @@ def statut_for(player_id):
         return "RET"
     if pid in SUSPECTED_IDS:
         return "RET?"
-    return "—"
+    return "actif"
 
 
 def is_new(player_id):
@@ -509,8 +509,8 @@ def status_match(row, status):
 def apply_filters(df, key_prefix, player_type):
     """Affiche la barre de filtres (repliable) et retourne le DataFrame filtré."""
     with st.expander("🔧 Filtres", expanded=False):
-        # Ligne 1 : recherche + NHL Team + Pool Team + Statut
-        r1 = st.columns([2, 1, 1, 1])
+        # Ligne 1 : recherche + NHL Team + Pool Team
+        r1 = st.columns([2, 1, 1])
         search = r1[0].text_input("🔎 Nom", key=f"{key_prefix}_search",
                                   placeholder="ex. McDavid")
         nhl_teams = ["Toutes"] + sorted(t for t in df["NHL Team"].dropna().unique())
@@ -518,8 +518,11 @@ def apply_filters(df, key_prefix, player_type):
         pool_opts = ["Toutes"] + sorted(POOL_ABBR.get(p, p)
                                         for p in {v for v in df["_pool_full"] if v})
         pool_sel = r1[2].selectbox("Pool Team", pool_opts, key=f"{key_prefix}_pool")
-        status = r1[3].selectbox("Statut", ["Tous", "Libres", "Possédés", "Mon équipe"],
-                                 key=f"{key_prefix}_status")
+        # Filtre possession en boutons (renommé « Possession » pour éviter la
+        # confusion avec la colonne « Statut » = statut roster du joueur).
+        status = st.segmented_control(
+            "Possession", ["Tous", "Libres", "Possédés", "Mon équipe"],
+            default="Tous", key=f"{key_prefix}_status") or "Tous"
 
         # Ligne 2 : Position (multi, patineurs) + Âge + GP min + Cap min-max
         cmax_m = (int(df["Cap Hit"].max()) // 1_000_000) if not df["Cap Hit"].dropna().empty else 0
