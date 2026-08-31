@@ -243,9 +243,13 @@ for _pid in NEW_IDS:
 # Retraités : l'auto-détection NHL (isActive) ne fait que SUGGÉRER des suspects
 # (lecture instantanée du cache disque). L'utilisateur confirme/écarte via
 # l'onglet Retraités (retired_manual.json).
-_SUSPECTED = rs.load_retired()          # suggestions auto (isActive=False)
+# Ids valides = joueurs des stats courantes OU sous contrat courant. Écarte les
+# suspects « orphelins » d'un ancien cache (id absent des données actuelles).
+_VALID_IDS = _stats_ids | set(cache)
+_SUSPECTED = rs.load_retired() & _VALID_IDS   # suggestions auto (isActive=False)
 _MANUAL = rs.load_manual()              # {id: 'retired'|'active'}
-CONFIRMED_RETIRED = {pid for pid, v in _MANUAL.items() if v == "retired"}
+CONFIRMED_RETIRED = {pid for pid, v in _MANUAL.items()
+                     if v == "retired" and pid in _VALID_IDS}
 _DISMISSED = {pid for pid, v in _MANUAL.items() if v == "active"}
 # Suspects à afficher (RET?) = suggérés, ni confirmés ni écartés.
 SUSPECTED_IDS = (_SUSPECTED - CONFIRMED_RETIRED) - _DISMISSED
@@ -1525,7 +1529,8 @@ def render_retired_tab():
 
     manual = rs.load_manual()
     by_id = {str(p.get("playerId")): p for p in players}
-    ids = set(_SUSPECTED) | set(manual)
+    # Uniquement des joueurs réels (écarte les ids orphelins d'anciens caches).
+    ids = (set(_SUSPECTED) | set(manual)) & _VALID_IDS
 
     DECISIONS = {"❔ À confirmer": None, "✅ Retraité": "retired",
                  "❌ Actif (ignorer)": "active"}
