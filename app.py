@@ -619,6 +619,40 @@ def apply_filters(df, key_prefix, player_type):
     return view
 
 
+def apply_sort(view, key_prefix, display_cols, default_col):
+    """Barre de tri multi-colonnes : l'ordre de sélection = priorité du tri,
+    chaque colonne ayant son propre sens (↓ décroissant / ↑ croissant)."""
+    with st.expander("↕️ Tri", expanded=False):
+        sort_cols = st.multiselect(
+            "Colonnes de tri (l'ordre de sélection définit la priorité)",
+            display_cols,
+            default=[default_col] if default_col in display_cols else [],
+            key=f"{key_prefix}_sortcols",
+        )
+        ascending = []
+        # Un sens de tri par colonne, réparti sur des lignes de 4 pour rester lisible.
+        for start in range(0, len(sort_cols), 4):
+            chunk = sort_cols[start:start + 4]
+            cols = st.columns(len(chunk))
+            for i, c in enumerate(chunk):
+                key = f"{key_prefix}_dir_{c}"
+                st.session_state.setdefault(key, True)  # True = décroissant par défaut
+                cols[i].toggle(
+                    f"{c} {'↓' if st.session_state[key] else '↑'}",
+                    key=key,
+                    help="Activé = décroissant (↓), désactivé = croissant (↑)")
+                ascending.append(not st.session_state[key])
+
+    active = [(c, a) for c, a in zip(sort_cols, ascending) if c in view.columns]
+    if active:
+        view = view.sort_values(
+            by=[c for c, _ in active],
+            ascending=[a for _, a in active],
+            na_position="last",
+        )
+    return view
+
+
 def render_tab(player_type, key_prefix, sort_col, display_cols):
     df = build_df(player_type)
     # Valeur / Valeur/$M (z-scores composites) mappées par playerId
@@ -628,8 +662,7 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
     df["Valeur/$M"] = df["_pid"].map(lambda i: val_by_id.get(i, {}).get("value_per_m"))
 
     view = apply_filters(df, key_prefix, player_type)
-    if sort_col in view.columns:
-        view = view.sort_values(sort_col, ascending=False)
+    view = apply_sort(view, key_prefix, display_cols, sort_col)
 
     style_cols = display_cols + ["_mine", "_owned", "_new", "_retired", "_suspected"]
 
