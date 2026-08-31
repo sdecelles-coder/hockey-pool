@@ -117,6 +117,7 @@ if "_auto_refreshed" not in st.session_state:
         _ph_stats = st.empty()
         _ph_pool = st.empty()
         _ph_contracts = st.empty()
+        _ph_roster = st.empty()
         _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
         _ph_pool.write("🏒 **Pool ESPN** : récupération en cours…")
         _ph_contracts.write("🔄 **Contrats** : récupération en cours…")
@@ -157,6 +158,25 @@ if "_auto_refreshed" not in st.session_state:
                     "— données précédentes conservées"
                 )
                 _f.cancel()
+
+        # Statut retraités : appels API NHL bornés dans le temps, persistés sur
+        # disque (roster_status.json) et réutilisés < 24 h. Fait ici (hors du
+        # chemin de rendu) pour ne jamais bloquer l'affichage des tableaux.
+        _ph_roster.write("🚑 **Retraités** : vérification (API NHL)…")
+        try:
+            _sj = load_json(STATS_FILE, {}) or {}
+            _cj = load_json(CONTRACTS_FILE, {"contracts": {}})
+            _contract_ids = set(_cj.get("contracts", {}))
+            # Candidats = joueurs des stats sans contrat courant, avec un temps de
+            # jeu significatif l'an dernier (un retraité notable avait des matchs).
+            # Réduit le nombre d'appels NHL et évite le throttling.
+            _cands = {str(_p.get("playerId")) for _p in _sj.get("players", [])
+                      if str(_p.get("playerId")) not in _contract_ids
+                      and (_p.get("gp") or 0) >= 20}
+            _rr = rs.refresh_retired(_cands)
+            _ph_roster.write(f"✅ **Retraités** : {len(_rr)} identifiés")
+        except Exception as _e:
+            _ph_roster.write(f"⚠️ **Retraités** : ignoré — {_e}")
 
         if all(v == "ok" for v in _rf_res.values()):
             _status_box.update(
@@ -208,11 +228,6 @@ players = stats.get("players", [])
 # Statut roster : nouveaux (contrat courant sans stats) + retraités
 # (stats sans contrat courant & inactifs LNH). Voir roster_status.py.
 # ----------------------------------------------------------------------
-@st.cache_data(ttl=21600, show_spinner=False)
-def _retired_ids_cached(candidate_ids):
-    return rs.retired_ids(candidate_ids)
-
-
 _stats_ids = {str(p.get("playerId")) for p in players}
 # Nouveaux = contrat courant sans stats l'an dernier ET contrat de type ELC
 # (Entry Level Contract). Les vétérans blessés sans stats ont un contrat STD :
@@ -222,8 +237,9 @@ NEW_IDS = {_pid for _pid in set(cache) - _stats_ids
 for _pid in NEW_IDS:
     players.append(rs.make_new_player_row(_pid, cache[_pid]))
 
-# Candidats retraités : dans les stats mais sans contrat courant.
-RETIRED_IDS = _retired_ids_cached(tuple(sorted(_stats_ids - set(cache))))
+# Retraités : lecture instantanée du cache disque (calculé dans le bloc
+# d'auto-refresh, jamais sur le chemin de rendu -> pas de blocage de l'app).
+RETIRED_IDS = rs.load_retired()
 
 # Lookup des lignes joueur (augmentées) par id — sert à réinjecter les nouveaux
 # dans les tables scorées qui filtrent par GP.

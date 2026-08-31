@@ -11,11 +11,14 @@
 """
 
 import concurrent.futures
+import json
+from datetime import datetime, timezone
 
 import requests
 
 NHL_LANDING = "https://api-web.nhle.com/v1/player/{}/landing"
-TIMEOUT = 15
+TIMEOUT = 8            # s par appel NHL (évite les traînards)
+STATUS_FILE = "roster_status.json"
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -35,11 +38,13 @@ def is_active_nhl(nhl_id):
         return None
 
 
-def retired_ids(candidate_ids, max_workers=12):
+def retired_ids(candidate_ids, max_workers=8, budget_sec=60):
     """Parmi les candidats (stats sans contrat courant), ceux inactifs (retraités).
 
     Un candidat dont l'appel NHL échoue (None) n'est PAS marqué retraité : choix
-    sûr pour éviter les faux positifs.
+    sûr pour éviter les faux positifs. `budget_sec` borne le temps total : les
+    appels non terminés sont annulés (ils seront réévalués au prochain refresh).
+    Concurrence volontairement modérée : l'API NHL throttle les grosses rafales.
     """
     candidates = [str(pid) for pid in candidate_ids if pid]
     if not candidates:
@@ -47,9 +52,52 @@ def retired_ids(candidate_ids, max_workers=12):
     retired = set()
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
         futures = {ex.submit(is_active_nhl, pid): pid for pid in candidates}
-        for fut in concurrent.futures.as_completed(futures):
+        done, not_done = concurrent.futures.wait(futures, timeout=budget_sec)
+        for fut in done:
             if fut.result() is False:
                 retired.add(futures[fut])
+        for fut in not_done:
+            fut.cancel()
+    return retired
+
+
+def load_retired():
+    """Ensemble des ids retraités depuis le cache disque (vide si absent)."""
+    try:
+        with open(STATUS_FILE, encoding="utf-8") as f:
+            return set(json.load(f).get("retired", []))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return set()
+
+
+def _status_age_hours():
+    try:
+        with open(STATUS_FILE, encoding="utf-8") as f:
+            ts = json.load(f).get("updated_at")
+        if not ts:
+            return None
+        return (datetime.now(timezone.utc) - datetime.fromisoformat(ts)).total_seconds() / 3600
+    except Exception:
+        return None
+
+
+def refresh_retired(candidate_ids, max_age_h=24, budget_sec=60):
+    """Recalcule et persiste les retraités si le cache disque est absent/périmé.
+
+    Retourne l'ensemble des ids retraités (frais ou recalculés). Ne fait AUCUN
+    appel réseau si roster_status.json a moins de `max_age_h` heures.
+    """
+    age = _status_age_hours()
+    if age is not None and age < max_age_h:
+        return load_retired()
+    retired = retired_ids(candidate_ids, budget_sec=budget_sec)
+    payload = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "candidates": len(list(candidate_ids)),
+        "retired": sorted(retired),
+    }
+    with open(STATUS_FILE, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
     return retired
 
 
