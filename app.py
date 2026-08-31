@@ -169,10 +169,13 @@ if "_auto_refreshed" not in st.session_state:
             _contract_ids = set(_cj.get("contracts", {}))
             # Candidats = joueurs des stats sans contrat courant, avec un temps de
             # jeu significatif l'an dernier (un retraité notable avait des matchs).
+            # Seuil GP plus bas pour les gardiens (ils jouent moitié moins de matchs).
             # Réduit le nombre d'appels NHL et évite le throttling.
+            def _gp_min(_p):
+                return 10 if _p.get("type") == "goalie" else 20
             _cands = {str(_p.get("playerId")) for _p in _sj.get("players", [])
                       if str(_p.get("playerId")) not in _contract_ids
-                      and (_p.get("gp") or 0) >= 20}
+                      and (_p.get("gp") or 0) >= _gp_min(_p)}
             _rr = rs.refresh_retired(_cands)
             _ph_roster.write(f"✅ **Retraités** : {len(_rr)} identifiés")
         except Exception as _e:
