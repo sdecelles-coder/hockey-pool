@@ -62,12 +62,47 @@ def retired_ids(candidate_ids, max_workers=8, budget_sec=60):
 
 
 def load_retired():
-    """Ensemble des ids retraités depuis le cache disque (vide si absent)."""
+    """Ensemble des ids SUSPECTÉS retraités (détection auto NHL isActive)."""
     try:
         with open(STATUS_FILE, encoding="utf-8") as f:
             return set(json.load(f).get("retired", []))
     except (FileNotFoundError, json.JSONDecodeError):
         return set()
+
+
+# ----------------------------------------------------------------------
+# Confirmation manuelle du statut retraité (l'auto n'est qu'une suggestion)
+# ----------------------------------------------------------------------
+MANUAL_FILE = "retired_manual.json"
+
+
+def load_manual():
+    """Décisions manuelles {player_id(str): 'retired' | 'active'}.
+
+    'retired' = confirmé retraité par l'utilisateur ; 'active' = suspect écarté.
+    """
+    try:
+        with open(MANUAL_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def save_manual(manual):
+    with open(MANUAL_FILE, "w", encoding="utf-8") as f:
+        json.dump(manual, f, ensure_ascii=False, indent=2)
+
+
+def set_manual(player_id, status):
+    """status in {'retired', 'active', None}. None => efface la décision (redevient suspect)."""
+    manual = load_manual()
+    pid = str(player_id)
+    if status is None:
+        manual.pop(pid, None)
+    else:
+        manual[pid] = status
+    save_manual(manual)
+    return manual
 
 
 def _status_age_hours():

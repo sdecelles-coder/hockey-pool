@@ -240,9 +240,15 @@ NEW_IDS = {_pid for _pid in set(cache) - _stats_ids
 for _pid in NEW_IDS:
     players.append(rs.make_new_player_row(_pid, cache[_pid]))
 
-# Retraités : lecture instantanée du cache disque (calculé dans le bloc
-# d'auto-refresh, jamais sur le chemin de rendu -> pas de blocage de l'app).
-RETIRED_IDS = rs.load_retired()
+# Retraités : l'auto-détection NHL (isActive) ne fait que SUGGÉRER des suspects
+# (lecture instantanée du cache disque). L'utilisateur confirme/écarte via
+# l'onglet Retraités (retired_manual.json).
+_SUSPECTED = rs.load_retired()          # suggestions auto (isActive=False)
+_MANUAL = rs.load_manual()              # {id: 'retired'|'active'}
+CONFIRMED_RETIRED = {pid for pid, v in _MANUAL.items() if v == "retired"}
+_DISMISSED = {pid for pid, v in _MANUAL.items() if v == "active"}
+# Suspects à afficher (RET?) = suggérés, ni confirmés ni écartés.
+SUSPECTED_IDS = (_SUSPECTED - CONFIRMED_RETIRED) - _DISMISSED
 
 # Lookup des lignes joueur (augmentées) par id — sert à réinjecter les nouveaux
 # dans les tables scorées qui filtrent par GP.
@@ -253,8 +259,10 @@ def statut_for(player_id):
     pid = str(player_id)
     if pid in NEW_IDS:
         return "NOUVEAU"
-    if pid in RETIRED_IDS:
+    if pid in CONFIRMED_RETIRED:
         return "RET"
+    if pid in SUSPECTED_IDS:
+        return "RET?"
     return "—"
 
 
@@ -263,7 +271,11 @@ def is_new(player_id):
 
 
 def is_retired(player_id):
-    return str(player_id) in RETIRED_IDS
+    return str(player_id) in CONFIRMED_RETIRED
+
+
+def is_suspected(player_id):
+    return str(player_id) in SUSPECTED_IDS
 
 
 # Toasts de confirmation après l'auto-refresh
@@ -316,6 +328,7 @@ def build_df(player_type):
             "_owned": pool_team is not None,
             "_new": is_new(p.get("playerId")),
             "_retired": is_retired(p.get("playerId")),
+            "_suspected": is_suspected(p.get("playerId")),
             "_pool_full": pool_team or "",
             "Nom": p["name"],
             "Statut": statut_for(p.get("playerId")),
@@ -453,8 +466,9 @@ def pool_cap_summary():
 # ----------------------------------------------------------------------
 # Coloration
 # ----------------------------------------------------------------------
-COLOR_RETIRED = "rgba(200, 0, 0, 0.35)"    # ligne rouge : retraité
+COLOR_RETIRED = "rgba(200, 0, 0, 0.35)"    # ligne rouge : retraité confirmé
 COLOR_NEW_TEXT = "#159e46"                  # texte vert : nouveau joueur
+COLOR_SUSPECT_TEXT = "#d98000"             # texte orange : suspect retraité (RET?)
 
 
 def row_style(row):
@@ -462,6 +476,8 @@ def row_style(row):
         return [f"background-color: {COLOR_RETIRED}" for _ in row]
     if row.get("_new"):
         return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
+    if row.get("_suspected"):
+        return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
     if row.get("_mine"):
         color = COLOR_MINE
     elif row.get("_owned"):
@@ -553,7 +569,7 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
     if sort_col in view.columns:
         view = view.sort_values(sort_col, ascending=False)
 
-    style_cols = display_cols + ["_mine", "_owned", "_new", "_retired"]
+    style_cols = display_cols + ["_mine", "_owned", "_new", "_retired", "_suspected"]
 
     def _int(v):
         return f"{int(v)}" if pd.notna(v) else "—"
@@ -571,15 +587,17 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
         styled, hide_index=True, width="stretch",
         height=1090,
         column_order=display_cols,
-        column_config={"_mine": None, "_owned": None,
-                       "_new": None, "_retired": None},
+        column_config={"_mine": None, "_owned": None, "_new": None,
+                       "_retired": None, "_suspected": None},
     )
     n_mine = int(view["_mine"].sum())
     n_owned = int(view["_owned"].sum())
     n_ret = int(view["_retired"].sum())
     n_new = int(view["_new"].sum())
+    n_susp = int(view["_suspected"].sum())
     st.caption(f"{len(view)} joueurs — {n_mine} dans mon équipe, "
-               f"{n_owned} possédés · {n_new} nouveaux, {n_ret} retraités")
+               f"{n_owned} possédés · {n_new} nouveaux, {n_ret} retraités, "
+               f"{n_susp} suspects (RET?)")
 
 
 # ----------------------------------------------------------------------
@@ -607,6 +625,7 @@ def render_fa_tab():
             "_mine": is_mine,
             "_new": is_new(p.get("playerId")),
             "_retired": is_retired(p.get("playerId")),
+            "_suspected": is_suspected(p.get("playerId")),
             "_expiry_year": expiry_year,
             "_type": p.get("type", ""),
             "Nom": p["name"],
@@ -649,15 +668,16 @@ def render_fa_tab():
             st.info("Aucun joueur avec ces critères.")
             return
         ok_disp = [c for c in display_cols if c in df_show.columns]
-        ok_style = ok_disp + [c for c in ("_mine", "_owned", "_new", "_retired")
+        ok_style = ok_disp + [c for c in ("_mine", "_owned", "_new",
+                                          "_retired", "_suspected")
                               if c in df_show.columns]
         styled = (df_show[ok_style].style
                   .apply(row_style, axis=1)
                   .format(_fmt_fa, na_rep="—"))
         st.dataframe(styled, hide_index=True, width="stretch", height=height,
                      column_order=ok_disp,
-                     column_config={"_mine": None, "_owned": None,
-                                    "_new": None, "_retired": None})
+                     column_config={"_mine": None, "_owned": None, "_new": None,
+                                    "_retired": None, "_suspected": None})
 
     # ------------------------------------------------------------------
     # Section 1 : Agents libres
@@ -770,9 +790,9 @@ def render_fa_tab():
 # ----------------------------------------------------------------------
 # Onglets
 # ----------------------------------------------------------------------
-tab_s, tab_g, tab_d, tab_c, tab_fa, tab_aide = st.tabs(
+tab_s, tab_g, tab_d, tab_c, tab_fa, tab_ret, tab_aide = st.tabs(
     ["⚡ Patineurs", "🥅 Gardiens", "🎯 Équipe & Repêchage", "🥊 Confrontations",
-     "🔍 Agents libres & Prospects", "📐 Comment ça marche ?"])
+     "🔍 Agents libres & Prospects", "🚑 Retraités", "📐 Comment ça marche ?"])
 
 with tab_s:
     render_tab(
@@ -1169,6 +1189,7 @@ def render_draft_tab():
                 "_taken": is_taken,
                 "_new": is_new(pid),
                 "_retired": is_retired(pid),
+                "_suspected": is_suspected(pid),
                 "Tier": p.get("tier", "—"),
                 "Dispo": owner or "Libre",
                 "Nom": p.get("name"),
@@ -1214,12 +1235,14 @@ def render_draft_tab():
                          "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
                          "Bonus jeun.", "V", "D", "DPr", "Moy", "%Arr", "BL"]
 
-        # Coloration : retraité rouge, nouveau vert, sinon gris si déjà pris.
+        # Coloration : retraité rouge, nouveau vert, suspect orange, sinon gris si pris.
         def grey_taken(row):
             if row.get("_retired"):
                 return [f"background-color: {COLOR_RETIRED}" for _ in row]
             if row.get("_new"):
                 return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
+            if row.get("_suspected"):
+                return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
             if row.get("_taken"):
                 return ["color: #999999" for _ in row]
             return ["" for _ in row]
@@ -1232,13 +1255,14 @@ def render_draft_tab():
         if "HIT" in disp_cols:
             fmt["HIT"] = _int2
 
-        styled_av = (df[disp_cols + ["_taken", "_new", "_retired"]].style
+        styled_av = (df[disp_cols + ["_taken", "_new", "_retired", "_suspected"]].style
                      .apply(grey_taken, axis=1)
                      .format(fmt))
         st.dataframe(
             styled_av, hide_index=True, width="stretch",
             column_order=disp_cols, height=560,
-            column_config={"_taken": None, "_new": None, "_retired": None},
+            column_config={"_taken": None, "_new": None,
+                           "_retired": None, "_suspected": None},
         )
         n_libre = int((~df["_taken"]).sum())
         st.caption(f"{len(df)} joueurs affichés — {n_libre} libres "
@@ -1485,6 +1509,94 @@ with tab_c:
 
 with tab_fa:
     render_fa_tab()
+
+
+# ----------------------------------------------------------------------
+# Onglet Retraités — suggestions auto + confirmation manuelle
+# ----------------------------------------------------------------------
+def render_retired_tab():
+    st.markdown("### 🚑 Statut retraité — suggestions & confirmation")
+    st.caption(
+        "L'app **suggère** des joueurs susceptibles d'être retraités (détection "
+        "auto via l'API NHL → statut « RET? » orange dans tous les tableaux). "
+        "Confirme ou écarte chacun ci-dessous : les **confirmés** passent en "
+        "**RET** (ligne rouge) partout ; les **écartés** redeviennent normaux."
+    )
+
+    manual = rs.load_manual()
+    by_id = {str(p.get("playerId")): p for p in players}
+    ids = set(_SUSPECTED) | set(manual)
+
+    DECISIONS = {"❔ À confirmer": None, "✅ Retraité": "retired",
+                 "❌ Actif (ignorer)": "active"}
+    REV = {None: "❔ À confirmer", "retired": "✅ Retraité",
+           "active": "❌ Actif (ignorer)"}
+
+    if not ids:
+        st.info("Aucun joueur suspecté pour le moment. "
+                "Utilise la recherche ci-dessous pour en ajouter un.")
+    else:
+        rows = []
+        for pid in ids:
+            p = by_id.get(pid, {})
+            c = cache.get(pid, {})
+            rows.append({
+                "_id": pid,
+                "Décision": REV.get(manual.get(pid)),
+                "Nom": p.get("name") or c.get("name") or pid,
+                "Pos": p.get("position") or c.get("pos") or "—",
+                "Équipe": p.get("team") or "—",
+                "Âge": int(p["age"]) if p.get("age") is not None else None,
+                "GP (an dernier)": p.get("gp"),
+            })
+        rdf = pd.DataFrame(rows).sort_values(["Décision", "Nom"]).reset_index(drop=True)
+        ed = st.data_editor(
+            rdf, hide_index=True, width="stretch",
+            height=min(700, 45 * len(rdf) + 60),
+            column_order=["Décision", "Nom", "Pos", "Équipe", "Âge", "GP (an dernier)"],
+            column_config={
+                "_id": None,
+                "Décision": st.column_config.SelectboxColumn(
+                    "Décision", options=list(DECISIONS.keys()), required=True,
+                    help="Confirme (Retraité), écarte (Actif) ou laisse à confirmer"),
+            },
+            disabled=["Nom", "Pos", "Équipe", "Âge", "GP (an dernier)"],
+            key="retired_editor",
+        )
+        changed = False
+        for i in range(len(ed)):
+            pid = rdf.iloc[i]["_id"]
+            new_dec = DECISIONS.get(ed.iloc[i]["Décision"])
+            if new_dec != manual.get(pid):
+                rs.set_manual(pid, new_dec)
+                changed = True
+        if changed:
+            st.rerun()
+
+        n_conf = sum(1 for v in manual.values() if v == "retired")
+        n_susp = len(set(_SUSPECTED) - set(manual))
+        st.caption(f"{n_conf} confirmés retraités · {n_susp} suspects à examiner")
+
+    st.divider()
+    st.markdown("**➕ Ajouter un joueur non suggéré** "
+                "(ex. un retraité manqué par la détection auto)")
+    all_opts = {f"{p.get('name')} ({p.get('position') or '?'})": str(p.get("playerId"))
+                for p in players if p.get("name")}
+    q = st.text_input("🔎 Rechercher un joueur", key="ret_add_search",
+                      placeholder="Tape un nom…")
+    opts = {k: v for k, v in all_opts.items() if q.lower() in k.lower()} if q else {}
+    if q and not opts:
+        st.info("Aucun joueur ne correspond.")
+    elif opts:
+        a1, a2 = st.columns([3, 1])
+        chosen = a1.selectbox("Joueur", list(opts.keys()), key="ret_add_sel")
+        if a2.button("Marquer retraité", width="stretch", key="ret_add_btn"):
+            rs.set_manual(opts[chosen], "retired")
+            st.rerun()
+
+
+with tab_ret:
+    render_retired_tab()
 
 
 # ----------------------------------------------------------------------
