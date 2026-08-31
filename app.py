@@ -214,7 +214,11 @@ def _retired_ids_cached(candidate_ids):
 
 
 _stats_ids = {str(p.get("playerId")) for p in players}
-NEW_IDS = set(cache) - _stats_ids
+# Nouveaux = contrat courant sans stats l'an dernier ET contrat de type ELC
+# (Entry Level Contract). Les vétérans blessés sans stats ont un contrat STD :
+# ils ne peuvent pas être ELC, donc ils sont exclus (ni verts, ni injectés).
+NEW_IDS = {_pid for _pid in set(cache) - _stats_ids
+           if (cache[_pid].get("contract_level") or "").upper() == "ELC"}
 for _pid in NEW_IDS:
     players.append(rs.make_new_player_row(_pid, cache[_pid]))
 
