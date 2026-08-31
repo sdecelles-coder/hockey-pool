@@ -873,7 +873,8 @@ def players_with_cap(player_type):
 
 
 def status_label(s):
-    return {"mine": "★ Protégé (moi)", "other": "🔒 Protégé (autre DG)",
+    return {"mine": "★ Protégé (moi)", "added": "➕ Ajouté",
+            "other": "🔒 Protégé (autre DG)",
             "target": "🎯 Cible", None: "—"}.get(s, "—")
 
 
@@ -920,14 +921,14 @@ def render_draft_tab():
 
     # --- Panneau Mon équipe ---
     mine_ids = [pid for pid, s in plan.items() if s == "mine"]
+    added_ids = [pid for pid, s in plan.items() if s == "added"]
     target_ids = [pid for pid, s in plan.items() if s == "target"]
 
     def cap_sum(ids):
         return sum(by_id.get(pid, {}).get("cap_hit_value", 0) for pid in ids)
 
-    cap_mine = cap_sum(mine_ids)
-    cap_target = cap_sum(target_ids)
-    cap_total = cap_mine + cap_target
+    # Masse salariale = protégés (moi) + ajoutés. Les cibles NE comptent pas.
+    cap_total = cap_sum(mine_ids + added_ids)
     remaining = cap_limit - cap_total
 
     MAX_PROTECTED = 8
@@ -951,7 +952,7 @@ def render_draft_tab():
         return "F"
 
     counts = {"F": 0, "D": 0, "G": 0}
-    for pid in mine_ids + target_ids:
+    for pid in mine_ids + added_ids + target_ids:
         p = by_id.get(pid, {})
         counts[pos_group(p.get("position"))] += 1
     total_sel = counts["F"] + counts["D"] + counts["G"]
@@ -964,6 +965,7 @@ def render_draft_tab():
     st.markdown(
         f"<div style='font-size:0.9rem;line-height:1.6'>"
         f"<b>Protégés:</b> {len(mine_ids)}/{MAX_PROTECTED}{over} · "
+        f"<b>Ajoutés:</b> {len(added_ids)} · "
         f"<b>Cibles:</b> {len(target_ids)} · "
         f"<b>F:</b> {counts['F']}/{SLOTS['F']} · "
         f"<b>D:</b> {counts['D']}/{SLOTS['D']} · "
@@ -981,9 +983,10 @@ def render_draft_tab():
                  "Retire-en avant le repêchage.")
 
     # liste des joueurs marqués (repliable — pertinent au repêchage)
-    marked = [(pid, s) for pid, s in plan.items() if s in ("mine", "target")]
+    marked = [(pid, s) for pid, s in plan.items()
+              if s in ("mine", "added", "target")]
     if marked:
-        with st.expander("📑 Mes joueurs au repêchage (protégés + cibles)",
+        with st.expander("📑 Mes joueurs au repêchage (protégés + ajoutés + cibles)",
                          expanded=False):
             rows = []
             for pid, s in marked:
@@ -1153,19 +1156,55 @@ def render_draft_tab():
 
     st.divider()
 
-    # --- Cap Hit total par équipe de pool ---
-    with st.expander("💰 Cap Hit total par équipe de pool", expanded=False):
-        cap_df = pool_cap_summary()
-        if cap_df.empty:
-            st.info("Aucune donnée de pool. Clique sur « 🏒 Pool » dans l'en-tête.")
-        else:
-            st.dataframe(
-                cap_df, hide_index=True, width="stretch",
-                column_config={
-                    "Cap Hit total": st.column_config.NumberColumn(
-                        "Cap Hit total", format="$%d")
-                },
-            )
+    # --- Assigner un statut ---
+    st.markdown("**Assigner un statut à un joueur**")
+    search_assign = st.text_input(
+        "🔎 Rechercher un joueur", key="draft_assign_search",
+        placeholder="Tape un nom pour filtrer la liste…")
+
+    # Liste des joueurs assignables, indépendante du tableau ci-dessous :
+    # tous les joueurs scorés + les nouveaux joueurs sans stats.
+    assignable = list(by_id.values())
+    _seen_assign = {str(p["playerId"]) for p in assignable}
+    for _nid in NEW_IDS:
+        if _nid in _seen_assign:
+            continue
+        _pr = PLAYERS_BY_ID.get(_nid)
+        if _pr:
+            assignable.append(_pr)
+    all_names = {f"{p.get('name')} ({p.get('position')})": str(p["playerId"])
+                 for p in sorted(assignable, key=lambda x: (x.get("name") or ""))}
+    if search_assign:
+        names = {k: v for k, v in all_names.items()
+                 if search_assign.lower() in k.lower()}
+    else:
+        names = all_names
+
+    if not names:
+        st.info("Aucun joueur ne correspond à la recherche.")
+    else:
+        a1, a2, a3 = st.columns([3, 2, 1])
+        chosen = a1.selectbox("Joueur", list(names.keys()),
+                              key="draft_assign_player")
+        new_status = a2.selectbox(
+            "Statut",
+            ["★ Protégé (moi)", "➕ Ajouté", "🔒 Protégé (autre DG)",
+             "🎯 Cible", "— (retirer)"],
+            key="draft_assign_status")
+        status_map = {"★ Protégé (moi)": "mine", "➕ Ajouté": "added",
+                      "🔒 Protégé (autre DG)": "other",
+                      "🎯 Cible": "target", "— (retirer)": None}
+        if a3.button("Appliquer", width="stretch", key="draft_apply"):
+            target_pid = names[chosen]
+            target_status = status_map[new_status]
+            if (target_status == "mine"
+                    and plan.get(target_pid) != "mine"
+                    and len(mine_ids) >= MAX_PROTECTED):
+                st.error(f"⚠️ Maximum {MAX_PROTECTED} protégés atteint. "
+                         "Retire un protégé avant d'en ajouter un autre.")
+            else:
+                de.set_status(target_pid, target_status)
+                st.rerun()
 
     st.divider()
 
@@ -1209,6 +1248,8 @@ def render_draft_tab():
                     return True, "Autre DG"
                 if s == "mine":
                     return True, "Moi"
+                if s == "added":
+                    return True, "➕ Ajouté"
                 if s == "target":
                     return False, "🎯 Cible"
                 return False, ""
@@ -1262,89 +1303,67 @@ def render_draft_tab():
         df = pd.DataFrame(rows)
         if df.empty:
             st.info("Aucun joueur scoré. Vérifie le seuil GP ou lance les updates.")
-            return
-
-        df = df.sort_values(sort_by, ascending=False).reset_index(drop=True)
-
-        if ptype == "Patineurs":
-            disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
-                         "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
-                         "Bonus jeun.", "G", "A", "Pts", "+/-", "PIM", "PPP",
-                         "SOG", "HIT"]
         else:
-            disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
-                         "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
-                         "Bonus jeun.", "V", "D", "DPr", "Moy", "%Arr", "BL"]
+            df = df.sort_values(sort_by, ascending=False).reset_index(drop=True)
 
-        # Coloration : retraité rouge, nouveau vert, suspect orange, sinon gris si pris.
-        def grey_taken(row):
-            if row.get("_retired"):
-                return [f"background-color: {COLOR_RETIRED}" for _ in row]
-            if row.get("_new"):
-                return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
-            if row.get("_suspected"):
-                return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
-            if row.get("_taken"):
-                return ["color: #999999" for _ in row]
-            return ["" for _ in row]
-
-        def _int2(v):
-            return f"{int(v)}" if pd.notna(v) else "—"
-
-        fmt = {"Cap Hit": lambda v: f"${v:,.0f}" if v else "—",
-               "Âge": _int2}
-        if "HIT" in disp_cols:
-            fmt["HIT"] = _int2
-
-        styled_av = (df[disp_cols + ["_taken", "_new", "_retired", "_suspected"]].style
-                     .apply(grey_taken, axis=1)
-                     .format(fmt))
-        st.dataframe(
-            styled_av, hide_index=True, width="stretch",
-            column_order=disp_cols, height=560,
-            column_config={"_taken": None, "_new": None,
-                           "_retired": None, "_suspected": None},
-        )
-        n_libre = int((~df["_taken"]).sum())
-        st.caption(f"{len(df)} joueurs affichés — {n_libre} libres "
-                   f"({'mode repêchage' if draft_mode else 'mode saison (ESPN)'})")
-
-    # --- Assigner un statut ---
-    st.markdown("**Assigner un statut à un joueur**")
-    search_assign = st.text_input(
-        "🔎 Rechercher un joueur", key="draft_assign_search",
-        placeholder="Tape un nom pour filtrer la liste…")
-
-    all_names = {f"{p['Nom']} ({p['Pos']})": p["_id"] for _, p in df.iterrows()}
-    if search_assign:
-        names = {k: v for k, v in all_names.items()
-                 if search_assign.lower() in k.lower()}
-    else:
-        names = all_names
-
-    if not names:
-        st.info("Aucun joueur ne correspond à la recherche.")
-    else:
-        a1, a2, a3 = st.columns([3, 2, 1])
-        chosen = a1.selectbox("Joueur", list(names.keys()),
-                              key="draft_assign_player")
-        new_status = a2.selectbox(
-            "Statut",
-            ["★ Protégé (moi)", "🔒 Protégé (autre DG)", "🎯 Cible", "— (retirer)"],
-            key="draft_assign_status")
-        status_map = {"★ Protégé (moi)": "mine", "🔒 Protégé (autre DG)": "other",
-                      "🎯 Cible": "target", "— (retirer)": None}
-        if a3.button("Appliquer", width="stretch", key="draft_apply"):
-            target_pid = names[chosen]
-            target_status = status_map[new_status]
-            if (target_status == "mine"
-                    and plan.get(target_pid) != "mine"
-                    and len(mine_ids) >= MAX_PROTECTED):
-                st.error(f"⚠️ Maximum {MAX_PROTECTED} protégés atteint. "
-                         "Retire un protégé avant d'en ajouter un autre.")
+            if ptype == "Patineurs":
+                disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
+                             "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
+                             "Bonus jeun.", "G", "A", "Pts", "+/-", "PIM", "PPP",
+                             "SOG", "HIT"]
             else:
-                de.set_status(target_pid, target_status)
-                st.rerun()
+                disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
+                             "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
+                             "Bonus jeun.", "V", "D", "DPr", "Moy", "%Arr", "BL"]
+
+            # Coloration : retraité rouge, nouveau vert, suspect orange, sinon gris si pris.
+            def grey_taken(row):
+                if row.get("_retired"):
+                    return [f"background-color: {COLOR_RETIRED}" for _ in row]
+                if row.get("_new"):
+                    return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
+                if row.get("_suspected"):
+                    return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
+                if row.get("_taken"):
+                    return ["color: #999999" for _ in row]
+                return ["" for _ in row]
+
+            def _int2(v):
+                return f"{int(v)}" if pd.notna(v) else "—"
+
+            fmt = {"Cap Hit": lambda v: f"${v:,.0f}" if v else "—",
+                   "Âge": _int2}
+            if "HIT" in disp_cols:
+                fmt["HIT"] = _int2
+
+            styled_av = (df[disp_cols + ["_taken", "_new", "_retired", "_suspected"]].style
+                         .apply(grey_taken, axis=1)
+                         .format(fmt))
+            st.dataframe(
+                styled_av, hide_index=True, width="stretch",
+                column_order=disp_cols, height=560,
+                column_config={"_taken": None, "_new": None,
+                               "_retired": None, "_suspected": None},
+            )
+            n_libre = int((~df["_taken"]).sum())
+            st.caption(f"{len(df)} joueurs affichés — {n_libre} libres "
+                       f"({'mode repêchage' if draft_mode else 'mode saison (ESPN)'})")
+
+    st.divider()
+
+    # --- Cap Hit total par équipe de pool ---
+    with st.expander("💰 Cap Hit total par équipe de pool", expanded=False):
+        cap_df = pool_cap_summary()
+        if cap_df.empty:
+            st.info("Aucune donnée de pool. Clique sur « 🏒 Pool » dans l'en-tête.")
+        else:
+            st.dataframe(
+                cap_df, hide_index=True, width="stretch",
+                column_config={
+                    "Cap Hit total": st.column_config.NumberColumn(
+                        "Cap Hit total", format="$%d")
+                },
+            )
 
 
 with tab_d:

@@ -198,7 +198,7 @@ def assign_tiers(scored):
 # ----------------------------------------------------------------------
 def load_plan():
     """Retourne {player_id(str): status}. status in
-    {'mine', 'other', 'target'}."""
+    {'mine', 'added', 'other', 'target'}."""
     try:
         with open(PLAN_FILE, encoding="utf-8") as f:
             return json.load(f)
@@ -212,7 +212,7 @@ def save_plan(plan):
 
 
 def set_status(player_id, status):
-    """status in {'mine','other','target', None}. None => retire le joueur."""
+    """status in {'mine','added','other','target', None}. None => retire le joueur."""
     plan = load_plan()
     pid = str(player_id)
     if status is None:
