@@ -29,6 +29,7 @@ import update_contracts as uc
 import espn_roster as er
 import draft_engine as de
 import update_stats as us
+import roster_status as rs
 
 STATS_FILE = "nhl_stats.json"
 CONTRACTS_FILE = "nhl_contracts.json"
@@ -107,11 +108,6 @@ def norm_name(name):
 # ----------------------------------------------------------------------
 # Chargement
 # ----------------------------------------------------------------------
-import os
-
-# Streamlit Community Cloud tourne sous /home/appuser — pas de Chromium disponible
-IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
-
 REFRESH_TIMEOUT = 30
 
 # ---------- Auto-refresh au chargement (réveil Streamlit Community Cloud) -----
@@ -120,8 +116,11 @@ if "_auto_refreshed" not in st.session_state:
     with _status_box:
         _ph_stats = st.empty()
         _ph_pool = st.empty()
+        _ph_contracts = st.empty()
+        _ph_roster = st.empty()
         _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
         _ph_pool.write("🏒 **Pool ESPN** : récupération en cours…")
+        _ph_contracts.write("🔄 **Contrats** : récupération en cours…")
 
         def _task_stats():
             us.main()
@@ -129,11 +128,15 @@ if "_auto_refreshed" not in st.session_state:
         def _task_pool():
             er.update_owned()
 
+        def _task_contracts():
+            uc.update_contracts()
+
         _rf_res = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as _ex:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as _ex:
             _futures = {
                 _ex.submit(_task_stats): ("stats", _ph_stats, "📊 Stats NHL"),
                 _ex.submit(_task_pool): ("pool", _ph_pool, "🏒 Pool ESPN"),
+                _ex.submit(_task_contracts): ("contracts", _ph_contracts, "🔄 Contrats"),
             }
             _done, _not_done = concurrent.futures.wait(
                 list(_futures.keys()), timeout=REFRESH_TIMEOUT
@@ -155,6 +158,28 @@ if "_auto_refreshed" not in st.session_state:
                     "— données précédentes conservées"
                 )
                 _f.cancel()
+
+        # Statut retraités : appels API NHL bornés dans le temps, persistés sur
+        # disque (roster_status.json) et réutilisés < 24 h. Fait ici (hors du
+        # chemin de rendu) pour ne jamais bloquer l'affichage des tableaux.
+        _ph_roster.write("🚑 **Retraités** : vérification (API NHL)…")
+        try:
+            _sj = load_json(STATS_FILE, {}) or {}
+            _cj = load_json(CONTRACTS_FILE, {"contracts": {}})
+            _contract_ids = set(_cj.get("contracts", {}))
+            # Candidats = joueurs des stats sans contrat courant, avec un temps de
+            # jeu significatif l'an dernier (un retraité notable avait des matchs).
+            # Seuil GP plus bas pour les gardiens (ils jouent moitié moins de matchs).
+            # Réduit le nombre d'appels NHL et évite le throttling.
+            def _gp_min(_p):
+                return 10 if _p.get("type") == "goalie" else 20
+            _cands = {str(_p.get("playerId")) for _p in _sj.get("players", [])
+                      if str(_p.get("playerId")) not in _contract_ids
+                      and (_p.get("gp") or 0) >= _gp_min(_p)}
+            _rr = rs.refresh_retired(_cands)
+            _ph_roster.write(f"✅ **Retraités** : {len(_rr)} identifiés")
+        except Exception as _e:
+            _ph_roster.write(f"⚠️ **Retraités** : ignoré — {_e}")
 
         if all(v == "ok" for v in _rf_res.values()):
             _status_box.update(
@@ -200,6 +225,62 @@ espn_db = er.load_owned()
 owned = espn_db.get("owned", {})
 
 players = stats.get("players", [])
+
+
+# ----------------------------------------------------------------------
+# Statut roster : nouveaux (contrat courant sans stats) + retraités
+# (stats sans contrat courant & inactifs LNH). Voir roster_status.py.
+# ----------------------------------------------------------------------
+_stats_ids = {str(p.get("playerId")) for p in players}
+# Nouveaux = contrat courant sans stats l'an dernier ET contrat de type ELC
+# (Entry Level Contract). Les vétérans blessés sans stats ont un contrat STD :
+# ils ne peuvent pas être ELC, donc ils sont exclus (ni verts, ni injectés).
+NEW_IDS = {_pid for _pid in set(cache) - _stats_ids
+           if (cache[_pid].get("contract_level") or "").upper() == "ELC"}
+for _pid in NEW_IDS:
+    players.append(rs.make_new_player_row(_pid, cache[_pid]))
+
+# Retraités : l'auto-détection NHL (isActive) ne fait que SUGGÉRER des suspects
+# (lecture instantanée du cache disque). L'utilisateur confirme/écarte via
+# l'onglet Retraités (retired_manual.json).
+# Ids valides = joueurs des stats courantes OU sous contrat courant. Écarte les
+# suspects « orphelins » d'un ancien cache (id absent des données actuelles).
+_VALID_IDS = _stats_ids | set(cache)
+_SUSPECTED = rs.load_retired() & _VALID_IDS   # suggestions auto (isActive=False)
+_MANUAL = rs.load_manual()              # {id: 'retired'|'active'}
+CONFIRMED_RETIRED = {pid for pid, v in _MANUAL.items()
+                     if v == "retired" and pid in _VALID_IDS}
+_DISMISSED = {pid for pid, v in _MANUAL.items() if v == "active"}
+# Suspects à afficher (RET?) = suggérés, ni confirmés ni écartés.
+SUSPECTED_IDS = (_SUSPECTED - CONFIRMED_RETIRED) - _DISMISSED
+
+# Lookup des lignes joueur (augmentées) par id — sert à réinjecter les nouveaux
+# dans les tables scorées qui filtrent par GP.
+PLAYERS_BY_ID = {str(p.get("playerId")): p for p in players}
+
+
+def statut_for(player_id):
+    pid = str(player_id)
+    if pid in NEW_IDS:
+        return "NOUVEAU"
+    if pid in CONFIRMED_RETIRED:
+        return "RET"
+    if pid in SUSPECTED_IDS:
+        return "RET?"
+    return "actif"
+
+
+def is_new(player_id):
+    return str(player_id) in NEW_IDS
+
+
+def is_retired(player_id):
+    return str(player_id) in CONFIRMED_RETIRED
+
+
+def is_suspected(player_id):
+    return str(player_id) in SUSPECTED_IDS
+
 
 # Toasts de confirmation après l'auto-refresh
 if "_refresh_results" in st.session_state:
@@ -249,8 +330,12 @@ def build_df(player_type):
         base = {
             "_mine": is_mine,
             "_owned": pool_team is not None,
+            "_new": is_new(p.get("playerId")),
+            "_retired": is_retired(p.get("playerId")),
+            "_suspected": is_suspected(p.get("playerId")),
             "_pool_full": pool_team or "",
             "Nom": p["name"],
+            "Statut": statut_for(p.get("playerId")),
             "NHL Team": p.get("team"),
             "Pool Team": pool_abbr(pool_team) if pool_team else "—",
             "Pos": p.get("position"),
@@ -306,9 +391,9 @@ def run_full_update():
     except Exception as e:
         bar.empty()
         st.warning(
-            f"Mise à jour manuelle impossible sur cet environnement : `{e}`\n\n"
-            "Les contrats sont mis à jour **automatiquement chaque nuit** via GitHub Actions. "
-            "Recharge la page pour voir les données les plus récentes."
+            f"Impossible de récupérer les contrats depuis PuckPedia : `{e}`\n\n"
+            "Les données de contrats en cache sont conservées "
+            f"(dernière mise à jour {fmt_age(contracts_db.get('updated_at'))})."
         )
 
 
@@ -350,17 +435,14 @@ hc1.caption(
 if _contracts_age_h is not None and _contracts_age_h > 25:
     st.warning(
         f"⚠️ Les données de contrats ont **{int(_contracts_age_h)} h** — "
-        "elles sont normalement mises à jour chaque nuit via GitHub Actions. "
-        "Si le problème persiste, vérifier le workflow CI/CD dans GitHub.",
+        "la récupération automatique depuis PuckPedia à l'ouverture a probablement échoué. "
+        "Utilise le bouton 🔄 Contrats pour réessayer.",
         icon="🔔",
     )
 if hc2.button("📊 Stats", width="stretch", help="Mettre à jour les stats NHL"):
     run_stats_update()
-if IS_CLOUD:
-    hc3.button("🔄 Contrats", width="stretch", disabled=True,
-               help="Mis à jour automatiquement chaque nuit (GitHub Actions)")
-elif hc3.button("🔄 Contrats", type="primary", width="stretch",
-                help="Update All contracts (PuckPedia)"):
+if hc3.button("🔄 Contrats", type="primary", width="stretch",
+              help="Update All contracts (PuckPedia)"):
     run_full_update()
 if hc4.button("🏒 Pool", width="stretch", help="Update pool (ESPN)"):
     run_pool_update()
@@ -388,7 +470,18 @@ def pool_cap_summary():
 # ----------------------------------------------------------------------
 # Coloration
 # ----------------------------------------------------------------------
+COLOR_RETIRED = "rgba(200, 0, 0, 0.35)"    # ligne rouge : retraité confirmé
+COLOR_NEW_TEXT = "#159e46"                  # texte vert : nouveau joueur
+COLOR_SUSPECT_TEXT = "#d98000"             # texte orange : suspect retraité (RET?)
+
+
 def row_style(row):
+    if row.get("_retired"):
+        return [f"background-color: {COLOR_RETIRED}" for _ in row]
+    if row.get("_new"):
+        return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
+    if row.get("_suspected"):
+        return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
     if row.get("_mine"):
         color = COLOR_MINE
     elif row.get("_owned"):
@@ -416,8 +509,8 @@ def status_match(row, status):
 def apply_filters(df, key_prefix, player_type):
     """Affiche la barre de filtres (repliable) et retourne le DataFrame filtré."""
     with st.expander("🔧 Filtres", expanded=False):
-        # Ligne 1 : recherche + NHL Team + Pool Team + Statut
-        r1 = st.columns([2, 1, 1, 1])
+        # Ligne 1 : recherche + NHL Team + Pool Team
+        r1 = st.columns([2, 1, 1])
         search = r1[0].text_input("🔎 Nom", key=f"{key_prefix}_search",
                                   placeholder="ex. McDavid")
         nhl_teams = ["Toutes"] + sorted(t for t in df["NHL Team"].dropna().unique())
@@ -425,8 +518,11 @@ def apply_filters(df, key_prefix, player_type):
         pool_opts = ["Toutes"] + sorted(POOL_ABBR.get(p, p)
                                         for p in {v for v in df["_pool_full"] if v})
         pool_sel = r1[2].selectbox("Pool Team", pool_opts, key=f"{key_prefix}_pool")
-        status = r1[3].selectbox("Statut", ["Tous", "Libres", "Possédés", "Mon équipe"],
-                                 key=f"{key_prefix}_status")
+        # Filtre possession en boutons (renommé « Possession » pour éviter la
+        # confusion avec la colonne « Statut » = statut roster du joueur).
+        status = st.segmented_control(
+            "Possession", ["Tous", "Libres", "Possédés", "Mon équipe"],
+            default="Tous", key=f"{key_prefix}_status") or "Tous"
 
         # Ligne 2 : Position (multi, patineurs) + Âge + GP min + Cap min-max
         cmax_m = (int(df["Cap Hit"].max()) // 1_000_000) if not df["Cap Hit"].dropna().empty else 0
@@ -480,7 +576,7 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
     if sort_col in view.columns:
         view = view.sort_values(sort_col, ascending=False)
 
-    style_cols = display_cols + ["_mine", "_owned"]
+    style_cols = display_cols + ["_mine", "_owned", "_new", "_retired", "_suspected"]
 
     def _int(v):
         return f"{int(v)}" if pd.notna(v) else "—"
@@ -498,12 +594,17 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
         styled, hide_index=True, width="stretch",
         height=1090,
         column_order=display_cols,
-        column_config={"_mine": None, "_owned": None},
+        column_config={"_mine": None, "_owned": None, "_new": None,
+                       "_retired": None, "_suspected": None},
     )
     n_mine = int(view["_mine"].sum())
     n_owned = int(view["_owned"].sum())
+    n_ret = int(view["_retired"].sum())
+    n_new = int(view["_new"].sum())
+    n_susp = int(view["_suspected"].sum())
     st.caption(f"{len(view)} joueurs — {n_mine} dans mon équipe, "
-               f"{n_owned} possédés au total")
+               f"{n_owned} possédés · {n_new} nouveaux, {n_ret} retraités, "
+               f"{n_susp} suspects (RET?)")
 
 
 # ----------------------------------------------------------------------
@@ -529,9 +630,13 @@ def render_fa_tab():
         row = {
             "_owned": pool_team is not None,
             "_mine": is_mine,
+            "_new": is_new(p.get("playerId")),
+            "_retired": is_retired(p.get("playerId")),
+            "_suspected": is_suspected(p.get("playerId")),
             "_expiry_year": expiry_year,
             "_type": p.get("type", ""),
             "Nom": p["name"],
+            "Statut": statut_for(p.get("playerId")),
             "NHL Team": p.get("team", ""),
             "Pool Team": pool_abbr(pool_team) if pool_team else "—",
             "Pos": p.get("position", ""),
@@ -570,13 +675,16 @@ def render_fa_tab():
             st.info("Aucun joueur avec ces critères.")
             return
         ok_disp = [c for c in display_cols if c in df_show.columns]
-        ok_style = ok_disp + [c for c in ("_mine", "_owned") if c in df_show.columns]
+        ok_style = ok_disp + [c for c in ("_mine", "_owned", "_new",
+                                          "_retired", "_suspected")
+                              if c in df_show.columns]
         styled = (df_show[ok_style].style
                   .apply(row_style, axis=1)
                   .format(_fmt_fa, na_rep="—"))
         st.dataframe(styled, hide_index=True, width="stretch", height=height,
                      column_order=ok_disp,
-                     column_config={"_mine": None, "_owned": None})
+                     column_config={"_mine": None, "_owned": None, "_new": None,
+                                    "_retired": None, "_suspected": None})
 
     # ------------------------------------------------------------------
     # Section 1 : Agents libres
@@ -619,15 +727,15 @@ def render_fa_tab():
     fa_df = fa_df.sort_values("Valeur", ascending=False, na_position="last")
 
     if fa_ptype == "Gardiens":
-        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        fa_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                    "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur",
                    "V", "Moy", "%Arr", "BL"]
     elif fa_ptype == "Patineurs":
-        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        fa_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                    "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur",
                    "G", "A", "Pts", "+/-", "PPP", "SOG"]
     else:
-        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        fa_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                    "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur"]
 
     _show(fa_df, fa_cols, height=min(700, max(150, 45 * len(fa_df) + 40)))
@@ -668,15 +776,15 @@ def render_fa_tab():
     pro_df = pro_df.sort_values("Valeur", ascending=False, na_position="last")
 
     if pro_ptype == "Gardiens":
-        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        pro_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                     "Cap Hit", "FA", "Expiry", "Tier", "Valeur",
                     "V", "Moy", "%Arr", "BL"]
     elif pro_ptype == "Patineurs":
-        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        pro_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                     "Cap Hit", "FA", "Expiry", "Tier", "Valeur",
                     "G", "A", "Pts", "+/-", "PPP", "SOG"]
     else:
-        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        pro_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                     "Cap Hit", "FA", "Expiry", "Tier", "Valeur"]
 
     _show(pro_df, pro_cols, height=min(700, max(150, 45 * len(pro_df) + 40)))
@@ -689,14 +797,14 @@ def render_fa_tab():
 # ----------------------------------------------------------------------
 # Onglets
 # ----------------------------------------------------------------------
-tab_s, tab_g, tab_d, tab_c, tab_fa, tab_aide = st.tabs(
+tab_s, tab_g, tab_d, tab_c, tab_fa, tab_ret, tab_aide = st.tabs(
     ["⚡ Patineurs", "🥅 Gardiens", "🎯 Équipe & Repêchage", "🥊 Confrontations",
-     "🔍 Agents libres & Prospects", "📐 Comment ça marche ?"])
+     "🔍 Agents libres & Prospects", "🚑 Retraités", "📐 Comment ça marche ?"])
 
 with tab_s:
     render_tab(
         "skater", "sk", "Pts",
-        ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
          "Cap Hit", "Signing", "Expiry", "Clauses",
          "G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"],
     )
@@ -704,7 +812,7 @@ with tab_s:
 with tab_g:
     render_tab(
         "goalie", "go", "V",
-        ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
          "Cap Hit", "Signing", "Expiry", "Clauses",
          "V", "D", "DPr", "Moy", "%Arr", "BL"],
     )
@@ -907,6 +1015,7 @@ def render_draft_tab():
                         "Gardé": plan.get(pid) == "mine",
                         "Tier": info.get("tier", "—"),
                         "Nom": p.get("name"),
+                        "Statut": statut_for(pid),
                         "Pool Team": pool_abbr(
                             pool_for(p.get("name"))[0]) if pool_for(p.get("name"))[0] else "—",
                         "Pos": p.get("position"),
@@ -975,8 +1084,8 @@ def render_draft_tab():
                                 changed = True
                 return changed
 
-            order_cols = ["On ice", "Gardé", "Tier", "Nom", "Pool Team", "Pos",
-                          "Âge", "Cap Hit", "GP", "Valeur", "Valeur/$M"]
+            order_cols = ["On ice", "Gardé", "Tier", "Nom", "Statut", "Pool Team",
+                          "Pos", "Âge", "Cap Hit", "GP", "Valeur", "Valeur/$M"]
 
             sk_df = build_editable("skater", sk_stats)
             if not sk_df.empty:
@@ -986,8 +1095,8 @@ def render_draft_tab():
                     height=table_height(len(sk_df)),
                     column_order=order_cols + [c[0] for c in sk_stats],
                     column_config=col_cfg([c[0] for c in sk_stats]),
-                    disabled=["Tier", "Nom", "Pool Team", "Pos", "Âge", "Cap Hit",
-                              "GP", "Valeur", "Valeur/$M"] + [c[0] for c in sk_stats],
+                    disabled=["Tier", "Nom", "Statut", "Pool Team", "Pos", "Âge",
+                              "Cap Hit", "GP", "Valeur", "Valeur/$M"] + [c[0] for c in sk_stats],
                     key="edit_sk",
                 )
                 if handle_edits(sk_df, ed, "patineurs"):
@@ -1001,8 +1110,8 @@ def render_draft_tab():
                     height=table_height(len(go_df)),
                     column_order=order_cols + [c[0] for c in go_stats],
                     column_config=col_cfg([c[0] for c in go_stats]),
-                    disabled=["Tier", "Nom", "Pool Team", "Pos", "Âge", "Cap Hit",
-                              "GP", "Valeur", "Valeur/$M"] + [c[0] for c in go_stats],
+                    disabled=["Tier", "Nom", "Statut", "Pool Team", "Pos", "Âge",
+                              "Cap Hit", "GP", "Valeur", "Valeur/$M"] + [c[0] for c in go_stats],
                     key="edit_go",
                 )
                 if handle_edits(go_df, ed, "gardiens"):
@@ -1035,7 +1144,24 @@ def render_draft_tab():
                             key="draft_sort")
         hide_taken = tc3.checkbox("Masquer les joueurs pris", value=False,
                                   key="draft_hide_taken")
-        scored = sk if ptype == "Patineurs" else go
+        scored = list(sk if ptype == "Patineurs" else go)
+
+        # Nouveaux joueurs (sans stats) : exclus du scoring par le filtre GP.
+        # On les réinjecte avec Valeur/Tier vides pour qu'ils apparaissent.
+        _want_type = "skater" if ptype == "Patineurs" else "goalie"
+        _scored_ids = {str(p["playerId"]) for p in scored}
+        for _nid in NEW_IDS:
+            if _nid in _scored_ids:
+                continue
+            _pr = PLAYERS_BY_ID.get(_nid)
+            if not _pr or _pr.get("type") != _want_type:
+                continue
+            _c = cache.get(_nid, {})
+            scored.append({**_pr,
+                           "cap_hit_value": _c.get("cap_hit_value", 0),
+                           "signing_status": _c.get("signing_status"),
+                           "value": None, "value_per_m": None,
+                           "youth_bonus": None, "tier": "—"})
 
         # Détermine qui est "pris" selon le mode :
         # - Repêchage : marquage manuel (mine / other / target)
@@ -1068,9 +1194,13 @@ def render_draft_tab():
             base = {
                 "_id": pid,
                 "_taken": is_taken,
+                "_new": is_new(pid),
+                "_retired": is_retired(pid),
+                "_suspected": is_suspected(pid),
                 "Tier": p.get("tier", "—"),
                 "Dispo": owner or "Libre",
                 "Nom": p.get("name"),
+                "Statut": statut_for(pid),
                 "Pool Team": pool_abbr(pool_team) if pool_team else "—",
                 "Pos": p.get("position"),
                 "Âge": int(p["age"]) if p.get("age") is not None else None,
@@ -1103,17 +1233,23 @@ def render_draft_tab():
         df = df.sort_values(sort_by, ascending=False).reset_index(drop=True)
 
         if ptype == "Patineurs":
-            disp_cols = ["Tier", "Dispo", "Nom", "Pool Team", "Pos", "Âge",
+            disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
                          "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
                          "Bonus jeun.", "G", "A", "Pts", "+/-", "PIM", "PPP",
                          "SOG", "HIT"]
         else:
-            disp_cols = ["Tier", "Dispo", "Nom", "Pool Team", "Pos", "Âge",
+            disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
                          "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
                          "Bonus jeun.", "V", "D", "DPr", "Moy", "%Arr", "BL"]
 
-        # Lignes grises pour les joueurs pris
+        # Coloration : retraité rouge, nouveau vert, suspect orange, sinon gris si pris.
         def grey_taken(row):
+            if row.get("_retired"):
+                return [f"background-color: {COLOR_RETIRED}" for _ in row]
+            if row.get("_new"):
+                return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
+            if row.get("_suspected"):
+                return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
             if row.get("_taken"):
                 return ["color: #999999" for _ in row]
             return ["" for _ in row]
@@ -1126,13 +1262,14 @@ def render_draft_tab():
         if "HIT" in disp_cols:
             fmt["HIT"] = _int2
 
-        styled_av = (df[disp_cols + ["_taken"]].style
+        styled_av = (df[disp_cols + ["_taken", "_new", "_retired", "_suspected"]].style
                      .apply(grey_taken, axis=1)
                      .format(fmt))
         st.dataframe(
             styled_av, hide_index=True, width="stretch",
             column_order=disp_cols, height=560,
-            column_config={"_taken": None},
+            column_config={"_taken": None, "_new": None,
+                           "_retired": None, "_suspected": None},
         )
         n_libre = int((~df["_taken"]).sum())
         st.caption(f"{len(df)} joueurs affichés — {n_libre} libres "
@@ -1379,6 +1516,95 @@ with tab_c:
 
 with tab_fa:
     render_fa_tab()
+
+
+# ----------------------------------------------------------------------
+# Onglet Retraités — suggestions auto + confirmation manuelle
+# ----------------------------------------------------------------------
+def render_retired_tab():
+    st.markdown("### 🚑 Statut retraité — suggestions & confirmation")
+    st.caption(
+        "L'app **suggère** des joueurs susceptibles d'être retraités (détection "
+        "auto via l'API NHL → statut « RET? » orange dans tous les tableaux). "
+        "Confirme ou écarte chacun ci-dessous : les **confirmés** passent en "
+        "**RET** (ligne rouge) partout ; les **écartés** redeviennent normaux."
+    )
+
+    manual = rs.load_manual()
+    by_id = {str(p.get("playerId")): p for p in players}
+    # Uniquement des joueurs réels (écarte les ids orphelins d'anciens caches).
+    ids = (set(_SUSPECTED) | set(manual)) & _VALID_IDS
+
+    DECISIONS = {"❔ À confirmer": None, "✅ Retraité": "retired",
+                 "❌ Actif (ignorer)": "active"}
+    REV = {None: "❔ À confirmer", "retired": "✅ Retraité",
+           "active": "❌ Actif (ignorer)"}
+
+    if not ids:
+        st.info("Aucun joueur suspecté pour le moment. "
+                "Utilise la recherche ci-dessous pour en ajouter un.")
+    else:
+        rows = []
+        for pid in ids:
+            p = by_id.get(pid, {})
+            c = cache.get(pid, {})
+            rows.append({
+                "_id": pid,
+                "Décision": REV.get(manual.get(pid)),
+                "Nom": p.get("name") or c.get("name") or pid,
+                "Pos": p.get("position") or c.get("pos") or "—",
+                "Équipe": p.get("team") or "—",
+                "Âge": int(p["age"]) if p.get("age") is not None else None,
+                "GP (an dernier)": p.get("gp"),
+            })
+        rdf = pd.DataFrame(rows).sort_values(["Décision", "Nom"]).reset_index(drop=True)
+        ed = st.data_editor(
+            rdf, hide_index=True, width="stretch",
+            height=min(700, 45 * len(rdf) + 60),
+            column_order=["Décision", "Nom", "Pos", "Équipe", "Âge", "GP (an dernier)"],
+            column_config={
+                "_id": None,
+                "Décision": st.column_config.SelectboxColumn(
+                    "Décision", options=list(DECISIONS.keys()), required=True,
+                    help="Confirme (Retraité), écarte (Actif) ou laisse à confirmer"),
+            },
+            disabled=["Nom", "Pos", "Équipe", "Âge", "GP (an dernier)"],
+            key="retired_editor",
+        )
+        changed = False
+        for i in range(len(ed)):
+            pid = rdf.iloc[i]["_id"]
+            new_dec = DECISIONS.get(ed.iloc[i]["Décision"])
+            if new_dec != manual.get(pid):
+                rs.set_manual(pid, new_dec)
+                changed = True
+        if changed:
+            st.rerun()
+
+        n_conf = sum(1 for v in manual.values() if v == "retired")
+        n_susp = len(set(_SUSPECTED) - set(manual))
+        st.caption(f"{n_conf} confirmés retraités · {n_susp} suspects à examiner")
+
+    st.divider()
+    st.markdown("**➕ Ajouter un joueur non suggéré** "
+                "(ex. un retraité manqué par la détection auto)")
+    all_opts = {f"{p.get('name')} ({p.get('position') or '?'})": str(p.get("playerId"))
+                for p in players if p.get("name")}
+    q = st.text_input("🔎 Rechercher un joueur", key="ret_add_search",
+                      placeholder="Tape un nom…")
+    opts = {k: v for k, v in all_opts.items() if q.lower() in k.lower()} if q else {}
+    if q and not opts:
+        st.info("Aucun joueur ne correspond.")
+    elif opts:
+        a1, a2 = st.columns([3, 1])
+        chosen = a1.selectbox("Joueur", list(opts.keys()), key="ret_add_sel")
+        if a2.button("Marquer retraité", width="stretch", key="ret_add_btn"):
+            rs.set_manual(opts[chosen], "retired")
+            st.rerun()
+
+
+with tab_ret:
+    render_retired_tab()
 
 
 # ----------------------------------------------------------------------

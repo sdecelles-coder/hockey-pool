@@ -7,6 +7,9 @@ Source unique : https://puckpedia.com/players/api
   -> normalisé par _as_list.
 - Jointure avec les stats NHL via nhl_id == playerId.
 
+Récupération via une simple requête HTTP `requests` (l'API répond en HTTP 200
+à un GET avec un User-Agent navigateur — plus besoin de Playwright/Chromium).
+
 Deux modes :
 - update_contracts()                 -> rafraîchit TOUS les contrats
 - update_contracts_for(player_ids)   -> ne met à jour QUE les joueurs ciblés
@@ -14,34 +17,45 @@ Deux modes :
 
 import json
 import math
-import shutil
 import time
 from datetime import datetime, timezone
 from urllib.parse import quote
 
-try:
-    from playwright.sync_api import sync_playwright
-    _PLAYWRIGHT_AVAILABLE = True
-except ImportError:
-    _PLAYWRIGHT_AVAILABLE = False
+import requests
 
 CONTRACTS_FILE = "nhl_contracts.json"
-PAGE_SIZE = 100
-DELAY_SEC = 1.0
-TIMEOUT = 30_000  # ms pour Playwright
+PAGE_SIZE = 100  # l'API PuckPedia plafonne à 100 joueurs par page
+DELAY_SEC = 0.3  # pause entre pages (rester bien sous le timeout d'ouverture de l'app)
+TIMEOUT = 30  # secondes pour requests
 API_BASE = "https://puckpedia.com/players/api?q="
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/131.0.0.0 Safari/537.36"
+    )
+}
+
+# PuckPedia encode chaque saison par un id entier :
+#   2025-2026 -> 162, 2026-2027 -> 163, 2030-2031 -> 167, ...
+#   soit id = (année de début de saison) - SEASON_ID_BASE.
+# La saison "contrat" NHL bascule le 1er juillet ; avant on code en dur "162"
+# (2025-2026), ce qui renvoyait les contrats d'une saison périmée (ex. l'ancien
+# ELC de Brandt Clarke au lieu de sa prolongation). On calcule donc la saison
+# courante à partir de la date.
+SEASON_ID_BASE = 1863  # 2025 - 162
 
 
-def _chromium_path():
-    """Retourne le chemin du binaire Chromium disponible sur le système, ou None."""
-    for name in ("chromium-browser", "chromium", "google-chrome-stable", "google-chrome"):
-        path = shutil.which(name)
-        if path:
-            return path
-    return None
+def current_season_id(today=None):
+    """Id PuckPedia de la saison de contrat courante (bascule le 1er juillet)."""
+    d = today or datetime.now(timezone.utc)
+    start_year = d.year if d.month >= 7 else d.year - 1
+    return start_year - SEASON_ID_BASE
 
 
-def build_url(role, page, size=PAGE_SIZE):
+def build_url(role, page, size=PAGE_SIZE, season=None):
+    if season is None:
+        season = current_season_id()
     q = {
         "player_active": ["1"],
         "player_role": role,
@@ -49,8 +63,8 @@ def build_url(role, page, size=PAGE_SIZE):
         "sortDirection": "DESC",
         "curPage": page,
         "pageSize": size,
-        "focus_season": "162",
-        "stat_season": "162",
+        "focus_season": str(season),
+        "stat_season": str(season),
     }
     return API_BASE + quote(json.dumps(q))
 
@@ -61,59 +75,42 @@ def _as_list(p):
     return p
 
 
+def _to_int(v):
+    """Convertit un cap_hit PuckPedia (entier ou décimal, ex. '11567857.14') en int."""
+    if not v:
+        return 0
+    try:
+        return int(round(float(v)))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _fetch(url):
+    """GET l'API PuckPedia et renvoie le JSON décodé."""
+    r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+    r.raise_for_status()
+    return r.json()
+
+
 def fetch_role(role, progress_cb=None, label=""):
-    """Récupère tous les joueurs d'un rôle via pagination (Playwright)."""
-    if not _PLAYWRIGHT_AVAILABLE:
-        raise RuntimeError(
-            "Playwright non installé. "
-            "Lance : pip install playwright && python -m playwright install chromium"
-        )
+    """Récupère tous les joueurs d'un rôle via pagination (requests)."""
     out = []
-    with sync_playwright() as pw:
-        sys_chrome = _chromium_path()
-        browser = pw.chromium.launch(
-            headless=True,
-            executable_path=sys_chrome,  # None = utilise le binaire Playwright
-        )
-        context = browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/131.0.0.0 Safari/537.36"
-            )
-        )
 
-        def fetch(url):
-            page = context.new_page()
-            try:
-                resp = page.goto(url, timeout=TIMEOUT)
-                if resp.status != 200:
-                    raise Exception(f"HTTP {resp.status}")
-                # La réponse JSON est dans une balise <pre>
-                try:
-                    text = page.inner_text("pre")
-                except Exception:
-                    text = page.evaluate("() => document.body.innerText")
-                return json.loads(text)
-            finally:
-                page.close()
+    data = _fetch(build_url(role, 1))["data"]
+    out.extend(_as_list(data["p"]))
+    total = data["meta"]["count"]
+    pages = math.ceil(total / PAGE_SIZE)
 
-        data = fetch(build_url(role, 1))["data"]
-        out.extend(_as_list(data["p"]))
-        total = data["meta"]["count"]
-        pages = math.ceil(total / PAGE_SIZE)
+    if progress_cb:
+        progress_cb(1, pages, f"{label} page 1/{pages}")
 
+    for p in range(2, pages + 1):
+        time.sleep(DELAY_SEC)
+        d = _fetch(build_url(role, p))["data"]
+        out.extend(_as_list(d["p"]))
         if progress_cb:
-            progress_cb(1, pages, f"{label} page 1/{pages}")
+            progress_cb(p, pages, f"{label} page {p}/{pages}")
 
-        for p in range(2, pages + 1):
-            time.sleep(DELAY_SEC)
-            d = fetch(build_url(role, p))["data"]
-            out.extend(_as_list(d["p"]))
-            if progress_cb:
-                progress_cb(p, pages, f"{label} page {p}/{pages}")
-
-        browser.close()
     return out, total
 
 
@@ -123,7 +120,7 @@ def parse_player(p):
         "name": f"{p.get('p_fn', '')} {p.get('p_ln', '')}".strip(),
         "pos": p.get("pos"),
         "age": p.get("age"),
-        "cap_hit_value": int(p["cap_hit"]) if p.get("cap_hit") else 0,
+        "cap_hit_value": _to_int(p.get("cap_hit")),
         "signing_status": p.get("sts_sign"),
         "expiry_status": p.get("sts_exp"),
         "expiry_year": p.get("exp"),
@@ -178,11 +175,6 @@ def _fetch_all_parsed(progress_cb=None):
 
 
 def update_contracts(progress_cb=None):
-    if not _PLAYWRIGHT_AVAILABLE:
-        raise RuntimeError(
-            "Playwright non installé sur cet environnement. "
-            "Les contrats sont mis à jour automatiquement chaque nuit via GitHub Actions."
-        )
     parsed_by_id, errors, no_id = _fetch_all_parsed(progress_cb)
     if not parsed_by_id:
         raise RuntimeError(f"Aucun contrat récupéré — fichier non modifié. Erreurs : {errors}")

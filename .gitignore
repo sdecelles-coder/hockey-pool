@@ -21,3 +21,8 @@ blob.json
 # Données personnelles (non versionnées)
 draft_plan.json
 lineup.json
+
+# Cache local du statut roster (retraités) — recalculé au besoin
+roster_status.json
+# Décisions manuelles de retraite (confirmé/écarté) — données personnelles
+retired_manual.json
