@@ -60,7 +60,14 @@ def fetch_all(endpoint: str, sort_prop: str) -> list:
         params = {
             "isAggregate": "false",
             "isGame": "false",
-            "sort": json.dumps([{"property": sort_prop, "direction": "DESC"}]),
+            # playerId (unique) en clé secondaire : rend l'ordre STABLE entre
+            # les pages. Sans ça, les joueurs à égalité sur `sort_prop` (ex.
+            # points) peuvent basculer d'une page à l'autre et être renvoyés
+            # deux fois (doublons) — ou sautés (oublis).
+            "sort": json.dumps([
+                {"property": sort_prop, "direction": "DESC"},
+                {"property": "playerId", "direction": "ASC"},
+            ]),
             "start": start,
             "limit": limit,
             "cayenneExp": f"seasonId={SEASON} and gameTypeId={GAME_TYPE}",
@@ -149,10 +156,24 @@ def main():
     goalies = collect_goalies()
     print(f"  gardiens : {len(goalies)}")
 
+    # Dédoublonnage défensif par playerId (ceinture + bretelles au cas où
+    # l'API renverrait tout de même un doublon), en conservant l'ordre.
+    players = []
+    seen = set()
+    for p in skaters + goalies:
+        pid = p.get("playerId")
+        if pid in seen:
+            continue
+        seen.add(pid)
+        players.append(p)
+    n_dupes = (len(skaters) + len(goalies)) - len(players)
+    if n_dupes:
+        print(f"  doublons ignorés : {n_dupes}")
+
     db = {
         "season": SEASON,
         "updated_at": datetime.now(timezone.utc).isoformat(),
-        "players": skaters + goalies,
+        "players": players,
     }
     with open(OUT_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=2)
