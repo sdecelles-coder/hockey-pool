@@ -29,6 +29,7 @@ import update_contracts as uc
 import espn_roster as er
 import draft_engine as de
 import update_stats as us
+import roster_status as rs
 
 STATS_FILE = "nhl_stats.json"
 CONTRACTS_FILE = "nhl_contracts.json"
@@ -202,6 +203,46 @@ owned = espn_db.get("owned", {})
 
 players = stats.get("players", [])
 
+
+# ----------------------------------------------------------------------
+# Statut roster : nouveaux (contrat courant sans stats) + retraités
+# (stats sans contrat courant & inactifs LNH). Voir roster_status.py.
+# ----------------------------------------------------------------------
+@st.cache_data(ttl=21600, show_spinner=False)
+def _retired_ids_cached(candidate_ids):
+    return rs.retired_ids(candidate_ids)
+
+
+_stats_ids = {str(p.get("playerId")) for p in players}
+NEW_IDS = set(cache) - _stats_ids
+for _pid in NEW_IDS:
+    players.append(rs.make_new_player_row(_pid, cache[_pid]))
+
+# Candidats retraités : dans les stats mais sans contrat courant.
+RETIRED_IDS = _retired_ids_cached(tuple(sorted(_stats_ids - set(cache))))
+
+# Lookup des lignes joueur (augmentées) par id — sert à réinjecter les nouveaux
+# dans les tables scorées qui filtrent par GP.
+PLAYERS_BY_ID = {str(p.get("playerId")): p for p in players}
+
+
+def statut_for(player_id):
+    pid = str(player_id)
+    if pid in NEW_IDS:
+        return "NOUVEAU"
+    if pid in RETIRED_IDS:
+        return "RET"
+    return "—"
+
+
+def is_new(player_id):
+    return str(player_id) in NEW_IDS
+
+
+def is_retired(player_id):
+    return str(player_id) in RETIRED_IDS
+
+
 # Toasts de confirmation après l'auto-refresh
 if "_refresh_results" in st.session_state:
     _res_toast = st.session_state.pop("_refresh_results")
@@ -250,8 +291,11 @@ def build_df(player_type):
         base = {
             "_mine": is_mine,
             "_owned": pool_team is not None,
+            "_new": is_new(p.get("playerId")),
+            "_retired": is_retired(p.get("playerId")),
             "_pool_full": pool_team or "",
             "Nom": p["name"],
+            "Statut": statut_for(p.get("playerId")),
             "NHL Team": p.get("team"),
             "Pool Team": pool_abbr(pool_team) if pool_team else "—",
             "Pos": p.get("position"),
@@ -386,7 +430,15 @@ def pool_cap_summary():
 # ----------------------------------------------------------------------
 # Coloration
 # ----------------------------------------------------------------------
+COLOR_RETIRED = "rgba(200, 0, 0, 0.35)"    # ligne rouge : retraité
+COLOR_NEW_TEXT = "#159e46"                  # texte vert : nouveau joueur
+
+
 def row_style(row):
+    if row.get("_retired"):
+        return [f"background-color: {COLOR_RETIRED}" for _ in row]
+    if row.get("_new"):
+        return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
     if row.get("_mine"):
         color = COLOR_MINE
     elif row.get("_owned"):
@@ -478,7 +530,7 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
     if sort_col in view.columns:
         view = view.sort_values(sort_col, ascending=False)
 
-    style_cols = display_cols + ["_mine", "_owned"]
+    style_cols = display_cols + ["_mine", "_owned", "_new", "_retired"]
 
     def _int(v):
         return f"{int(v)}" if pd.notna(v) else "—"
@@ -496,12 +548,15 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
         styled, hide_index=True, width="stretch",
         height=1090,
         column_order=display_cols,
-        column_config={"_mine": None, "_owned": None},
+        column_config={"_mine": None, "_owned": None,
+                       "_new": None, "_retired": None},
     )
     n_mine = int(view["_mine"].sum())
     n_owned = int(view["_owned"].sum())
+    n_ret = int(view["_retired"].sum())
+    n_new = int(view["_new"].sum())
     st.caption(f"{len(view)} joueurs — {n_mine} dans mon équipe, "
-               f"{n_owned} possédés au total")
+               f"{n_owned} possédés · {n_new} nouveaux, {n_ret} retraités")
 
 
 # ----------------------------------------------------------------------
@@ -527,9 +582,12 @@ def render_fa_tab():
         row = {
             "_owned": pool_team is not None,
             "_mine": is_mine,
+            "_new": is_new(p.get("playerId")),
+            "_retired": is_retired(p.get("playerId")),
             "_expiry_year": expiry_year,
             "_type": p.get("type", ""),
             "Nom": p["name"],
+            "Statut": statut_for(p.get("playerId")),
             "NHL Team": p.get("team", ""),
             "Pool Team": pool_abbr(pool_team) if pool_team else "—",
             "Pos": p.get("position", ""),
@@ -568,13 +626,15 @@ def render_fa_tab():
             st.info("Aucun joueur avec ces critères.")
             return
         ok_disp = [c for c in display_cols if c in df_show.columns]
-        ok_style = ok_disp + [c for c in ("_mine", "_owned") if c in df_show.columns]
+        ok_style = ok_disp + [c for c in ("_mine", "_owned", "_new", "_retired")
+                              if c in df_show.columns]
         styled = (df_show[ok_style].style
                   .apply(row_style, axis=1)
                   .format(_fmt_fa, na_rep="—"))
         st.dataframe(styled, hide_index=True, width="stretch", height=height,
                      column_order=ok_disp,
-                     column_config={"_mine": None, "_owned": None})
+                     column_config={"_mine": None, "_owned": None,
+                                    "_new": None, "_retired": None})
 
     # ------------------------------------------------------------------
     # Section 1 : Agents libres
@@ -617,15 +677,15 @@ def render_fa_tab():
     fa_df = fa_df.sort_values("Valeur", ascending=False, na_position="last")
 
     if fa_ptype == "Gardiens":
-        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        fa_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                    "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur",
                    "V", "Moy", "%Arr", "BL"]
     elif fa_ptype == "Patineurs":
-        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        fa_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                    "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur",
                    "G", "A", "Pts", "+/-", "PPP", "SOG"]
     else:
-        fa_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        fa_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                    "Cap Hit", "FA", "Expiry", "Clauses", "Tier", "Valeur"]
 
     _show(fa_df, fa_cols, height=min(700, max(150, 45 * len(fa_df) + 40)))
@@ -666,15 +726,15 @@ def render_fa_tab():
     pro_df = pro_df.sort_values("Valeur", ascending=False, na_position="last")
 
     if pro_ptype == "Gardiens":
-        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        pro_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                     "Cap Hit", "FA", "Expiry", "Tier", "Valeur",
                     "V", "Moy", "%Arr", "BL"]
     elif pro_ptype == "Patineurs":
-        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        pro_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                     "Cap Hit", "FA", "Expiry", "Tier", "Valeur",
                     "G", "A", "Pts", "+/-", "PPP", "SOG"]
     else:
-        pro_cols = ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        pro_cols = ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
                     "Cap Hit", "FA", "Expiry", "Tier", "Valeur"]
 
     _show(pro_df, pro_cols, height=min(700, max(150, 45 * len(pro_df) + 40)))
@@ -694,7 +754,7 @@ tab_s, tab_g, tab_d, tab_c, tab_fa, tab_aide = st.tabs(
 with tab_s:
     render_tab(
         "skater", "sk", "Pts",
-        ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
          "Cap Hit", "Signing", "Expiry", "Clauses",
          "G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"],
     )
@@ -702,7 +762,7 @@ with tab_s:
 with tab_g:
     render_tab(
         "goalie", "go", "V",
-        ["Nom", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
+        ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
          "Cap Hit", "Signing", "Expiry", "Clauses",
          "V", "D", "DPr", "Moy", "%Arr", "BL"],
     )
@@ -905,6 +965,7 @@ def render_draft_tab():
                         "Gardé": plan.get(pid) == "mine",
                         "Tier": info.get("tier", "—"),
                         "Nom": p.get("name"),
+                        "Statut": statut_for(pid),
                         "Pool Team": pool_abbr(
                             pool_for(p.get("name"))[0]) if pool_for(p.get("name"))[0] else "—",
                         "Pos": p.get("position"),
@@ -973,8 +1034,8 @@ def render_draft_tab():
                                 changed = True
                 return changed
 
-            order_cols = ["On ice", "Gardé", "Tier", "Nom", "Pool Team", "Pos",
-                          "Âge", "Cap Hit", "GP", "Valeur", "Valeur/$M"]
+            order_cols = ["On ice", "Gardé", "Tier", "Nom", "Statut", "Pool Team",
+                          "Pos", "Âge", "Cap Hit", "GP", "Valeur", "Valeur/$M"]
 
             sk_df = build_editable("skater", sk_stats)
             if not sk_df.empty:
@@ -984,8 +1045,8 @@ def render_draft_tab():
                     height=table_height(len(sk_df)),
                     column_order=order_cols + [c[0] for c in sk_stats],
                     column_config=col_cfg([c[0] for c in sk_stats]),
-                    disabled=["Tier", "Nom", "Pool Team", "Pos", "Âge", "Cap Hit",
-                              "GP", "Valeur", "Valeur/$M"] + [c[0] for c in sk_stats],
+                    disabled=["Tier", "Nom", "Statut", "Pool Team", "Pos", "Âge",
+                              "Cap Hit", "GP", "Valeur", "Valeur/$M"] + [c[0] for c in sk_stats],
                     key="edit_sk",
                 )
                 if handle_edits(sk_df, ed, "patineurs"):
@@ -999,8 +1060,8 @@ def render_draft_tab():
                     height=table_height(len(go_df)),
                     column_order=order_cols + [c[0] for c in go_stats],
                     column_config=col_cfg([c[0] for c in go_stats]),
-                    disabled=["Tier", "Nom", "Pool Team", "Pos", "Âge", "Cap Hit",
-                              "GP", "Valeur", "Valeur/$M"] + [c[0] for c in go_stats],
+                    disabled=["Tier", "Nom", "Statut", "Pool Team", "Pos", "Âge",
+                              "Cap Hit", "GP", "Valeur", "Valeur/$M"] + [c[0] for c in go_stats],
                     key="edit_go",
                 )
                 if handle_edits(go_df, ed, "gardiens"):
@@ -1033,7 +1094,24 @@ def render_draft_tab():
                             key="draft_sort")
         hide_taken = tc3.checkbox("Masquer les joueurs pris", value=False,
                                   key="draft_hide_taken")
-        scored = sk if ptype == "Patineurs" else go
+        scored = list(sk if ptype == "Patineurs" else go)
+
+        # Nouveaux joueurs (sans stats) : exclus du scoring par le filtre GP.
+        # On les réinjecte avec Valeur/Tier vides pour qu'ils apparaissent.
+        _want_type = "skater" if ptype == "Patineurs" else "goalie"
+        _scored_ids = {str(p["playerId"]) for p in scored}
+        for _nid in NEW_IDS:
+            if _nid in _scored_ids:
+                continue
+            _pr = PLAYERS_BY_ID.get(_nid)
+            if not _pr or _pr.get("type") != _want_type:
+                continue
+            _c = cache.get(_nid, {})
+            scored.append({**_pr,
+                           "cap_hit_value": _c.get("cap_hit_value", 0),
+                           "signing_status": _c.get("signing_status"),
+                           "value": None, "value_per_m": None,
+                           "youth_bonus": None, "tier": "—"})
 
         # Détermine qui est "pris" selon le mode :
         # - Repêchage : marquage manuel (mine / other / target)
@@ -1066,9 +1144,12 @@ def render_draft_tab():
             base = {
                 "_id": pid,
                 "_taken": is_taken,
+                "_new": is_new(pid),
+                "_retired": is_retired(pid),
                 "Tier": p.get("tier", "—"),
                 "Dispo": owner or "Libre",
                 "Nom": p.get("name"),
+                "Statut": statut_for(pid),
                 "Pool Team": pool_abbr(pool_team) if pool_team else "—",
                 "Pos": p.get("position"),
                 "Âge": int(p["age"]) if p.get("age") is not None else None,
@@ -1101,17 +1182,21 @@ def render_draft_tab():
         df = df.sort_values(sort_by, ascending=False).reset_index(drop=True)
 
         if ptype == "Patineurs":
-            disp_cols = ["Tier", "Dispo", "Nom", "Pool Team", "Pos", "Âge",
+            disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
                          "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
                          "Bonus jeun.", "G", "A", "Pts", "+/-", "PIM", "PPP",
                          "SOG", "HIT"]
         else:
-            disp_cols = ["Tier", "Dispo", "Nom", "Pool Team", "Pos", "Âge",
+            disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
                          "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
                          "Bonus jeun.", "V", "D", "DPr", "Moy", "%Arr", "BL"]
 
-        # Lignes grises pour les joueurs pris
+        # Coloration : retraité rouge, nouveau vert, sinon gris si déjà pris.
         def grey_taken(row):
+            if row.get("_retired"):
+                return [f"background-color: {COLOR_RETIRED}" for _ in row]
+            if row.get("_new"):
+                return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
             if row.get("_taken"):
                 return ["color: #999999" for _ in row]
             return ["" for _ in row]
@@ -1124,13 +1209,13 @@ def render_draft_tab():
         if "HIT" in disp_cols:
             fmt["HIT"] = _int2
 
-        styled_av = (df[disp_cols + ["_taken"]].style
+        styled_av = (df[disp_cols + ["_taken", "_new", "_retired"]].style
                      .apply(grey_taken, axis=1)
                      .format(fmt))
         st.dataframe(
             styled_av, hide_index=True, width="stretch",
             column_order=disp_cols, height=560,
-            column_config={"_taken": None},
+            column_config={"_taken": None, "_new": None, "_retired": None},
         )
         n_libre = int((~df["_taken"]).sum())
         st.caption(f"{len(df)} joueurs affichés — {n_libre} libres "
