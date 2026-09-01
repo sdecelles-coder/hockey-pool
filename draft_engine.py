@@ -14,6 +14,7 @@ import json
 from statistics import mean, pstdev
 
 PLAN_FILE = "draft_plan.json"
+SETTINGS_FILE = "draft_settings.json"
 
 # Poids par défaut (ajustables ensuite via l'app)
 DEFAULT_WEIGHTS_SKATER = {
@@ -71,21 +72,27 @@ def _zscores(values, higher_is_better=True, floor_zero=True):
 
 
 def compute_scores(players, player_type, weights=None, min_gp=1,
-                   youth_weight=0.0, ref_age=27):
+                   youth_weight=0.0, ref_age=27, weights_d=None):
     """Calcule Valeur et Valeur/$ pour chaque joueur d'un type.
 
     players : liste de dicts (depuis nhl_stats.json), filtrés sur player_type.
     Retourne une liste de dicts enrichis avec 'value' et 'value_per_m',
     en réutilisant le cap_hit fourni dans le champ 'cap_hit_value'.
+
+    Pour les patineurs, `weights` s'applique aux attaquants (C/L/R) et
+    `weights_d`, s'il est fourni, aux défenseurs. Les z-scores restent
+    normalisés sur l'ensemble des patineurs ; seule la pondération diffère.
     """
     if player_type == "skater":
         cats = list(DEFAULT_WEIGHTS_SKATER.keys())
         direction = SKATER_DIRECTION
         w = {**DEFAULT_WEIGHTS_SKATER, **(weights or {})}
+        w_d = {**DEFAULT_WEIGHTS_SKATER, **(weights_d or {})} if weights_d else None
     else:
         cats = list(DEFAULT_WEIGHTS_GOALIE.keys())
         direction = GOALIE_DIRECTION
         w = {**DEFAULT_WEIGHTS_GOALIE, **(weights or {})}
+        w_d = None
 
     # On ne score que les joueurs ayant assez de matchs (sinon stats trompeuses)
     pool = [p for p in players if (p.get("gp") or 0) >= min_gp]
@@ -117,7 +124,8 @@ def compute_scores(players, player_type, weights=None, min_gp=1,
     # => un joueur plus jeune que ref_age gagne un bonus proportionnel.
     results = []
     for i, p in enumerate(pool):
-        base_value = sum(w[cat] * z_by_cat[cat][i] for cat in cats)
+        wp = w_d if (w_d is not None and _position_group(p) == "D") else w
+        base_value = sum(wp[cat] * z_by_cat[cat][i] for cat in cats)
         age = p.get("age")
         youth_bonus = 0.0
         if youth_weight and age is not None:
@@ -209,6 +217,23 @@ def load_plan():
 def save_plan(plan):
     with open(PLAN_FILE, "w", encoding="utf-8") as f:
         json.dump(plan, f, ensure_ascii=False, indent=2)
+
+
+# ----------------------------------------------------------------------
+# Persistance des réglages (poids, cap, seuil GP)
+# ----------------------------------------------------------------------
+def load_settings():
+    """Retourne le dict des réglages sauvegardés (ou {} si absent)."""
+    try:
+        with open(SETTINGS_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def save_settings(settings):
+    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+        json.dump(settings, f, ensure_ascii=False, indent=2)
 
 
 def set_status(player_id, status):

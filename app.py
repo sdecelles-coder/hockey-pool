@@ -933,38 +933,67 @@ def status_label(s):
 def render_draft_tab():
     plan = de.load_plan()   # {player_id: 'mine'/'other'/'target'}
 
-    # --- Réglages (poids + cap + GP) ---
+    # --- Réglages (poids + cap + GP) — persistés dans draft_settings.json ---
+    cfg = de.load_settings()
+
+    def _c(section, key, default):
+        """Valeur sauvegardée pour un poids (section 'skater'/'def'/'goalie')."""
+        return cfg.get(section, {}).get(key, default)
+
     with st.expander("⚙️ Réglages (poids, cap, seuil GP)", expanded=False):
-        cap_limit = st.number_input("Cap salarial ($)", value=DEFAULT_CAP,
+        cap_limit = st.number_input("Cap salarial ($)",
+                                    value=int(cfg.get("cap_limit", DEFAULT_CAP)),
                                     step=1_000_000, format="%d")
-        min_gp = st.slider("GP minimum z-score", 1, 60, 20)
+        min_gp = st.slider("GP minimum z-score", 1, 60,
+                           int(cfg.get("min_gp", 20)))
         cj = st.columns(2)
         youth_w = cj[0].number_input("Poids jeunesse (bonus/an sous l'âge réf.)",
-                                     0.0, 2.0, 0.15, 0.05)
-        ref_age = cj[1].number_input("Âge de référence", 20, 35, 27, 1)
-        st.markdown("**Poids patineurs**")
+                                     0.0, 2.0, float(cfg.get("youth_w", 0.15)), 0.05)
+        ref_age = cj[1].number_input("Âge de référence", 20, 35,
+                                     int(cfg.get("ref_age", 27)), 1)
+        st.markdown("**Poids attaquants**")
         w1 = st.columns(7)
         ws = {
-            "ppp": w1[0].number_input("PPP", 0.0, 5.0, 2.0, 0.05),
-            "plus_minus": w1[1].number_input("+/-", 0.0, 5.0, 1.5, 0.05),
-            "hits": w1[2].number_input("HIT", 0.0, 5.0, 1.25, 0.05),
-            "goals": w1[3].number_input("G", 0.0, 5.0, 1.0, 0.05),
-            "assists": w1[4].number_input("A", 0.0, 5.0, 1.0, 0.05),
-            "pim": w1[5].number_input("PIM", 0.0, 5.0, 1.0, 0.05),
-            "sog": w1[6].number_input("SOG", 0.0, 5.0, 1.0, 0.05),
+            "ppp": w1[0].number_input("PPP", 0.0, 5.0, _c("skater", "ppp", 2.0), 0.05),
+            "plus_minus": w1[1].number_input("+/-", 0.0, 5.0, _c("skater", "plus_minus", 1.5), 0.05),
+            "hits": w1[2].number_input("HIT", 0.0, 5.0, _c("skater", "hits", 1.25), 0.05),
+            "goals": w1[3].number_input("G", 0.0, 5.0, _c("skater", "goals", 1.0), 0.05),
+            "assists": w1[4].number_input("A", 0.0, 5.0, _c("skater", "assists", 1.0), 0.05),
+            "pim": w1[5].number_input("PIM", 0.0, 5.0, _c("skater", "pim", 1.0), 0.05),
+            "sog": w1[6].number_input("SOG", 0.0, 5.0, _c("skater", "sog", 1.0), 0.05),
+        }
+        st.markdown("**Poids défenseurs**")
+        wd_cols = st.columns(7)
+        ws_d = {
+            "ppp": wd_cols[0].number_input("PPP", 0.0, 5.0, _c("def", "ppp", 2.0), 0.05, key="wd_ppp"),
+            "plus_minus": wd_cols[1].number_input("+/-", 0.0, 5.0, _c("def", "plus_minus", 1.5), 0.05, key="wd_pm"),
+            "hits": wd_cols[2].number_input("HIT", 0.0, 5.0, _c("def", "hits", 1.25), 0.05, key="wd_hits"),
+            "goals": wd_cols[3].number_input("G", 0.0, 5.0, _c("def", "goals", 1.0), 0.05, key="wd_goals"),
+            "assists": wd_cols[4].number_input("A", 0.0, 5.0, _c("def", "assists", 1.0), 0.05, key="wd_assists"),
+            "pim": wd_cols[5].number_input("PIM", 0.0, 5.0, _c("def", "pim", 1.0), 0.05, key="wd_pim"),
+            "sog": wd_cols[6].number_input("SOG", 0.0, 5.0, _c("def", "sog", 1.0), 0.05, key="wd_sog"),
         }
         st.markdown("**Poids gardiens**")
         w2 = st.columns(4)
         wg = {
-            "shutouts": w2[0].number_input("SO", 0.0, 5.0, 2.0, 0.05),
-            "wins": w2[1].number_input("W", 0.0, 5.0, 1.0, 0.05),
-            "gaa": w2[2].number_input("GAA", 0.0, 5.0, 1.0, 0.05),
-            "sv_pct": w2[3].number_input("SV%", 0.0, 5.0, 1.0, 0.05),
+            "shutouts": w2[0].number_input("SO", 0.0, 5.0, _c("goalie", "shutouts", 2.0), 0.05),
+            "wins": w2[1].number_input("W", 0.0, 5.0, _c("goalie", "wins", 1.0), 0.05),
+            "gaa": w2[2].number_input("GAA", 0.0, 5.0, _c("goalie", "gaa", 1.0), 0.05),
+            "sv_pct": w2[3].number_input("SV%", 0.0, 5.0, _c("goalie", "sv_pct", 1.0), 0.05),
         }
+
+    # Sauvegarde des réglages si un changement a eu lieu (persistance entre sessions)
+    new_cfg = {
+        "cap_limit": int(cap_limit), "min_gp": int(min_gp),
+        "youth_w": float(youth_w), "ref_age": int(ref_age),
+        "skater": ws, "def": ws_d, "goalie": wg,
+    }
+    if new_cfg != cfg:
+        de.save_settings(new_cfg)
 
     # --- Calcul des scores ---
     sk = de.compute_scores(players_with_cap("skater"), "skater", ws, min_gp,
-                           youth_weight=youth_w, ref_age=ref_age)
+                           youth_weight=youth_w, ref_age=ref_age, weights_d=ws_d)
     go = de.compute_scores(players_with_cap("goalie"), "goalie", wg, min_gp,
                            youth_weight=youth_w, ref_age=ref_age)
     de.assign_tiers(sk)

@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-08-31T20:27:37.468983+00:00",
+  "updated_at": "2026-09-01T12:04:34.873742+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -48,7 +48,7 @@
       "team": "COL",
       "teams_all": "COL",
       "position": "C",
-      "age": 30,
+      "age": 31,
       "gp": 80,
       "goals": 53,
       "assists": 74,
@@ -2062,7 +2062,7 @@
       "team": "MIN",
       "teams_all": "MIN",
       "position": "R",
-      "age": 38,
+      "age": 39,
       "gp": 59,
       "goals": 15,
       "assists": 39,
@@ -10080,7 +10080,7 @@
       "team": "WPG",
       "teams_all": "WPG",
       "position": "R",
-      "age": 36,
+      "age": 37,
       "gp": 51,
       "goals": 1,
       "assists": 11,
@@ -13082,7 +13082,7 @@
       "team": "FLA",
       "teams_all": "FLA",
       "position": "L",
-      "age": 33,
+      "age": 34,
       "gp": 21,
       "goals": 2,
       "assists": 2,
