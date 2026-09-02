@@ -10,13 +10,16 @@ from datetime import datetime, timezone, date
 import requests
 import urllib3
 import config
+import seasons
 
 VERIFY_SSL = config.get("VERIFY_SSL", "true").lower() == "true"
 
 if not VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-SEASON = "20252026"
+# La saison n'est plus figée dans le code : elle est lue dans le manifeste
+# `seasons.json` (source de vérité, modifiée par season_admin.py `open`).
+SEASON = seasons.current_season()
 GAME_TYPE = 2  # 2 = saison régulière
 OUT_FILE = "nhl_stats.json"
 TIMEOUT = 30

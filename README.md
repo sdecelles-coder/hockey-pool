@@ -35,9 +35,13 @@ Les jointures se font par `playerId` (NHL ↔ contrats) et par nom normalisé
 - `update_contracts.py` — contrats PuckPedia → `nhl_contracts.json`
 - `espn_roster.py` — rosters ESPN → `espn_owned.json`
 - `draft_engine.py` — moteur de scoring et persistance du repêchage
+- `seasons.py` — manifeste des saisons + résolution des chemins stats/contrats
+- `season_admin.py` — bascules manuelles de saison (`close` / `open`)
 
 **Données et choix (versionnés pour usage multi-ordi) :**
-- `nhl_stats.json`, `nhl_contracts.json`, `espn_owned.json` — données
+- `nhl_stats.json`, `nhl_contracts.json`, `espn_owned.json` — données (saison courante / live)
+- `seasons.json` — manifeste : saison courante, phase, saisons archivées
+- `archive/<saison>/{stats,contracts}.json` — saisons terminées, **figées**
 - `draft_plan.json` — statuts des joueurs (protégé / cible / autre DG)
 - `lineup.json` — alignement on ice / bench
 - `.env` — identifiants ESPN (⚠️ voir avertissement sécurité)
@@ -95,6 +99,44 @@ Sans `.env`, l'app fonctionne quand même, mais les fonctions liées au pool
 - **Stats NHL** : `python update_stats.py` (ou via une tâche planifiée quotidienne).
 - **Contrats** : bouton **🔄 Contrats** dans l'app.
 - **Rosters du pool** : bouton **🏒 Pool** dans l'app.
+
+## Saisons (archives + sélecteur)
+
+L'app peut afficher les stats de **plusieurs saisons**. Un menu déroulant **Saison**
+(en haut de la barre latérale) choisit la saison consultée ; par défaut, la plus récente.
+
+**Comment ça marche :**
+
+- Les fichiers racine (`nhl_stats.json` / `nhl_contracts.json`) contiennent toujours le
+  **live** (mis à jour quotidiennement).
+- Une saison **terminée** est **figée** dans `archive/<saison>/{stats,contracts}.json` et
+  n'est plus jamais rafraîchie.
+- Le fichier `seasons.json` mémorise la saison courante, la phase et la liste des archives.
+
+**Deux phases :**
+
+- **`active`** — la saison est en cours : stats + contrats live.
+- **`offseason`** — la saison est terminée : la vue par défaut est une **tampon** pour le
+  repêchage de la prochaine saison = **stats finales de la dernière saison + contrats live**
+  (les contrats continuent d'être mis à jour chaque jour pendant l'entre-saison).
+
+**Les 2 bascules manuelles (~2× par an)** — via `season_admin.py` :
+
+```bash
+python season_admin.py status          # voir l'état courant
+python season_admin.py close           # FIN de saison : fige stats + contrats, passe en tampon
+python season_admin.py open 20262027   # DÉBUT nouvelle saison : active la nouvelle saison
+```
+
+Après un `close` ou un `open`, committer les changements :
+
+```bash
+git add seasons.json archive/ nhl_stats.json && git commit -m "chore: bascule saison"
+```
+
+> ⚠️ Limite : PuckPedia ne fournit que les contrats **courants**. Le gel des contrats d'une
+> saison terminée capture donc leur valeur **au moment du `close`** ; il faut lancer `close`
+> à la fin de la saison pour des valeurs justes. Les **stats**, elles, sont toujours exactes.
 
 ## Utilisation sur plusieurs ordinateurs
 
