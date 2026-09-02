@@ -31,6 +31,7 @@ import espn_roster as er
 import draft_engine as de
 import update_stats as us
 import roster_status as rs
+import seasons as seasons_mod
 
 STATS_FILE = "nhl_stats.json"
 CONTRACTS_FILE = "nhl_contracts.json"
@@ -213,28 +214,52 @@ if "_auto_refreshed" not in st.session_state:
     st.session_state["_refresh_results"] = _rf_res
     st.rerun()
 
-stats = load_json(STATS_FILE, None)
+# ----------------------------------------------------------------------
+# Sélecteur de saison : choisit d'où charger stats + contrats.
+#   - saison en cours / tampon -> fichiers racine (live, MàJ quotidienne)
+#   - saison archivée          -> archive/<saison>/{stats,contracts}.json (figés)
+# Par défaut : la plus récente (1re option). Voir seasons.py / season_admin.py.
+# ----------------------------------------------------------------------
+_season_opts = seasons_mod.list_selectable()
+with st.sidebar:
+    _sel_label = st.selectbox(
+        "Saison", [o["label"] for o in _season_opts], index=0, key="season_select"
+    )
+_sel = next(o for o in _season_opts if o["label"] == _sel_label)
+STATS_PATH = str(_sel["stats_path"])
+CONTRACTS_PATH = str(_sel["contracts_path"])
+_SEL_IS_LIVE = _sel["kind"] in ("active", "buffer")
 
-# Génération automatique des stats si le fichier est absent (ex. après un clone
-# où nhl_stats.json n'aurait pas été versionné). Évite l'erreur bloquante.
+stats = load_json(STATS_PATH, None)
+
+# Génération automatique des stats si le fichier est absent.
 if stats is None:
-    st.warning(f"`{STATS_FILE}` introuvable — génération automatique des stats "
-               "NHL en cours (10–20 secondes)…")
-    try:
-        import update_stats
-        with st.spinner("Récupération des stats depuis l'API NHL…"):
-            update_stats.main()
-        st.success("Stats générées. Rechargement…")
-        st.rerun()
-    except Exception as e:
+    if _SEL_IS_LIVE:
+        # Cas live (ex. après un clone où nhl_stats.json n'aurait pas été versionné).
+        st.warning(f"`{STATS_PATH}` introuvable — génération automatique des stats "
+                   "NHL en cours (10–20 secondes)…")
+        try:
+            import update_stats
+            with st.spinner("Récupération des stats depuis l'API NHL…"):
+                update_stats.main()
+            st.success("Stats générées. Rechargement…")
+            st.rerun()
+        except Exception as e:
+            st.error(
+                f"Échec de la génération automatique : {e}\n\n"
+                f"Lance manuellement `python update_stats.py` dans un terminal, "
+                "puis recharge la page."
+            )
+            st.stop()
+    else:
+        # Saison archivée manquante : rien à régénérer (archive figée).
         st.error(
-            f"Échec de la génération automatique : {e}\n\n"
-            f"Lance manuellement `python update_stats.py` dans un terminal, "
-            "puis recharge la page."
+            f"Archive de la saison **{_sel_label}** introuvable (`{STATS_PATH}`).\n\n"
+            "Choisis une autre saison dans le menu de gauche."
         )
         st.stop()
 
-contracts_db = load_json(CONTRACTS_FILE, {"contracts": {}})
+contracts_db = load_json(CONTRACTS_PATH, {"contracts": {}})
 cache = contracts_db.get("contracts", {})
 
 espn_db = er.load_owned()

@@ -15,6 +15,14 @@ import json
 from datetime import datetime, timezone
 
 import requests
+import urllib3
+import config
+
+# Vérification SSL (désactivable via .env pour les réseaux d'entreprise qui
+# inspectent le HTTPS avec un certificat racine maison).
+VERIFY_SSL = config.get("VERIFY_SSL", "true").lower() == "true"
+if not VERIFY_SSL:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 NHL_LANDING = "https://api-web.nhle.com/v1/player/{}/landing"
 TIMEOUT = 8            # s par appel NHL (évite les traînards)
@@ -31,7 +39,8 @@ HEADERS = {
 def is_active_nhl(nhl_id):
     """True/False selon l'API NHL, None si l'appel échoue (indéterminé)."""
     try:
-        r = requests.get(NHL_LANDING.format(nhl_id), headers=HEADERS, timeout=TIMEOUT)
+        r = requests.get(NHL_LANDING.format(nhl_id), headers=HEADERS, timeout=TIMEOUT,
+                         verify=VERIFY_SSL)
         r.raise_for_status()
         return bool(r.json().get("isActive"))
     except Exception:

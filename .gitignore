@@ -1,6 +1,9 @@
 # Secrets locaux Streamlit (ne jamais committer)
 .streamlit/secrets.toml
 
+# Config locale (secrets ESPN + VERIFY_SSL propre à la machine) — voir .env.example
+.env
+
 # Python
 __pycache__/
 *.py[cod]

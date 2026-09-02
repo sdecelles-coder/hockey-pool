@@ -22,6 +22,14 @@ from datetime import datetime, timezone
 from urllib.parse import quote
 
 import requests
+import urllib3
+import config
+
+# Vérification SSL (désactivable via .env pour les réseaux d'entreprise qui
+# inspectent le HTTPS avec un certificat racine maison).
+VERIFY_SSL = config.get("VERIFY_SSL", "true").lower() == "true"
+if not VERIFY_SSL:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 CONTRACTS_FILE = "nhl_contracts.json"
 PAGE_SIZE = 100  # l'API PuckPedia plafonne à 100 joueurs par page
@@ -87,7 +95,7 @@ def _to_int(v):
 
 def _fetch(url):
     """GET l'API PuckPedia et renvoie le JSON décodé."""
-    r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+    r = requests.get(url, headers=HEADERS, timeout=TIMEOUT, verify=VERIFY_SSL)
     r.raise_for_status()
     return r.json()
 
