@@ -1191,9 +1191,24 @@ def render_draft_tab():
     starters = sum(min(counts[g], SLOTS[g]) for g in SLOTS)
     bench = max(0, total_sel - starters)
 
+    # Moy du budget restant par joueur qu'il reste à ajouter (repêchage).
+    # Dénominateur = slots vides = total roster (13) − (protégés + ajoutés).
+    # Le Restant est utilisé tel quel (protégés + ajoutés ; les cibles ne
+    # comptent pas dans le cap).
+    slots_to_fill = sum(SLOTS.values()) - (len(mine_ids) + len(added_ids))
+    avg_per_slot = remaining / slots_to_fill if slots_to_fill > 0 else None
+
     # Ligne unique compacte : protégés/cibles/cap + slots
     over = " ⚠️" if len(mine_ids) > MAX_PROTECTED else ""
     cap_color = "red" if remaining < 0 else "gray"
+    avg_html = ""
+    if draft_mode:
+        if avg_per_slot is not None:
+            avg_html = (f" · <b>Moy/joueur restant:</b> "
+                        f"${avg_per_slot:,.0f} <span style='color:gray'>"
+                        f"({slots_to_fill} slot{'s' if slots_to_fill > 1 else ''})</span>")
+        else:
+            avg_html = " · <b>Moy/joueur restant:</b> — <span style='color:gray'>(0 slot)</span>"
     st.markdown(
         f"<div style='font-size:0.9rem;line-height:1.6'>"
         f"<b>Protégés:</b> {len(mine_ids)}/{MAX_PROTECTED}{over} · "
@@ -1205,6 +1220,7 @@ def render_draft_tab():
         f"<b>Banc:</b> {bench}  &nbsp;|&nbsp;  "
         f"<b>Cap:</b> ${cap_total:,.0f} / ${cap_limit:,.0f} · "
         f"<span style='color:{cap_color}'><b>Restant:</b> ${remaining:,.0f}</span>"
+        f"{avg_html}"
         f"</div>",
         unsafe_allow_html=True,
     )
