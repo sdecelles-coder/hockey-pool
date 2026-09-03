@@ -1639,6 +1639,16 @@ def render_status_tab():
     if ps.is_official():
         st.success("🌐 Mode **officiel** : tes changements sont persistés "
                    "(commit vers GitHub) et survivent aux redémarrages.")
+    elif ps.is_cloud():
+        # Sur le Cloud SANS token : la persistance ne marche pas et les modifs
+        # seraient perdues au prochain redémarrage. On le signale clairement.
+        st.error(
+            "⚠️ **Persistance désactivée** — tu es sur le web mais le secret "
+            "`GITHUB_TOKEN` est absent. Tes changements seront **perdus** au "
+            "prochain redémarrage. Ajoute `GITHUB_TOKEN` dans "
+            "**Settings → Secrets** de l'app Streamlit Cloud pour activer le "
+            "mode officiel."
+        )
     else:
         st.info("🧪 Mode **test local** : tes changements vont dans "
                 "`player_status.local.json` (gitignoré) et ne touchent pas la "

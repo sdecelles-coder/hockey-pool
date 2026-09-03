@@ -29,6 +29,7 @@ commitée. En ligne on lit toujours la référence.
 
 import base64
 import json
+import os
 from datetime import datetime, timezone
 
 import requests
@@ -39,20 +40,34 @@ LOCAL_FILE = "player_status.local.json"   # override local gitignoré (tests)
 
 VALID_STATUSES = ("retired", "rookie")
 
+# Repo/branche par défaut : évite d'avoir à configurer 3 secrets. Sur le Cloud,
+# il suffit d'ajouter GITHUB_TOKEN ; repo et branche sont déjà connus (mais
+# restent surchargeables via secrets si le repo est renommé/forké).
+DEFAULT_REPO = "sdecelles-coder/hockey-pool"
+DEFAULT_BRANCH = "main"
+
 
 # ----------------------------------------------------------------------
 # Détection du contexte : officiel (token) vs test (local)
 # ----------------------------------------------------------------------
 def _github_conf():
-    """(token, repo, branch) si configuré pour le commit-retour, sinon (None, ...)."""
+    """(token, repo, branch) pour le commit-retour. token=None si non configuré."""
     token = config.get("GITHUB_TOKEN")
-    repo = config.get("GITHUB_REPO")          # "owner/name"
-    branch = config.get("GITHUB_BRANCH", "main")
+    repo = config.get("GITHUB_REPO", DEFAULT_REPO)      # "owner/name"
+    branch = config.get("GITHUB_BRANCH", DEFAULT_BRANCH)
     return token, repo, branch
 
 
+def is_cloud():
+    """True si on tourne sur Streamlit Community Cloud (heuristique HOME)."""
+    return os.environ.get("HOME", "") == "/home/appuser"
+
+
 def is_official():
-    """True si on tourne comme app officielle (token GitHub présent)."""
+    """True si le commit-retour est possible (token GitHub présent).
+
+    Repo/branche ont des valeurs par défaut : seul le token est requis.
+    """
     token, repo, _ = _github_conf()
     return bool(token and repo)
 
