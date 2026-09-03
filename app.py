@@ -105,6 +105,24 @@ def fmt_age(iso):
         return iso
 
 
+def _updated_today(path):
+    """True si le JSON `path` a un updated_at tombant aujourd'hui (heure locale).
+
+    Sert à sauter le refresh Stats/Contrats quand les données du matin sont déjà
+    en place. Fichier absent, sans updated_at ou illisible -> False (on rafraîchit,
+    comportement sûr).
+    """
+    data = load_json(path, {}) or {}
+    iso = data.get("updated_at")
+    if not iso:
+        return False
+    try:
+        dt = datetime.fromisoformat(iso).astimezone()  # UTC -> tz locale
+    except ValueError:
+        return False
+    return dt.date() == datetime.now().astimezone().date()
+
+
 def norm_name(name):
     if not name:
         return ""
@@ -128,12 +146,24 @@ if "_auto_refreshed" not in st.session_state:
         _ph_pool = st.empty()
         _ph_contracts = st.empty()
         _ph_roster = st.empty()
-        _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
+        # Stats & Contrats sont dispo chaque matin : on ne les re-télécharge pas
+        # si leur JSON est déjà daté d'aujourd'hui (heure locale). Le Pool ESPN,
+        # lui, est toujours rafraîchi à chaque ouverture. Les boutons manuels
+        # (📊/🔄) forcent toujours la MàJ (ils n'utilisent pas ce test).
+        _stats_fresh = _updated_today(STATS_FILE)
+        _contracts_fresh = _updated_today(CONTRACTS_FILE)
+
+        if _stats_fresh:
+            _ph_stats.write("✅ **Stats NHL** : déjà à jour (aujourd'hui)")
+        else:
+            _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
         _ph_pool.write("🏒 **Pool ESPN** : récupération en cours…")
         # Sur Cloud, PuckPedia renvoie 403 : on ne tente pas le fetch en direct
         # (les contrats sont rafraîchis chaque nuit via GitHub Actions).
         if IS_CLOUD:
             _ph_contracts.write("🌙 **Contrats** : mis à jour chaque nuit (GitHub Actions)")
+        elif _contracts_fresh:
+            _ph_contracts.write("✅ **Contrats** : déjà à jour (aujourd'hui)")
         else:
             _ph_contracts.write("🔄 **Contrats** : récupération en cours…")
 
@@ -149,10 +179,12 @@ if "_auto_refreshed" not in st.session_state:
         _rf_res = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as _ex:
             _futures = {
-                _ex.submit(_task_stats): ("stats", _ph_stats, "📊 Stats NHL"),
                 _ex.submit(_task_pool): ("pool", _ph_pool, "🏒 Pool ESPN"),
             }
-            if not IS_CLOUD:
+            if not _stats_fresh:
+                _futures[_ex.submit(_task_stats)] = (
+                    "stats", _ph_stats, "📊 Stats NHL")
+            if not IS_CLOUD and not _contracts_fresh:
                 _futures[_ex.submit(_task_contracts)] = (
                     "contracts", _ph_contracts, "🔄 Contrats")
             _done, _not_done = concurrent.futures.wait(
