@@ -712,11 +712,61 @@ def apply_sort(view, key_prefix, display_cols, default_col):
 
 def render_tab(player_type, key_prefix, sort_col, display_cols):
     df = build_df(player_type)
-    # Valeur / Valeur/$M (z-scores composites) mappées par playerId
-    scored = de.compute_scores(players_with_cap(player_type), player_type, min_gp=1)
-    val_by_id = {str(p["playerId"]): p for p in scored}
-    df["Valeur"] = df["_pid"].map(lambda i: val_by_id.get(i, {}).get("value"))
-    df["Valeur/$M"] = df["_pid"].map(lambda i: val_by_id.get(i, {}).get("value_per_m"))
+
+    # Valeur / Valeur/$M / Tier / Bonus jeunesse : z-scores composites pilotés
+    # par les réglages sauvegardés du Pool STM (draft_settings.json).
+    cfg = de.load_settings()
+    min_gp = int(cfg.get("min_gp", 20))
+    youth_w = float(cfg.get("youth_w", 0.15))
+    ref_age = int(cfg.get("ref_age", 27))
+    if player_type == "skater":
+        scored = de.compute_scores(players_with_cap("skater"), "skater",
+                                   cfg.get("skater"), min_gp,
+                                   youth_weight=youth_w, ref_age=ref_age,
+                                   weights_d=cfg.get("def"))
+    else:
+        scored = de.compute_scores(players_with_cap("goalie"), "goalie",
+                                   cfg.get("goalie"), min_gp,
+                                   youth_weight=youth_w, ref_age=ref_age)
+    de.assign_tiers(scored)
+    sc_by_id = {str(p["playerId"]): p for p in scored}
+    df["Valeur"] = df["_pid"].map(lambda i: sc_by_id.get(i, {}).get("value"))
+    df["Valeur/$M"] = df["_pid"].map(lambda i: sc_by_id.get(i, {}).get("value_per_m"))
+    df["Tier"] = df["_pid"].map(lambda i: sc_by_id.get(i, {}).get("tier", "—"))
+    df["Bonus jeun."] = df["_pid"].map(lambda i: sc_by_id.get(i, {}).get("youth_bonus"))
+
+    # Dispo + possession. En mode repêchage, on tient compte du marquage manuel
+    # (plan) de l'onglet Pool STM ; en mode saison, de la possession ESPN.
+    plan = de.load_plan()
+    draft_mode = str(st.session_state.get("team_mode", "📅 Saison")).startswith("🏒")
+
+    def _dispo_owner(row):
+        """Retourne (Dispo, _mine, _owned)."""
+        if draft_mode:
+            s = plan.get(row["_pid"])
+            if s == "mine":
+                return "Moi", True, True
+            if s == "other":
+                return "Autre DG", False, True
+            if s == "added":
+                return "➕ Ajouté", False, True
+            if s == "target":
+                return "🎯 Cible", False, False
+            return "Libre", False, False
+        # Mode saison : possession ESPN (déjà dans _mine / _owned)
+        if row["_mine"]:
+            return "Moi", True, True
+        if row["_owned"]:
+            return (row["Pool Team"] if row["Pool Team"] != "—" else "Possédé"), False, True
+        return "Libre", False, False
+
+    if df.empty:
+        df["Dispo"] = pd.Series(dtype="object")
+    else:
+        _info = df.apply(_dispo_owner, axis=1, result_type="expand")
+        df["Dispo"] = _info[0]
+        df["_mine"] = _info[1]
+        df["_owned"] = _info[2]
 
     view = apply_filters(df, key_prefix, player_type)
     view = apply_sort(view, key_prefix, display_cols, sort_col)
@@ -735,7 +785,7 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
     for col in ("G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"):
         if col in display_cols:
             fmt[col] = _int
-    for col in ("Valeur", "Valeur/$M"):
+    for col in ("Valeur", "Valeur/$M", "Bonus jeun."):
         if col in display_cols:
             fmt[col] = _float2
     styled = (view[style_cols].style
@@ -955,22 +1005,24 @@ def render_fa_tab():
 # Onglets
 # ----------------------------------------------------------------------
 tab_s, tab_g, tab_d, tab_c, tab_fa, tab_ret, tab_aide = st.tabs(
-    ["⚡ Patineurs", "🥅 Gardiens", "🎯 Équipe & Repêchage", "🥊 Confrontations",
+    ["⚡ Patineurs", "🥅 Gardiens", "🎯 Pool STM", "🥊 Confrontations",
      "🔍 Agents libres & Prospects", "🚑 Retraités", "📐 Comment ça marche ?"])
 
 with tab_s:
     render_tab(
         "skater", "sk", "Pts",
-        ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
-         "Cap Hit", "Valeur", "Valeur/$M", "Signing", "Expiry", "Clauses",
+        ["Nom", "Statut", "Dispo", "Tier", "NHL Team", "Pool Team", "Pos", "Âge",
+         "GP", "Cap Hit", "Valeur", "Valeur/$M", "Bonus jeun.", "Signing",
+         "Expiry", "Clauses",
          "G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"],
     )
 
 with tab_g:
     render_tab(
         "goalie", "go", "V",
-        ["Nom", "Statut", "NHL Team", "Pool Team", "Pos", "Âge", "GP",
-         "Cap Hit", "Valeur", "Valeur/$M", "Signing", "Expiry", "Clauses",
+        ["Nom", "Statut", "Dispo", "Tier", "NHL Team", "Pool Team", "Pos", "Âge",
+         "GP", "Cap Hit", "Valeur", "Valeur/$M", "Bonus jeun.", "Signing",
+         "Expiry", "Clauses",
          "V", "D", "DPr", "Moy", "%Arr", "BL"],
     )
 
@@ -990,54 +1042,38 @@ def status_label(s):
 def render_draft_tab():
     plan = de.load_plan()   # {player_id: 'mine'/'other'/'target'}
 
-    # --- Réglages (poids + cap + GP) — persistés dans draft_settings.json ---
+    # --- Réglages (poids, cap, seuil GP) : valeurs effectives ---
+    # Les widgets sont rendus en bas de l'onglet (_render_settings_expander).
+    # Ici on lit les valeurs courantes depuis st.session_state, initialisées
+    # depuis draft_settings.json, afin qu'elles soient disponibles pour le
+    # calcul des scores plus bas.
     cfg = de.load_settings()
+    _W_DEFAULTS = {
+        "skater": {"ppp": 2.0, "plus_minus": 1.5, "hits": 1.25, "goals": 1.0,
+                   "assists": 1.0, "pim": 1.0, "sog": 1.0},
+        "def": {"ppp": 2.0, "plus_minus": 1.5, "hits": 1.25, "goals": 1.0,
+                "assists": 1.0, "pim": 1.0, "sog": 1.0},
+        "goalie": {"shutouts": 2.0, "wins": 1.0, "gaa": 1.0, "sv_pct": 1.0},
+    }
+    st.session_state.setdefault("stm_cap_limit", int(cfg.get("cap_limit", DEFAULT_CAP)))
+    st.session_state.setdefault("stm_min_gp", int(cfg.get("min_gp", 20)))
+    st.session_state.setdefault("stm_youth_w", float(cfg.get("youth_w", 0.15)))
+    st.session_state.setdefault("stm_ref_age", int(cfg.get("ref_age", 27)))
+    for _section, _wd in _W_DEFAULTS.items():
+        for _cat, _dv in _wd.items():
+            st.session_state.setdefault(
+                f"stm_w_{_section}_{_cat}",
+                float(cfg.get(_section, {}).get(_cat, _dv)))
 
-    def _c(section, key, default):
-        """Valeur sauvegardée pour un poids (section 'skater'/'def'/'goalie')."""
-        return cfg.get(section, {}).get(key, default)
+    def _wdict(section):
+        return {cat: st.session_state[f"stm_w_{section}_{cat}"]
+                for cat in _W_DEFAULTS[section]}
 
-    with st.expander("⚙️ Réglages (poids, cap, seuil GP)", expanded=False):
-        cap_limit = st.number_input("Cap salarial ($)",
-                                    value=int(cfg.get("cap_limit", DEFAULT_CAP)),
-                                    step=1_000_000, format="%d")
-        min_gp = st.slider("GP minimum z-score", 1, 60,
-                           int(cfg.get("min_gp", 20)))
-        cj = st.columns(2)
-        youth_w = cj[0].number_input("Poids jeunesse (bonus/an sous l'âge réf.)",
-                                     0.0, 2.0, float(cfg.get("youth_w", 0.15)), 0.05)
-        ref_age = cj[1].number_input("Âge de référence", 20, 35,
-                                     int(cfg.get("ref_age", 27)), 1)
-        st.markdown("**Poids attaquants**")
-        w1 = st.columns(7)
-        ws = {
-            "ppp": w1[0].number_input("PPP", 0.0, 5.0, _c("skater", "ppp", 2.0), 0.05),
-            "plus_minus": w1[1].number_input("+/-", 0.0, 5.0, _c("skater", "plus_minus", 1.5), 0.05),
-            "hits": w1[2].number_input("HIT", 0.0, 5.0, _c("skater", "hits", 1.25), 0.05),
-            "goals": w1[3].number_input("G", 0.0, 5.0, _c("skater", "goals", 1.0), 0.05),
-            "assists": w1[4].number_input("A", 0.0, 5.0, _c("skater", "assists", 1.0), 0.05),
-            "pim": w1[5].number_input("PIM", 0.0, 5.0, _c("skater", "pim", 1.0), 0.05),
-            "sog": w1[6].number_input("SOG", 0.0, 5.0, _c("skater", "sog", 1.0), 0.05),
-        }
-        st.markdown("**Poids défenseurs**")
-        wd_cols = st.columns(7)
-        ws_d = {
-            "ppp": wd_cols[0].number_input("PPP", 0.0, 5.0, _c("def", "ppp", 2.0), 0.05, key="wd_ppp"),
-            "plus_minus": wd_cols[1].number_input("+/-", 0.0, 5.0, _c("def", "plus_minus", 1.5), 0.05, key="wd_pm"),
-            "hits": wd_cols[2].number_input("HIT", 0.0, 5.0, _c("def", "hits", 1.25), 0.05, key="wd_hits"),
-            "goals": wd_cols[3].number_input("G", 0.0, 5.0, _c("def", "goals", 1.0), 0.05, key="wd_goals"),
-            "assists": wd_cols[4].number_input("A", 0.0, 5.0, _c("def", "assists", 1.0), 0.05, key="wd_assists"),
-            "pim": wd_cols[5].number_input("PIM", 0.0, 5.0, _c("def", "pim", 1.0), 0.05, key="wd_pim"),
-            "sog": wd_cols[6].number_input("SOG", 0.0, 5.0, _c("def", "sog", 1.0), 0.05, key="wd_sog"),
-        }
-        st.markdown("**Poids gardiens**")
-        w2 = st.columns(4)
-        wg = {
-            "shutouts": w2[0].number_input("SO", 0.0, 5.0, _c("goalie", "shutouts", 2.0), 0.05),
-            "wins": w2[1].number_input("W", 0.0, 5.0, _c("goalie", "wins", 1.0), 0.05),
-            "gaa": w2[2].number_input("GAA", 0.0, 5.0, _c("goalie", "gaa", 1.0), 0.05),
-            "sv_pct": w2[3].number_input("SV%", 0.0, 5.0, _c("goalie", "sv_pct", 1.0), 0.05),
-        }
+    cap_limit = st.session_state["stm_cap_limit"]
+    min_gp = st.session_state["stm_min_gp"]
+    youth_w = st.session_state["stm_youth_w"]
+    ref_age = st.session_state["stm_ref_age"]
+    ws, ws_d, wg = _wdict("skater"), _wdict("def"), _wdict("goalie")
 
     # Sauvegarde des réglages si un changement a eu lieu (persistance entre sessions)
     new_cfg = {
@@ -1047,6 +1083,36 @@ def render_draft_tab():
     }
     if new_cfg != cfg:
         de.save_settings(new_cfg)
+
+    _SK_LABELS = [("ppp", "PPP"), ("plus_minus", "+/-"), ("hits", "HIT"),
+                  ("goals", "G"), ("assists", "A"), ("pim", "PIM"), ("sog", "SOG")]
+    _GO_LABELS = [("shutouts", "SO"), ("wins", "W"), ("gaa", "GAA"), ("sv_pct", "SV%")]
+
+    def _render_settings_expander():
+        with st.expander("⚙️ Réglages (poids, cap, seuil GP)", expanded=False):
+            st.number_input("Cap salarial ($)", step=1_000_000, format="%d",
+                            key="stm_cap_limit")
+            st.slider("GP minimum z-score", 1, 60, key="stm_min_gp")
+            cj = st.columns(2)
+            cj[0].number_input("Poids jeunesse (bonus/an sous l'âge réf.)",
+                               0.0, 2.0, step=0.05, key="stm_youth_w")
+            cj[1].number_input("Âge de référence", 20, 35, step=1, key="stm_ref_age")
+            st.markdown("**Poids attaquants**")
+            w1 = st.columns(len(_SK_LABELS))
+            for _i, (_cat, _lbl) in enumerate(_SK_LABELS):
+                w1[_i].number_input(_lbl, 0.0, 5.0, step=0.05,
+                                    key=f"stm_w_skater_{_cat}")
+            st.markdown("**Poids défenseurs**")
+            wd_cols = st.columns(len(_SK_LABELS))
+            for _i, (_cat, _lbl) in enumerate(_SK_LABELS):
+                wd_cols[_i].number_input(_lbl, 0.0, 5.0, step=0.05,
+                                         key=f"stm_w_def_{_cat}")
+            st.markdown("**Poids gardiens**")
+            w2 = st.columns(len(_GO_LABELS))
+            for _i, (_cat, _lbl) in enumerate(_GO_LABELS):
+                w2[_i].number_input(_lbl, 0.0, 5.0, step=0.05,
+                                    key=f"stm_w_goalie_{_cat}")
+
 
     # --- Calcul des scores ---
     sk = de.compute_scores(players_with_cap("skater"), "skater", ws, min_gp,
@@ -1070,6 +1136,58 @@ def render_draft_tab():
     remaining = cap_limit - cap_total
 
     MAX_PROTECTED = 8
+
+    # --- Assigner un statut ---
+    st.markdown("**Assigner un statut à un joueur**")
+    search_assign = st.text_input(
+        "🔎 Rechercher un joueur", key="draft_assign_search",
+        placeholder="Tape un nom pour filtrer la liste…")
+
+    # Liste des joueurs assignables, indépendante du tableau ci-dessous :
+    # tous les joueurs scorés + les nouveaux joueurs sans stats.
+    assignable = list(by_id.values())
+    _seen_assign = {str(p["playerId"]) for p in assignable}
+    for _nid in NEW_IDS:
+        if _nid in _seen_assign:
+            continue
+        _pr = PLAYERS_BY_ID.get(_nid)
+        if _pr:
+            assignable.append(_pr)
+    all_names = {f"{p.get('name')} ({p.get('position')})": str(p["playerId"])
+                 for p in sorted(assignable, key=lambda x: (x.get("name") or ""))}
+    if search_assign:
+        names = {k: v for k, v in all_names.items()
+                 if search_assign.lower() in k.lower()}
+    else:
+        names = all_names
+
+    if not names:
+        st.info("Aucun joueur ne correspond à la recherche.")
+    else:
+        a1, a2, a3 = st.columns([3, 2, 1])
+        chosen = a1.selectbox("Joueur", list(names.keys()),
+                              key="draft_assign_player")
+        new_status = a2.selectbox(
+            "Statut",
+            ["★ Protégé (moi)", "➕ Ajouté", "🔒 Protégé (autre DG)",
+             "🎯 Cible", "— (retirer)"],
+            key="draft_assign_status")
+        status_map = {"★ Protégé (moi)": "mine", "➕ Ajouté": "added",
+                      "🔒 Protégé (autre DG)": "other",
+                      "🎯 Cible": "target", "— (retirer)": None}
+        if a3.button("Appliquer", width="stretch", key="draft_apply"):
+            target_pid = names[chosen]
+            target_status = status_map[new_status]
+            if (target_status == "mine"
+                    and plan.get(target_pid) != "mine"
+                    and len(mine_ids) >= MAX_PROTECTED):
+                st.error(f"⚠️ Maximum {MAX_PROTECTED} protégés atteint. "
+                         "Retire un protégé avant d'en ajouter un autre.")
+            else:
+                de.set_status(target_pid, target_status)
+                st.rerun()
+
+    st.divider()
 
     # --- Sélecteur de mode ---
     hdr = st.columns([2, 3])
@@ -1304,215 +1422,6 @@ def render_draft_tab():
 
     st.divider()
 
-    # --- Assigner un statut ---
-    st.markdown("**Assigner un statut à un joueur**")
-    search_assign = st.text_input(
-        "🔎 Rechercher un joueur", key="draft_assign_search",
-        placeholder="Tape un nom pour filtrer la liste…")
-
-    # Liste des joueurs assignables, indépendante du tableau ci-dessous :
-    # tous les joueurs scorés + les nouveaux joueurs sans stats.
-    assignable = list(by_id.values())
-    _seen_assign = {str(p["playerId"]) for p in assignable}
-    for _nid in NEW_IDS:
-        if _nid in _seen_assign:
-            continue
-        _pr = PLAYERS_BY_ID.get(_nid)
-        if _pr:
-            assignable.append(_pr)
-    all_names = {f"{p.get('name')} ({p.get('position')})": str(p["playerId"])
-                 for p in sorted(assignable, key=lambda x: (x.get("name") or ""))}
-    if search_assign:
-        names = {k: v for k, v in all_names.items()
-                 if search_assign.lower() in k.lower()}
-    else:
-        names = all_names
-
-    if not names:
-        st.info("Aucun joueur ne correspond à la recherche.")
-    else:
-        a1, a2, a3 = st.columns([3, 2, 1])
-        chosen = a1.selectbox("Joueur", list(names.keys()),
-                              key="draft_assign_player")
-        new_status = a2.selectbox(
-            "Statut",
-            ["★ Protégé (moi)", "➕ Ajouté", "🔒 Protégé (autre DG)",
-             "🎯 Cible", "— (retirer)"],
-            key="draft_assign_status")
-        status_map = {"★ Protégé (moi)": "mine", "➕ Ajouté": "added",
-                      "🔒 Protégé (autre DG)": "other",
-                      "🎯 Cible": "target", "— (retirer)": None}
-        if a3.button("Appliquer", width="stretch", key="draft_apply"):
-            target_pid = names[chosen]
-            target_status = status_map[new_status]
-            if (target_status == "mine"
-                    and plan.get(target_pid) != "mine"
-                    and len(mine_ids) >= MAX_PROTECTED):
-                st.error(f"⚠️ Maximum {MAX_PROTECTED} protégés atteint. "
-                         "Retire un protégé avant d'en ajouter un autre.")
-            else:
-                de.set_status(target_pid, target_status)
-                st.rerun()
-
-    st.divider()
-
-    # --- Tableau des joueurs disponibles (repliable) ---
-    with st.expander("🏆 Meilleurs disponibles", expanded=True):
-        tc1, tc2, tc3 = st.columns([1.3, 1.3, 1.4])
-        ptype = tc1.radio("Type", ["Patineurs", "Gardiens"], horizontal=True,
-                          key="draft_ptype")
-        sort_by = tc2.radio("Trier par", ["Valeur", "Valeur/$M"], horizontal=True,
-                            key="draft_sort")
-        hide_taken = tc3.checkbox("Masquer les joueurs pris", value=False,
-                                  key="draft_hide_taken")
-        scored = list(sk if ptype == "Patineurs" else go)
-
-        # Nouveaux joueurs (sans stats) : exclus du scoring par le filtre GP.
-        # On les réinjecte avec Valeur/Tier vides pour qu'ils apparaissent.
-        _want_type = "skater" if ptype == "Patineurs" else "goalie"
-        _scored_ids = {str(p["playerId"]) for p in scored}
-        for _nid in NEW_IDS:
-            if _nid in _scored_ids:
-                continue
-            _pr = PLAYERS_BY_ID.get(_nid)
-            if not _pr or _pr.get("type") != _want_type:
-                continue
-            _c = cache.get(_nid, {})
-            scored.append({**_pr,
-                           "cap_hit_value": _c.get("cap_hit_value", 0),
-                           "signing_status": _c.get("signing_status"),
-                           "value": None, "value_per_m": None,
-                           "youth_bonus": None, "tier": "—"})
-
-        # Détermine qui est "pris" selon le mode :
-        # - Repêchage : marquage manuel (mine / other / target)
-        # - Saison    : appartenance ESPN (owned)
-        def taken_info(p):
-            """Retourne (is_taken, owner_label)."""
-            pid = str(p["playerId"])
-            if draft_mode:
-                s = plan.get(pid)
-                if s == "other":
-                    return True, "Autre DG"
-                if s == "mine":
-                    return True, "Moi"
-                if s == "added":
-                    return True, "➕ Ajouté"
-                if s == "target":
-                    return False, "🎯 Cible"
-                return False, ""
-            else:
-                pool_team, is_mine = pool_for(p.get("name"))
-                if pool_team:
-                    return True, ("Moi" if is_mine else pool_abbr(pool_team))
-                return False, ""
-
-        rows = []
-        for p in scored:
-            pid = str(p["playerId"])
-            is_taken, owner = taken_info(p)
-            if hide_taken and is_taken:
-                continue
-            pool_team, _ = pool_for(p.get("name"))
-            base = {
-                "_id": pid,
-                "_taken": is_taken,
-                "_new": is_new(pid),
-                "_retired": is_retired(pid),
-                "_suspected": is_suspected(pid),
-                "Tier": p.get("tier", "—"),
-                "Dispo": owner or "Libre",
-                "Nom": p.get("name"),
-                "Statut": statut_for(pid),
-                "Pool Team": pool_abbr(pool_team) if pool_team else "—",
-                "NHL Team": p.get("team") or "—",
-                "Pos": p.get("position"),
-                "Âge": int(p["age"]) if p.get("age") is not None else None,
-                "Cap Hit": p.get("cap_hit_value", 0),
-                "Signing": p.get("signing_status") or "—",
-                "GP": p.get("gp"),
-                "Valeur": p.get("value"),
-                "Valeur/$M": p.get("value_per_m"),
-                "Bonus jeun.": p.get("youth_bonus"),
-            }
-            if ptype == "Patineurs":
-                base.update({
-                    "G": p.get("goals"), "A": p.get("assists"),
-                    "Pts": p.get("points"), "+/-": p.get("plus_minus"),
-                    "PIM": p.get("pim"), "PPP": p.get("ppp"),
-                    "SOG": p.get("sog"), "HIT": p.get("hits"),
-                })
-            else:
-                _l = p.get("losses")
-                _otl = p.get("ot_losses")
-                if _l is None and _otl is None:
-                    _tot_d = None
-                else:
-                    _tot_d = (_l or 0) + (_otl or 0)
-                base.update({
-                    "V": p.get("wins"), "D": _tot_d,
-                    "Moy": p.get("gaa"),
-                    "%Arr": p.get("sv_pct"), "BL": p.get("shutouts"),
-                })
-            rows.append(base)
-        df = pd.DataFrame(rows)
-        if df.empty:
-            st.info("Aucun joueur scoré. Vérifie le seuil GP ou lance les updates.")
-        else:
-            df = df.sort_values(sort_by, ascending=False).reset_index(drop=True)
-
-            if ptype == "Patineurs":
-                disp_cols = ["Nom", "Statut", "Dispo", "Tier", "Pool Team", "NHL Team",
-                             "Pos", "Âge", "Cap Hit", "Signing", "Valeur", "Valeur/$M",
-                             "Bonus jeun.", "GP", "G", "A", "Pts", "+/-", "PIM", "PPP",
-                             "SOG", "HIT"]
-            else:
-                disp_cols = ["Nom", "Statut", "Dispo", "Tier", "Pool Team", "NHL Team",
-                             "Pos", "Âge", "Cap Hit", "Signing", "Valeur", "Valeur/$M",
-                             "Bonus jeun.", "GP", "V", "D", "Moy", "%Arr", "BL"]
-
-            # Coloration : retraité rouge, nouveau vert, suspect orange, sinon gris si pris.
-            def grey_taken(row):
-                if row.get("_retired"):
-                    return [f"background-color: {COLOR_RETIRED}" for _ in row]
-                if row.get("_new"):
-                    return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
-                if row.get("_suspected"):
-                    return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
-                if row.get("_taken"):
-                    return ["color: #999999" for _ in row]
-                return ["" for _ in row]
-
-            def _int2(v):
-                return f"{int(v)}" if pd.notna(v) else "—"
-
-            def _float2(v):
-                return f"{v:.2f}" if pd.notna(v) else "—"
-
-            fmt = {"Cap Hit": lambda v: f"${v:,.0f}" if v else "—",
-                   "Âge": _int2}
-            for col in ("G", "A", "Pts", "+/-", "PIM", "PPP", "SOG", "HIT"):
-                if col in disp_cols:
-                    fmt[col] = _int2
-            for col in ("Valeur", "Valeur/$M"):
-                if col in disp_cols:
-                    fmt[col] = _float2
-
-            styled_av = (df[disp_cols + ["_taken", "_new", "_retired", "_suspected"]].style
-                         .apply(grey_taken, axis=1)
-                         .format(fmt))
-            st.dataframe(
-                styled_av, hide_index=True, width="stretch",
-                column_order=disp_cols, height=560,
-                column_config={"_taken": None, "_new": None,
-                               "_retired": None, "_suspected": None},
-            )
-            n_libre = int((~df["_taken"]).sum())
-            st.caption(f"{len(df)} joueurs affichés — {n_libre} libres "
-                       f"({'mode repêchage' if draft_mode else 'mode saison (ESPN)'})")
-
-    st.divider()
-
     # --- Cap Hit total par équipe de pool ---
     with st.expander("💰 Cap Hit total par équipe de pool", expanded=False):
         cap_df = pool_cap_summary()
@@ -1526,6 +1435,10 @@ def render_draft_tab():
                         "Cap Hit total", format="$%d")
                 },
             )
+
+    st.divider()
+
+    _render_settings_expander()
 
 
 with tab_d:
@@ -1895,7 +1808,7 @@ puis on les **pondère** et on les **additionne** pour obtenir un score unique.
 **Score composite = (1.5 × 1) + (2.0 × 2) + (−0.5 × 1) = 6.5**
 
 Les poids permettent de donner plus d'importance aux catégories qui comptent davantage
-dans ton pool (ex. PPP pondéré à 2× dans l'onglet *Équipe & Repêchage*).
+dans ton pool (ex. PPP pondéré à 2× dans l'onglet *Pool STM*).
 """)
 
     st.subheader("4. Le seuil GP minimum z-score")
@@ -1907,7 +1820,7 @@ moyenne (μ) et de l'écart-type (σ).
 (= 0.67 buts/match), ce qui semblerait fantastique mais n'est pas représentatif.
 En l'excluant, on évite qu'il fausse la moyenne de référence et le classement.
 
-> Réglage par défaut : **20 GP**. Tu peux l'ajuster dans l'onglet *Équipe & Repêchage*
+> Réglage par défaut : **20 GP**. Tu peux l'ajuster dans l'onglet *Pool STM*
 > ou *Confrontations* selon la phase de saison.
 """)
 
