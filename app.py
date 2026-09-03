@@ -1425,6 +1425,7 @@ def render_draft_tab():
                 "Nom": p.get("name"),
                 "Statut": statut_for(pid),
                 "Pool Team": pool_abbr(pool_team) if pool_team else "—",
+                "NHL Team": p.get("team") or "—",
                 "Pos": p.get("position"),
                 "Âge": int(p["age"]) if p.get("age") is not None else None,
                 "Cap Hit": p.get("cap_hit_value", 0),
@@ -1442,9 +1443,15 @@ def render_draft_tab():
                     "SOG": p.get("sog"), "HIT": p.get("hits"),
                 })
             else:
+                _l = p.get("losses")
+                _otl = p.get("ot_losses")
+                if _l is None and _otl is None:
+                    _tot_d = None
+                else:
+                    _tot_d = (_l or 0) + (_otl or 0)
                 base.update({
-                    "V": p.get("wins"), "D": p.get("losses"),
-                    "DPr": p.get("ot_losses"), "Moy": p.get("gaa"),
+                    "V": p.get("wins"), "D": _tot_d,
+                    "Moy": p.get("gaa"),
                     "%Arr": p.get("sv_pct"), "BL": p.get("shutouts"),
                 })
             rows.append(base)
@@ -1455,14 +1462,14 @@ def render_draft_tab():
             df = df.sort_values(sort_by, ascending=False).reset_index(drop=True)
 
             if ptype == "Patineurs":
-                disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
-                             "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
-                             "Bonus jeun.", "G", "A", "Pts", "+/-", "PIM", "PPP",
+                disp_cols = ["Nom", "Statut", "Dispo", "Tier", "Pool Team", "NHL Team",
+                             "Pos", "Âge", "Cap Hit", "Signing", "Valeur", "Valeur/$M",
+                             "Bonus jeun.", "GP", "G", "A", "Pts", "+/-", "PIM", "PPP",
                              "SOG", "HIT"]
             else:
-                disp_cols = ["Tier", "Dispo", "Nom", "Statut", "Pool Team", "Pos", "Âge",
-                             "Cap Hit", "Signing", "GP", "Valeur", "Valeur/$M",
-                             "Bonus jeun.", "V", "D", "DPr", "Moy", "%Arr", "BL"]
+                disp_cols = ["Nom", "Statut", "Dispo", "Tier", "Pool Team", "NHL Team",
+                             "Pos", "Âge", "Cap Hit", "Signing", "Valeur", "Valeur/$M",
+                             "Bonus jeun.", "GP", "V", "D", "Moy", "%Arr", "BL"]
 
             # Coloration : retraité rouge, nouveau vert, suspect orange, sinon gris si pris.
             def grey_taken(row):
