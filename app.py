@@ -30,7 +30,7 @@ import update_contracts as uc
 import espn_roster as er
 import draft_engine as de
 import update_stats as us
-import roster_status as rs
+import player_status as ps
 import seasons as seasons_mod
 
 STATS_FILE = "nhl_stats.json"
@@ -146,7 +146,6 @@ if "_auto_refreshed" not in st.session_state:
         _ph_stats = st.empty()
         _ph_pool = st.empty()
         _ph_contracts = st.empty()
-        _ph_roster = st.empty()
         # Stats & Contrats sont dispo chaque matin : on ne les re-télécharge pas
         # si leur JSON est déjà daté d'aujourd'hui (heure locale). Le Pool ESPN,
         # lui, est toujours rafraîchi à chaque ouverture. Les boutons manuels
@@ -208,28 +207,6 @@ if "_auto_refreshed" not in st.session_state:
                     "— données précédentes conservées"
                 )
                 _f.cancel()
-
-        # Statut retraités : appels API NHL bornés dans le temps, persistés sur
-        # disque (roster_status.json) et réutilisés < 24 h. Fait ici (hors du
-        # chemin de rendu) pour ne jamais bloquer l'affichage des tableaux.
-        _ph_roster.write("🚑 **Retraités** : vérification (API NHL)…")
-        try:
-            _sj = load_json(STATS_FILE, {}) or {}
-            _cj = load_json(CONTRACTS_FILE, {"contracts": {}})
-            _contract_ids = set(_cj.get("contracts", {}))
-            # Candidats = joueurs des stats sans contrat courant, avec un temps de
-            # jeu significatif l'an dernier (un retraité notable avait des matchs).
-            # Seuil GP plus bas pour les gardiens (ils jouent moitié moins de matchs).
-            # Réduit le nombre d'appels NHL et évite le throttling.
-            def _gp_min(_p):
-                return 10 if _p.get("type") == "goalie" else 20
-            _cands = {str(_p.get("playerId")) for _p in _sj.get("players", [])
-                      if str(_p.get("playerId")) not in _contract_ids
-                      and (_p.get("gp") or 0) >= _gp_min(_p)}
-            _rr = rs.refresh_retired(_cands)
-            _ph_roster.write(f"✅ **Retraités** : {len(_rr)} identifiés")
-        except Exception as _e:
-            _ph_roster.write(f"⚠️ **Retraités** : ignoré — {_e}")
 
         if all(v == "ok" for v in _rf_res.values()):
             _status_box.update(
@@ -312,58 +289,43 @@ players = stats.get("players", [])
 
 
 # ----------------------------------------------------------------------
-# Statut roster : nouveaux (contrat courant sans stats) + retraités
-# (stats sans contrat courant & inactifs LNH). Voir roster_status.py.
+# Statut roster : overrides MANUELS uniquement (voir player_status.py).
+#   - "rookie"  : recrue/nouveau absent des stats -> injecté comme jouable.
+#   - "retired" : retraité -> ligne rouge, retiré des tableaux actifs.
+# Le manuel gagne toujours ; il n'y a plus d'auto-détection NHL ni de suspects.
 # ----------------------------------------------------------------------
 _stats_ids = {str(p.get("playerId")) for p in players}
-# Nouveaux = contrat courant sans stats l'an dernier ET contrat de type ELC
-# (Entry Level Contract). Les vétérans blessés sans stats ont un contrat STD :
-# ils ne peuvent pas être ELC, donc ils sont exclus (ni verts, ni injectés).
-NEW_IDS = {_pid for _pid in set(cache) - _stats_ids
-           if (cache[_pid].get("contract_level") or "").upper() == "ELC"}
-for _pid in NEW_IDS:
-    players.append(rs.make_new_player_row(_pid, cache[_pid]))
+_STATUS = ps.load_status()              # {id: {status, name, position, team, age, note}}
+RETIRED_IDS = {pid for pid, e in _STATUS.items() if e.get("status") == "retired"}
+ROOKIE_IDS = {pid for pid, e in _STATUS.items() if e.get("status") == "rookie"}
 
-# Retraités : l'auto-détection NHL (isActive) ne fait que SUGGÉRER des suspects
-# (lecture instantanée du cache disque). L'utilisateur confirme/écarte via
-# l'onglet Retraités (retired_manual.json).
-# Ids valides = joueurs des stats courantes OU sous contrat courant. Écarte les
-# suspects « orphelins » d'un ancien cache (id absent des données actuelles).
-_VALID_IDS = _stats_ids | set(cache)
-_SUSPECTED = rs.load_retired() & _VALID_IDS   # suggestions auto (isActive=False)
-_MANUAL = rs.load_manual()              # {id: 'retired'|'active'}
-CONFIRMED_RETIRED = {pid for pid, v in _MANUAL.items()
-                     if v == "retired" and pid in _VALID_IDS}
-_DISMISSED = {pid for pid, v in _MANUAL.items() if v == "active"}
-# Suspects à afficher (RET?) = suggérés, ni confirmés ni écartés.
-SUSPECTED_IDS = (_SUSPECTED - CONFIRMED_RETIRED) - _DISMISSED
+# Recrues absentes des stats : on fabrique une ligne « joueur » jouable (les
+# recrues déjà présentes dans les stats gardent leurs stats, juste marquées).
+for _pid in ROOKIE_IDS:
+    if _pid in _stats_ids:
+        continue
+    players.append(ps.make_rookie_row(_pid, _STATUS[_pid], cache.get(_pid)))
 
-# Lookup des lignes joueur (augmentées) par id — sert à réinjecter les nouveaux
+# Lookup des lignes joueur (augmentées) par id — sert à réinjecter les recrues
 # dans les tables scorées qui filtrent par GP.
 PLAYERS_BY_ID = {str(p.get("playerId")): p for p in players}
 
 
 def statut_for(player_id):
     pid = str(player_id)
-    if pid in NEW_IDS:
-        return "NOUVEAU"
-    if pid in CONFIRMED_RETIRED:
+    if pid in RETIRED_IDS:
         return "RET"
-    if pid in SUSPECTED_IDS:
-        return "RET?"
+    if pid in ROOKIE_IDS:
+        return "NOUVEAU"
     return "actif"
 
 
 def is_new(player_id):
-    return str(player_id) in NEW_IDS
+    return str(player_id) in ROOKIE_IDS
 
 
 def is_retired(player_id):
-    return str(player_id) in CONFIRMED_RETIRED
-
-
-def is_suspected(player_id):
-    return str(player_id) in SUSPECTED_IDS
+    return str(player_id) in RETIRED_IDS
 
 
 # Toasts de confirmation après l'auto-refresh
@@ -431,7 +393,6 @@ def build_df(player_type):
             "_owned": pool_team is not None,
             "_new": is_new(p.get("playerId")),
             "_retired": is_retired(p.get("playerId")),
-            "_suspected": is_suspected(p.get("playerId")),
             "_pool_full": pool_team or "",
             "Nom": p["name"],
             "Statut": statut_for(p.get("playerId")),
@@ -587,9 +548,8 @@ def pool_cap_summary():
 # ----------------------------------------------------------------------
 # Coloration
 # ----------------------------------------------------------------------
-COLOR_RETIRED = "rgba(200, 0, 0, 0.35)"    # ligne rouge : retraité confirmé
-COLOR_NEW_TEXT = "#159e46"                  # texte vert : nouveau joueur
-COLOR_SUSPECT_TEXT = "#d98000"             # texte orange : suspect retraité (RET?)
+COLOR_RETIRED = "rgba(200, 0, 0, 0.35)"    # ligne rouge : retraité (manuel)
+COLOR_NEW_TEXT = "#159e46"                  # texte vert : recrue/nouveau (manuel)
 
 
 def row_style(row):
@@ -597,8 +557,6 @@ def row_style(row):
         return [f"background-color: {COLOR_RETIRED}" for _ in row]
     if row.get("_new"):
         return [f"color: {COLOR_NEW_TEXT}; font-weight: 600" for _ in row]
-    if row.get("_suspected"):
-        return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
     if row.get("_mine"):
         color = COLOR_MINE
     elif row.get("_target"):
@@ -794,7 +752,7 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
     view = apply_sort(view, key_prefix, display_cols, sort_col)
 
     style_cols = display_cols + ["_mine", "_owned", "_target", "_new",
-                                 "_retired", "_suspected"]
+                                 "_retired"]
 
     def _int(v):
         return f"{int(v)}" if pd.notna(v) else "—"
@@ -820,16 +778,14 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
         height=1090,
         column_order=display_cols,
         column_config={"_mine": None, "_owned": None, "_target": None,
-                       "_new": None, "_retired": None, "_suspected": None},
+                       "_new": None, "_retired": None},
     )
     n_mine = int(view["_mine"].sum())
     n_owned = int(view["_owned"].sum())
     n_ret = int(view["_retired"].sum())
     n_new = int(view["_new"].sum())
-    n_susp = int(view["_suspected"].sum())
     st.caption(f"{len(view)} joueurs — {n_mine} dans mon équipe, "
-               f"{n_owned} possédés · {n_new} nouveaux, {n_ret} retraités, "
-               f"{n_susp} suspects (RET?)")
+               f"{n_owned} possédés · {n_new} recrues, {n_ret} retraités")
 
 
 # ----------------------------------------------------------------------
@@ -857,7 +813,6 @@ def render_fa_tab():
             "_mine": is_mine,
             "_new": is_new(p.get("playerId")),
             "_retired": is_retired(p.get("playerId")),
-            "_suspected": is_suspected(p.get("playerId")),
             "_expiry_year": expiry_year,
             "_type": p.get("type", ""),
             "Nom": p["name"],
@@ -906,7 +861,7 @@ def render_fa_tab():
             return
         ok_disp = [c for c in display_cols if c in df_show.columns]
         ok_style = ok_disp + [c for c in ("_mine", "_owned", "_new",
-                                          "_retired", "_suspected")
+                                          "_retired")
                               if c in df_show.columns]
         styled = (df_show[ok_style].style
                   .apply(row_style, axis=1)
@@ -914,7 +869,7 @@ def render_fa_tab():
         st.dataframe(styled, hide_index=True, width="stretch", height=height,
                      column_order=ok_disp,
                      column_config={"_mine": None, "_owned": None, "_new": None,
-                                    "_retired": None, "_suspected": None})
+                                    "_retired": None})
 
     # ------------------------------------------------------------------
     # Section 1 : Agents libres
@@ -1029,7 +984,7 @@ def render_fa_tab():
 # ----------------------------------------------------------------------
 tab_s, tab_g, tab_d, tab_c, tab_fa, tab_ret, tab_aide = st.tabs(
     ["⚡ Patineurs", "🥅 Gardiens", "🎯 Pool STM", "🥊 Confrontations",
-     "🔍 Agents libres & Prospects", "🚑 Retraités", "📐 Comment ça marche ?"])
+     "🔍 Agents libres & Prospects", "🛠️ Statut joueurs", "📐 Comment ça marche ?"])
 
 with tab_s:
     render_tab(
@@ -1167,10 +1122,10 @@ def render_draft_tab():
         placeholder="Tape un nom pour filtrer la liste…")
 
     # Liste des joueurs assignables, indépendante du tableau ci-dessous :
-    # tous les joueurs scorés + les nouveaux joueurs sans stats.
+    # tous les joueurs scorés + les recrues sans stats.
     assignable = list(by_id.values())
     _seen_assign = {str(p["playerId"]) for p in assignable}
-    for _nid in NEW_IDS:
+    for _nid in ROOKIE_IDS:
         if _nid in _seen_assign:
             continue
         _pr = PLAYERS_BY_ID.get(_nid)
@@ -1668,103 +1623,123 @@ with tab_fa:
 
 
 # ----------------------------------------------------------------------
-# Onglet Retraités — suggestions auto + confirmation manuelle
+# Onglet Statut joueurs — overrides MANUELS (retraités / recrues)
 # ----------------------------------------------------------------------
-def render_retired_tab():
-    st.markdown("### 🚑 Statut retraité — suggestions & confirmation")
+STATUS_LABELS = {"retired": "🔴 Retraité", "rookie": "🟢 Recrue"}
+_STATUS_OPTS = ["retired", "rookie"]
+
+
+def render_status_tab():
+    st.markdown("### 🛠️ Statut manuel des joueurs")
     st.caption(
-        "L'app **suggère** des joueurs susceptibles d'être retraités (détection "
-        "auto via l'API NHL → statut « RET? » orange dans tous les tableaux). "
-        "Confirme ou écarte chacun ci-dessous : les **confirmés** passent en "
-        "**RET** (ligne rouge) partout ; les **écartés** redeviennent normaux."
+        "Marque un joueur **retraité** (ligne rouge, retiré des tableaux actifs) "
+        "ou **recrue** (nouveau joueur absent des stats, injecté comme jouable). "
+        "Le statut manuel **prime toujours** sur les données auto."
     )
-
-    manual = rs.load_manual()
-    by_id = {str(p.get("playerId")): p for p in players}
-    # Uniquement des joueurs réels (écarte les ids orphelins d'anciens caches).
-    ids = (set(_SUSPECTED) | set(manual)) & _VALID_IDS
-
-    DECISIONS = {"❔ À confirmer": None, "✅ Retraité": "retired",
-                 "❌ Actif (ignorer)": "active"}
-    REV = {None: "❔ À confirmer", "retired": "✅ Retraité",
-           "active": "❌ Actif (ignorer)"}
-
-    if not ids:
-        st.info("Aucun joueur suspecté pour le moment. "
-                "Utilise la recherche ci-dessous pour en ajouter un.")
+    if ps.is_official():
+        st.success("🌐 Mode **officiel** : tes changements sont persistés "
+                   "(commit vers GitHub) et survivent aux redémarrages.")
     else:
-        rows = []
-        for pid in ids:
+        st.info("🧪 Mode **test local** : tes changements vont dans "
+                "`player_status.local.json` (gitignoré) et ne touchent pas la "
+                "référence en ligne.")
+
+    status_data = ps.load_status()
+    by_id = {str(p.get("playerId")): p for p in players}
+
+    def _name_of(pid, e):
+        p = by_id.get(pid, {})
+        c = cache.get(pid, {})
+        return e.get("name") or p.get("name") or c.get("name") or pid
+
+    # ---------------- Overrides actuels ----------------
+    st.markdown("#### Joueurs avec un statut manuel")
+    if not status_data:
+        st.info("Aucun statut manuel pour le moment. Ajoute un joueur ci-dessous.")
+    else:
+        for pid in sorted(status_data, key=lambda k: _name_of(k, status_data[k]).lower()):
+            e = status_data[pid]
             p = by_id.get(pid, {})
             c = cache.get(pid, {})
-            rows.append({
-                "_id": pid,
-                "Décision": REV.get(manual.get(pid)),
-                "Nom": p.get("name") or c.get("name") or pid,
-                "Pos": p.get("position") or c.get("pos") or "—",
-                "Équipe": p.get("team") or "—",
-                "Âge": int(p["age"]) if p.get("age") is not None else None,
-                "GP (an dernier)": p.get("gp"),
-            })
-        # Tri STABLE par nom : la ligne éditée ne saute jamais de place. Un tri
-        # par « Décision » réordonnait le tableau à chaque changement ; combiné au
-        # delta d'édition que st.data_editor mémorise par POSITION de ligne, la
-        # modif se réappliquait à la mauvaise ligne au rerun (→ instabilité).
-        rdf = pd.DataFrame(rows).sort_values("Nom").reset_index(drop=True)
-        # Clé versionnée : après chaque décision appliquée on incrémente la
-        # révision, ce qui recrée l'éditeur à neuf et purge tout delta d'édition
-        # résiduel (sinon réappliqué à la mauvaise ligne au rerun suivant).
-        _rev = st.session_state.get("_ret_ed_rev", 0)
-        ed = st.data_editor(
-            rdf, hide_index=True, width="stretch",
-            height=min(700, 45 * len(rdf) + 60),
-            column_order=["Décision", "Nom", "Pos", "Équipe", "Âge", "GP (an dernier)"],
-            column_config={
-                "_id": None,
-                "Décision": st.column_config.SelectboxColumn(
-                    "Décision", options=list(DECISIONS.keys()), required=True,
-                    help="Confirme (Retraité), écarte (Actif) ou laisse à confirmer"),
-            },
-            disabled=["Nom", "Pos", "Équipe", "Âge", "GP (an dernier)"],
-            key=f"retired_editor_{_rev}",
-        )
-        changed = False
-        for i in range(len(ed)):
-            pid = rdf.iloc[i]["_id"]
-            new_dec = DECISIONS.get(ed.iloc[i]["Décision"])
-            if new_dec != manual.get(pid):
-                rs.set_manual(pid, new_dec)
-                changed = True
-        if changed:
-            st.session_state["_ret_ed_rev"] = _rev + 1
-            st.rerun()
-
-        n_conf = sum(1 for v in manual.values() if v == "retired")
-        n_susp = len(set(_SUSPECTED) - set(manual))
-        st.caption(f"{n_conf} confirmés retraités · {n_susp} suspects à examiner")
+            name = _name_of(pid, e)
+            pos = e.get("position") or p.get("position") or c.get("pos") or "—"
+            team = e.get("team") or p.get("team") or "—"
+            col1, col2, col3 = st.columns([4, 3, 1])
+            col1.markdown(f"**{name}** · {pos} · {team}")
+            cur = e.get("status")
+            new = col2.selectbox(
+                "Statut", _STATUS_OPTS,
+                index=_STATUS_OPTS.index(cur) if cur in _STATUS_OPTS else 0,
+                format_func=lambda s: STATUS_LABELS[s],
+                key=f"st_sel_{pid}", label_visibility="collapsed")
+            if new != cur:
+                ps.set_status(pid, new)
+                st.rerun()
+            if col3.button("🗑️", key=f"st_del_{pid}",
+                           help="Retirer le statut manuel"):
+                ps.set_status(pid, None)
+                st.rerun()
+        n_ret = sum(1 for e in status_data.values() if e.get("status") == "retired")
+        n_rk = sum(1 for e in status_data.values() if e.get("status") == "rookie")
+        st.caption(f"{n_ret} retraités · {n_rk} recrues")
 
     st.divider()
-    st.markdown("**➕ Ajouter un joueur non suggéré** "
-                "(ex. un retraité manqué par la détection auto)")
-    all_opts = {f"{p.get('name')} ({p.get('position') or '?'})": str(p.get("playerId"))
-                for p in players if p.get("name")}
-    q = st.text_input("🔎 Rechercher un joueur", key="ret_add_search",
-                      placeholder="Tape un nom…")
-    opts = {k: v for k, v in all_opts.items() if q.lower() in k.lower()} if q else {}
-    if q and not opts:
-        st.info("Aucun joueur ne correspond.")
-    elif opts:
-        a1, a2 = st.columns([3, 1])
-        chosen = a1.selectbox("Joueur", list(opts.keys()), key="ret_add_sel")
-        if a2.button("Marquer retraité", width="stretch", key="ret_add_btn"):
-            rs.set_manual(opts[chosen], "retired")
-            # Nouvelle ligne dans le tableau -> purge le delta d'édition (positions décalées).
-            st.session_state["_ret_ed_rev"] = st.session_state.get("_ret_ed_rev", 0) + 1
-            st.rerun()
+
+    # ---------------- Ajouter un joueur ----------------
+    st.markdown("#### ➕ Ajouter un joueur")
+    add_mode = st.radio(
+        "Source", ["Chercher un joueur connu", "Saisie libre (recrue absente)"],
+        horizontal=True, key="st_add_mode", label_visibility="collapsed")
+
+    if add_mode == "Chercher un joueur connu":
+        # Joueurs des stats + joueurs sous contrat (recrues potentielles absentes
+        # des stats). Le manuel écrase de toute façon les données auto.
+        known = {}
+        for p in players:
+            if p.get("name"):
+                known[f"{p['name']} ({p.get('position') or '?'})"] = str(p.get("playerId"))
+        _seen = set(known.values())
+        for cid, cinfo in cache.items():
+            if cinfo.get("name") and cid not in _seen:
+                known[f"{cinfo['name']} ({cinfo.get('pos') or '?'}) · contrat"] = cid
+        q = st.text_input("🔎 Rechercher un joueur", key="st_add_search",
+                          placeholder="Tape un nom…")
+        opts = {k: v for k, v in known.items() if q.lower() in k.lower()} if q else {}
+        if q and not opts:
+            st.info("Aucun joueur ne correspond.")
+        elif opts:
+            c1, c2, c3 = st.columns([3, 2, 1])
+            chosen = c1.selectbox("Joueur", sorted(opts), key="st_add_known")
+            status = c2.selectbox("Statut", _STATUS_OPTS,
+                                  format_func=lambda s: STATUS_LABELS[s],
+                                  key="st_add_known_status")
+            if c3.button("Ajouter", width="stretch", key="st_add_known_btn"):
+                ps.set_status(opts[chosen], status)
+                st.rerun()
+    else:
+        st.caption("Pour un joueur **absent** des stats ET des contrats "
+                   "(ex. recrue tout juste arrivée). Il sera injecté comme jouable.")
+        c1, c2, c3 = st.columns([3, 1, 1])
+        f_name = c1.text_input("Nom", key="st_free_name",
+                               placeholder="Ex. Connor Bedard")
+        f_pos = c2.selectbox("Pos", ["C", "LW", "RW", "D", "G"], key="st_free_pos")
+        f_team = c3.text_input("Équipe", key="st_free_team", placeholder="Ex. CHI")
+        f_status = st.selectbox("Statut", ["rookie", "retired"],
+                                format_func=lambda s: STATUS_LABELS[s],
+                                key="st_free_status")
+        if st.button("Ajouter", key="st_free_btn"):
+            if not f_name.strip():
+                st.warning("Entre un nom.")
+            else:
+                # Id synthétique stable (pas de playerId NHL pour un joueur libre).
+                pid = "manual:" + (norm_name(f_name).replace(" ", "-") or "joueur")
+                ps.set_status(pid, f_status, name=f_name.strip(), position=f_pos,
+                              team=f_team.strip() or None)
+                st.rerun()
 
 
 with tab_ret:
-    render_retired_tab()
+    render_status_tab()
 
 
 # ----------------------------------------------------------------------

@@ -25,8 +25,13 @@ blob.json
 draft_plan.json
 lineup.json
 
-# Cache local du statut roster (retraités) — recalculé au besoin
-roster_status.json
-# Décisions manuelles de retraite (confirmé/écarté) — données personnelles
-retired_manual.json
+# Override LOCAL du statut manuel (tests) — ne jamais committer.
+# La référence officielle est player_status.json (commitée, lue par le Cloud).
+player_status.local.json
+
+# Données ESPN (rosters du pool) — rafraîchies à chaque ouverture de l'app, donc
+# regénérées automatiquement. Ignorées pour ne pas polluer la référence git
+# pendant les tests locaux.
+espn*.json
+
 modif à faire.md
