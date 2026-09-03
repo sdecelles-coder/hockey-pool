@@ -46,6 +46,7 @@ IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
 
 COLOR_MINE = "rgba(0, 114, 206, 0.60)"     # bleu Nordique
 COLOR_OTHER = "rgba(128, 128, 128, 0.80)"  # gris
+COLOR_TARGET = "rgba(255, 224, 102, 0.45)" # jaune pâle (cibles au repêchage)
 COLOR_NONE = ""
 
 POOL_ABBR = {
@@ -256,6 +257,16 @@ _season_opts = seasons_mod.list_selectable()
 with st.sidebar:
     _sel_label = st.selectbox(
         "Saison", [o["label"] for o in _season_opts], index=0, key="season_select"
+    )
+    # Contrôle global du mode d'affichage (Dispo + coloration), appliqué à
+    # TOUS les onglets. Repêchage : dispo/couleurs pilotées par le plan manuel
+    # (onglet Pool STM) — gris = Autre DG, bleu = mes joueurs, jaune = cibles,
+    # « Pool Team » ESPN conservé à titre informatif. Saison : possession ESPN.
+    st.radio(
+        "Mode d'affichage", ["🏒 Repêchage", "📅 Saison"], horizontal=True,
+        key="team_mode",
+        help="Repêchage : dispo/couleurs selon ton plan (Pool STM). "
+             "Saison : possession réelle collectée par ESPN.",
     )
 _sel = next(o for o in _season_opts if o["label"] == _sel_label)
 STATS_PATH = str(_sel["stats_path"])
@@ -590,6 +601,8 @@ def row_style(row):
         return [f"color: {COLOR_SUSPECT_TEXT}; font-weight: 600" for _ in row]
     if row.get("_mine"):
         color = COLOR_MINE
+    elif row.get("_target"):
+        color = COLOR_TARGET
     elif row.get("_owned"):
         color = COLOR_OTHER
     else:
@@ -738,40 +751,50 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
     # Dispo + possession. En mode repêchage, on tient compte du marquage manuel
     # (plan) de l'onglet Pool STM ; en mode saison, de la possession ESPN.
     plan = de.load_plan()
-    draft_mode = str(st.session_state.get("team_mode", "📅 Saison")).startswith("🏒")
+    draft_mode = str(st.session_state.get("team_mode", "🏒 Repêchage")).startswith("🏒")
 
     def _dispo_owner(row):
-        """Retourne (Dispo, _mine, _owned)."""
+        """Retourne (Dispo, _mine, _owned, _target).
+
+        En mode repêchage la coloration suit la colonne Dispo (pilotée par le
+        plan manuel) et non la possession ESPN : bleu = mes joueurs
+        (protégés + ajoutés), jaune pâle = cibles, gris = Autre DG, rien =
+        Libre. La colonne « Pool Team » (ESPN) reste affichée à titre
+        informatif — un joueur non marqué dans le plan reste « Libre ».
+        """
         if draft_mode:
             s = plan.get(row["_pid"])
             if s == "mine":
-                return "Moi", True, True
-            if s == "other":
-                return "Autre DG", False, True
+                return "Moi", True, True, False        # bleu
             if s == "added":
-                return "➕ Ajouté", False, True
+                return "➕ Ajouté", True, True, False    # bleu (mon équipe)
+            if s == "other":
+                return "Autre DG", False, True, False   # gris
             if s == "target":
-                return "🎯 Cible", False, False
-            return "Libre", False, False
+                return "🎯 Cible", False, False, True    # jaune pâle
+            return "Libre", False, False, False
         # Mode saison : possession ESPN (déjà dans _mine / _owned)
         if row["_mine"]:
-            return "Moi", True, True
+            return "Moi", True, True, False
         if row["_owned"]:
-            return (row["Pool Team"] if row["Pool Team"] != "—" else "Possédé"), False, True
-        return "Libre", False, False
+            return (row["Pool Team"] if row["Pool Team"] != "—" else "Possédé"), False, True, False
+        return "Libre", False, False, False
 
     if df.empty:
         df["Dispo"] = pd.Series(dtype="object")
+        df["_target"] = pd.Series(dtype="bool")
     else:
         _info = df.apply(_dispo_owner, axis=1, result_type="expand")
         df["Dispo"] = _info[0]
         df["_mine"] = _info[1]
         df["_owned"] = _info[2]
+        df["_target"] = _info[3]
 
     view = apply_filters(df, key_prefix, player_type)
     view = apply_sort(view, key_prefix, display_cols, sort_col)
 
-    style_cols = display_cols + ["_mine", "_owned", "_new", "_retired", "_suspected"]
+    style_cols = display_cols + ["_mine", "_owned", "_target", "_new",
+                                 "_retired", "_suspected"]
 
     def _int(v):
         return f"{int(v)}" if pd.notna(v) else "—"
@@ -796,8 +819,8 @@ def render_tab(player_type, key_prefix, sort_col, display_cols):
         styled, hide_index=True, width="stretch",
         height=1090,
         column_order=display_cols,
-        column_config={"_mine": None, "_owned": None, "_new": None,
-                       "_retired": None, "_suspected": None},
+        column_config={"_mine": None, "_owned": None, "_target": None,
+                       "_new": None, "_retired": None, "_suspected": None},
     )
     n_mine = int(view["_mine"].sum())
     n_owned = int(view["_owned"].sum())
@@ -1189,12 +1212,10 @@ def render_draft_tab():
 
     st.divider()
 
-    # --- Sélecteur de mode ---
-    hdr = st.columns([2, 3])
-    hdr[0].subheader("📋 Sommaire de mon équipe")
-    mode = hdr[1].radio("Mode", ["🏒 Repêchage", "📅 Saison"], horizontal=True,
-                        key="team_mode", label_visibility="collapsed")
-    draft_mode = mode.startswith("🏒")
+    # --- Mode d'affichage (contrôlé globalement par le radio de la barre
+    # latérale, clé « team_mode ») ---
+    st.subheader("📋 Sommaire de mon équipe")
+    draft_mode = str(st.session_state.get("team_mode", "🏒 Repêchage")).startswith("🏒")
 
     # --- Compteur de slots par position (Protégés + Cibles) ---
     SLOTS = {"F": 7, "D": 4, "G": 2}
