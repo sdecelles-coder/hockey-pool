@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-02T21:42:49.732449+00:00",
+  "updated_at": "2026-09-03T13:33:46.205071+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -12658,8 +12658,8 @@
     },
     {
       "playerId": 8479944,
-      "name": "Zach Aston-Reese",
-      "puckpedia_slug": "zach-aston-reese",
+      "name": "Zachary Aston-Reese",
+      "puckpedia_slug": "zachary-aston-reese",
       "type": "skater",
       "team": "CBJ",
       "teams_all": "CBJ",
