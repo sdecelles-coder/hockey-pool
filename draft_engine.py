@@ -13,6 +13,8 @@ Catégories gardiens  : W, SO, GAA, SV%  (GAA à minimiser => inversée)
 import json
 from statistics import mean, pstdev
 
+import cloud_store
+
 PLAN_FILE = "draft_plan.json"
 SETTINGS_FILE = "draft_settings.json"
 
@@ -207,16 +209,13 @@ def assign_tiers(scored):
 def load_plan():
     """Retourne {player_id(str): status}. status in
     {'mine', 'added', 'other', 'target'}."""
-    try:
-        with open(PLAN_FILE, encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+    return cloud_store.load_json(PLAN_FILE, default={})
 
 
 def save_plan(plan):
-    with open(PLAN_FILE, "w", encoding="utf-8") as f:
-        json.dump(plan, f, ensure_ascii=False, indent=2)
+    """Persiste le plan. Commit-retour GitHub en contexte officiel (survit aux
+    redémarrages du Cloud éphémère)."""
+    cloud_store.save_json(PLAN_FILE, plan, "chore: maj plan de repêchage")
 
 
 # ----------------------------------------------------------------------
@@ -224,16 +223,12 @@ def save_plan(plan):
 # ----------------------------------------------------------------------
 def load_settings():
     """Retourne le dict des réglages sauvegardés (ou {} si absent)."""
-    try:
-        with open(SETTINGS_FILE, encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+    return cloud_store.load_json(SETTINGS_FILE, default={})
 
 
 def save_settings(settings):
-    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-        json.dump(settings, f, ensure_ascii=False, indent=2)
+    """Persiste les réglages. Commit-retour GitHub en contexte officiel."""
+    cloud_store.save_json(SETTINGS_FILE, settings, "chore: maj réglages repêchage")
 
 
 def set_status(player_id, status):
@@ -256,16 +251,12 @@ LINEUP_FILE = "lineup.json"
 
 def load_lineup():
     """Retourne {player_id(str): 'ice'|'bench'}."""
-    try:
-        with open(LINEUP_FILE, encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+    return cloud_store.load_json(LINEUP_FILE, default={})
 
 
 def save_lineup(lineup):
-    with open(LINEUP_FILE, "w", encoding="utf-8") as f:
-        json.dump(lineup, f, ensure_ascii=False, indent=2)
+    """Persiste l'alignement. Commit-retour GitHub en contexte officiel."""
+    cloud_store.save_json(LINEUP_FILE, lineup, "chore: maj alignement")
 
 
 def set_lineup(player_id, slot):
