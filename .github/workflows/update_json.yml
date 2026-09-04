@@ -50,14 +50,15 @@ jobs:
           ESPN_S2:        ${{ secrets.ESPN_S2 }}
           VERIFY_SSL:     "true"
 
-      - name: Mettre à jour nhl_contracts.json
-        run: python update_contracts.py
-        continue-on-error: true
+      # NOTE : les contrats (PuckPedia) ne sont PLUS rafraîchis ici. PuckPedia
+      # (Cloudflare) renvoie 403 aux IP des runners GitHub — l'étape échouait en
+      # silence. Les contrats se mettent à jour manuellement (bouton 🔄 Contrats
+      # en local, puis commit/push de nhl_contracts.json).
 
       - name: Committer les fichiers mis à jour
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add nhl_stats.json espn_owned.json nhl_contracts.json
+          git add nhl_stats.json espn_owned.json
           git diff --staged --quiet || git commit -m "chore: màj automatique JSON $(date -u +'%Y-%m-%d') [skip ci]"
           git push

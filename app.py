@@ -37,12 +37,17 @@ STATS_FILE = "nhl_stats.json"
 CONTRACTS_FILE = "nhl_contracts.json"
 
 # PuckPedia (Cloudflare) renvoie 403 aux IP des serveurs Streamlit Community
-# Cloud : le fetch en direct des contrats y est donc impossible. Sur Cloud, on
-# s'appuie uniquement sur le job GitHub Actions nocturne (qui commit
-# nhl_contracts.json). En local, le fetch fonctionne normalement.
+# Cloud (et aux runners GitHub Actions) : le fetch en direct des contrats y est
+# donc impossible. Les contrats se mettent à jour MANUELLEMENT : bouton
+# 🔄 Contrats en local (le fetch fonctionne depuis une IP résidentielle/corpo),
+# puis commit/push de nhl_contracts.json pour que Cloud le récupère.
 # Détection : Streamlit Community Cloud exécute l'app sous l'utilisateur
 # « appuser » (HOME=/home/appuser).
 IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
+
+# Mise à jour des contrats désormais manuelle et occasionnelle : on n'alerte sur
+# la fraîcheur qu'au-delà de 7 jours (au lieu de 25 h à l'époque du job nocturne).
+CONTRACTS_STALE_H = 24 * 7
 
 COLOR_MINE = "rgba(0, 114, 206, 0.60)"     # bleu Nordique
 COLOR_OTHER = "rgba(128, 128, 128, 0.80)"  # gris
@@ -159,9 +164,9 @@ if "_auto_refreshed" not in st.session_state:
             _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
         _ph_pool.write("🏒 **Pool ESPN** : récupération en cours…")
         # Sur Cloud, PuckPedia renvoie 403 : on ne tente pas le fetch en direct
-        # (les contrats sont rafraîchis chaque nuit via GitHub Actions).
+        # (les contrats se mettent à jour manuellement, en local).
         if IS_CLOUD:
-            _ph_contracts.write("🌙 **Contrats** : mis à jour chaque nuit (GitHub Actions)")
+            _ph_contracts.write("🔒 **Contrats** : mise à jour manuelle (indispo sur Cloud)")
         elif _contracts_fresh:
             _ph_contracts.write("✅ **Contrats** : déjà à jour (aujourd'hui)")
         else:
@@ -441,8 +446,9 @@ def run_full_update():
     if IS_CLOUD:
         st.info(
             "Sur Streamlit Cloud, PuckPedia bloque les mises à jour en direct "
-            "(403). Les contrats sont rafraîchis **automatiquement chaque nuit** "
-            "via GitHub Actions — cache actuel : "
+            "(403). Les contrats se mettent à jour **manuellement** : lance "
+            "l'app **en local**, clique sur 🔄 Contrats, puis commit/push de "
+            "`nhl_contracts.json` — cache actuel : "
             f"{fmt_age(contracts_db.get('updated_at'))}."
         )
         return
@@ -464,8 +470,7 @@ def run_full_update():
             f"Impossible de récupérer les contrats depuis PuckPedia : `{e}`\n\n"
             "Les données de contrats en cache sont conservées "
             f"(dernière mise à jour {fmt_age(contracts_db.get('updated_at'))}). "
-            "Elles sont de toute façon rafraîchies automatiquement chaque nuit "
-            "via GitHub Actions."
+            "Réessaie plus tard avec le bouton 🔄 Contrats."
         )
 
 
@@ -500,20 +505,19 @@ hc1.caption(
     f"**{len(owned)}** pool — "
     f"Stats {fmt_age(stats.get('updated_at'))} · "
     f"Contrats {fmt_age(contracts_db.get('updated_at'))}"
-    + (" ⚠️" if _contracts_age_h is not None and _contracts_age_h > 25 else "")
+    + (" ⚠️" if _contracts_age_h is not None and _contracts_age_h > CONTRACTS_STALE_H else "")
     + f" · Pool {fmt_age(espn_db.get('updated_at'))}"
 )
 
-if _contracts_age_h is not None and _contracts_age_h > 25:
+if _contracts_age_h is not None and _contracts_age_h > CONTRACTS_STALE_H:
     _retry_hint = (
-        "Le job GitHub Actions nocturne a probablement échoué ; il réessaiera "
-        "la nuit prochaine (ou relance-le manuellement depuis l'onglet Actions)."
+        "Mise à jour manuelle : lance l'app en local, clique sur 🔄 Contrats, "
+        "puis commit/push de nhl_contracts.json."
         if IS_CLOUD else
-        "La récupération PuckPedia a probablement échoué — utilise le bouton "
-        "🔄 Contrats pour réessayer."
+        "Utilise le bouton 🔄 Contrats pour les rafraîchir."
     )
     st.warning(
-        f"⚠️ Les données de contrats ont **{int(_contracts_age_h)} h** — "
+        f"⚠️ Les contrats datent de plus de **{int(_contracts_age_h // 24)} j** — "
         + _retry_hint,
         icon="🔔",
     )
