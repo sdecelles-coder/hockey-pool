@@ -27,30 +27,108 @@ Lecture : en local on lit l'override local s'il existe, sinon la référence
 commitée. En ligne on lit toujours la référence.
 """
 
+import base64
+import json
+import os
 from datetime import datetime, timezone
 
-import cloud_store
+import requests
+import config
 
 REF_FILE = "player_status.json"          # référence commitée (lue par le Cloud)
+LOCAL_FILE = "player_status.local.json"   # override local gitignoré (tests)
 
 VALID_STATUSES = ("retired", "rookie")
 
-# Détection du contexte : réexportée pour l'app (bandeau Cloud). La logique vit
-# désormais dans cloud_store, partagée avec draft_engine.
-is_cloud = cloud_store.is_cloud
-is_official = cloud_store.is_official
+# Repo/branche par défaut : évite d'avoir à configurer 3 secrets. Sur le Cloud,
+# il suffit d'ajouter GITHUB_TOKEN ; repo et branche sont déjà connus (mais
+# restent surchargeables via secrets si le repo est renommé/forké).
+DEFAULT_REPO = "sdecelles-coder/hockey-pool"
+DEFAULT_BRANCH = "main"
+
+
+# ----------------------------------------------------------------------
+# Détection du contexte : officiel (token) vs test (local)
+# ----------------------------------------------------------------------
+def _github_conf():
+    """(token, repo, branch) pour le commit-retour. token=None si non configuré."""
+    token = config.get("GITHUB_TOKEN")
+    repo = config.get("GITHUB_REPO", DEFAULT_REPO)      # "owner/name"
+    branch = config.get("GITHUB_BRANCH", DEFAULT_BRANCH)
+    return token, repo, branch
+
+
+def is_cloud():
+    """True si on tourne sur Streamlit Community Cloud (heuristique HOME)."""
+    return os.environ.get("HOME", "") == "/home/appuser"
+
+
+def is_official():
+    """True si le commit-retour est possible (token GitHub présent).
+
+    Repo/branche ont des valeurs par défaut : seul le token est requis.
+    """
+    token, repo, _ = _github_conf()
+    return bool(token and repo)
+
+
+def _active_file():
+    """Fichier d'écriture selon le contexte."""
+    return REF_FILE if is_official() else LOCAL_FILE
 
 
 # ----------------------------------------------------------------------
 # Lecture / écriture
 # ----------------------------------------------------------------------
+def _read(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f).get("players", {})
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
 def load_status():
     """Dict {player_id(str): {status, name, position, team, age, note}}.
 
     En local, l'override local prime ; à défaut on lit la référence commitée.
     """
-    data = cloud_store.load_json(REF_FILE, default={})
-    return data.get("players", {}) if isinstance(data, dict) else {}
+    if not is_official():
+        local = _read(LOCAL_FILE)
+        if local is not None:
+            return local
+    return _read(REF_FILE) or {}
+
+
+def _github_commit(content_str):
+    """Commit best-effort de la référence vers GitHub (API contents PUT).
+
+    Silencieux en cas d'échec : l'app ne doit jamais planter à cause de ça.
+    Le disque local a déjà été écrit, donc la session courante voit la modif.
+    """
+    token, repo, branch = _github_conf()
+    if not (token and repo):
+        return False
+    url = f"https://api.github.com/repos/{repo}/contents/{REF_FILE}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+    }
+    try:
+        # sha du fichier existant (requis pour un update)
+        r = requests.get(url, headers=headers, params={"ref": branch}, timeout=10)
+        sha = r.json().get("sha") if r.ok else None
+        payload = {
+            "message": "chore: maj statut manuel des joueurs",
+            "content": base64.b64encode(content_str.encode("utf-8")).decode(),
+            "branch": branch,
+        }
+        if sha:
+            payload["sha"] = sha
+        pr = requests.put(url, headers=headers, json=payload, timeout=10)
+        return pr.ok
+    except Exception:
+        return False
 
 
 def save_status(players):
@@ -59,7 +137,11 @@ def save_status(players):
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "players": players,
     }
-    cloud_store.save_json(REF_FILE, payload, "chore: maj statut manuel des joueurs")
+    content = json.dumps(payload, ensure_ascii=False, indent=2)
+    with open(_active_file(), "w", encoding="utf-8") as f:
+        f.write(content)
+    if is_official():
+        _github_commit(content)
     return players
 
 
