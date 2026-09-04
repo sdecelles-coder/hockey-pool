@@ -109,6 +109,9 @@ def _github_commit(ref_file, content_str, message):
         # sha du fichier existant (requis pour un update)
         r = requests.get(url, headers=headers, params={"ref": branch}, timeout=10)
         sha = r.json().get("sha") if r.ok else None
+        if not r.ok:
+            print(f"[cloud_store] GET {url} (ref={branch}) a échoué : "
+                  f"{r.status_code} {r.text[:300]}")
         payload = {
             "message": message,
             "content": base64.b64encode(content_str.encode("utf-8")).decode(),
@@ -117,8 +120,12 @@ def _github_commit(ref_file, content_str, message):
         if sha:
             payload["sha"] = sha
         pr = requests.put(url, headers=headers, json=payload, timeout=10)
+        if not pr.ok:
+            print(f"[cloud_store] PUT {url} a échoué : "
+                  f"{pr.status_code} {pr.text[:300]}")
         return pr.ok
-    except Exception:
+    except Exception as e:
+        print(f"[cloud_store] Exception lors du commit GitHub de {ref_file} : {e!r}")
         return False
 
 
