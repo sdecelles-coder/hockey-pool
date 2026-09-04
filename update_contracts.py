@@ -93,75 +93,9 @@ def _to_int(v):
         return 0
 
 
-class _BrowserFetcher:
-    """Fallback Chromium (Playwright) quand Cloudflare bloque `requests` avec un
-    challenge JS ("Just a moment...") au lieu du 403 tout court. Un vrai
-    navigateur résout le challenge ; on garde la page ouverte pour réutiliser
-    les cookies de clearance sur toute la pagination."""
-
-    def __init__(self):
-        self._pw = None
-        self._browser = None
-        self._page = None
-
-    def _ensure_page(self):
-        if self._page is not None:
-            return
-        from playwright.sync_api import sync_playwright
-        self._pw = sync_playwright().start()
-        self._browser = self._pw.chromium.launch(headless=True)
-        self._page = self._browser.new_page(user_agent=HEADERS["User-Agent"])
-
-    def fetch(self, url):
-        self._ensure_page()
-        resp = self._page.goto(url, timeout=TIMEOUT * 1000)
-        # Laisse le challenge Cloudflare (redirection JS) se résoudre.
-        self._page.wait_for_timeout(3000)
-        if resp is not None and resp.status == 403:
-            resp = self._page.goto(url, timeout=TIMEOUT * 1000)
-        body = self._page.inner_text("body")
-        return json.loads(body)
-
-    def close(self):
-        if self._browser:
-            self._browser.close()
-        if self._pw:
-            self._pw.stop()
-
-
-_browser_fetcher = None
-
-
-def _fetch_via_browser(url):
-    global _browser_fetcher
-    try:
-        import playwright  # noqa: F401
-    except ImportError:
-        raise RuntimeError(
-            "Cloudflare bloque `requests` (403/challenge JS) et Playwright "
-            "n'est pas installé pour basculer en mode navigateur. Installe-le : "
-            "pip install playwright && playwright install chromium"
-        )
-    if _browser_fetcher is None:
-        _browser_fetcher = _BrowserFetcher()
-    return _browser_fetcher.fetch(url)
-
-
-def _close_browser_fetcher():
-    global _browser_fetcher
-    if _browser_fetcher is not None:
-        _browser_fetcher.close()
-        _browser_fetcher = None
-
-
 def _fetch(url):
-    """GET l'API PuckPedia et renvoie le JSON décodé.
-
-    Bascule sur Chromium (Playwright) si Cloudflare renvoie un 403 — signe
-    d'un challenge JS que `requests` ne peut pas résoudre."""
+    """GET l'API PuckPedia et renvoie le JSON décodé."""
     r = requests.get(url, headers=HEADERS, timeout=TIMEOUT, verify=VERIFY_SSL)
-    if r.status_code == 403:
-        return _fetch_via_browser(url)
     r.raise_for_status()
     return r.json()
 
@@ -231,8 +165,6 @@ def _fetch_all_parsed(progress_cb=None):
         all_players.extend(players)
     except Exception as e:
         errors.append(("Joueurs", f"{type(e).__name__}: {e}"))
-
-    _close_browser_fetcher()
 
     parsed_by_id = {}
     no_id = 0
