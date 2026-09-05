@@ -23,7 +23,7 @@
   },
   "goalie": {
     "shutouts": 1.5,
-    "wins": 1.05,
+    "wins": 1.1,
     "gaa": 1.0,
     "sv_pct": 1.0
   }
