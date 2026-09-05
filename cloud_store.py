@@ -105,13 +105,15 @@ def _github_commit(ref_file, content_str, message):
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
     }
+    print(f"[cloud_store] Tentative de commit GitHub pour {ref_file} "
+          f"(repo={repo}, branch={branch})", flush=True)
     try:
         # sha du fichier existant (requis pour un update)
         r = requests.get(url, headers=headers, params={"ref": branch}, timeout=10)
         sha = r.json().get("sha") if r.ok else None
         if not r.ok:
             print(f"[cloud_store] GET {url} (ref={branch}) a échoué : "
-                  f"{r.status_code} {r.text[:300]}")
+                  f"{r.status_code} {r.text[:300]}", flush=True)
         payload = {
             "message": message,
             "content": base64.b64encode(content_str.encode("utf-8")).decode(),
@@ -122,10 +124,13 @@ def _github_commit(ref_file, content_str, message):
         pr = requests.put(url, headers=headers, json=payload, timeout=10)
         if not pr.ok:
             print(f"[cloud_store] PUT {url} a échoué : "
-                  f"{pr.status_code} {pr.text[:300]}")
+                  f"{pr.status_code} {pr.text[:300]}", flush=True)
+        else:
+            print(f"[cloud_store] Commit réussi pour {ref_file} "
+                  f"(sha={pr.json().get('content', {}).get('sha', '?')[:8]})", flush=True)
         return pr.ok
     except Exception as e:
-        print(f"[cloud_store] Exception lors du commit GitHub de {ref_file} : {e!r}")
+        print(f"[cloud_store] Exception lors du commit GitHub de {ref_file} : {e!r}", flush=True)
         return False
 
 
