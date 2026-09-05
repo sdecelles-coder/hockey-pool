@@ -1,6 +1,6 @@
 {
   "cap_limit": 110000000,
-  "min_gp": 16,
+  "min_gp": 20,
   "youth_w": 0.05,
   "ref_age": 27,
   "skater": {
