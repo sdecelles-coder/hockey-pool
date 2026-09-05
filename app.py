@@ -604,6 +604,11 @@ def apply_filters(df, key_prefix, player_type):
         status = st.segmented_control(
             "Possession", ["Tous", "Libres", "Possédés", "Mon équipe"],
             default="Tous", key=f"{key_prefix}_status") or "Tous"
+        tier_order = ["🌟 Superstar", "🔥 Excellent", "⭐ Très bon", "✓ Bon", "· Moyen"]
+        tier_present = set(df["Tier"].dropna().unique())
+        tier_all = [t for t in tier_order if t in tier_present]
+        tier_sel = st.multiselect("Tier", tier_all, default=[],
+                                  key=f"{key_prefix}_tier")
 
         # Ligne 2 : Position (multi, patineurs) + Âge + GP min + Cap min-max
         cmax_m = (int(df["Cap Hit"].max()) // 1_000_000) if not df["Cap Hit"].dropna().empty else 0
@@ -644,6 +649,8 @@ def apply_filters(df, key_prefix, player_type):
         view = view[view.apply(lambda r: status_match(r, status), axis=1)]
     if pos_sel:
         view = view[view["Pos"].isin(pos_sel)]
+    if tier_sel:
+        view = view[view["Tier"].isin(tier_sel)]
     view = view[view["Âge"].fillna(-1).between(age_rng[0], age_rng[1]) | view["Âge"].isna()]
     view = view[view["GP"].fillna(0) >= gp_min]
     view = view[view["Cap Hit"].fillna(0).between(cap_rng[0] * 1_000_000,
