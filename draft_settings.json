@@ -22,7 +22,7 @@
     "sog": 1.05
   },
   "goalie": {
-    "shutouts": 1.45,
+    "shutouts": 1.35,
     "wins": 1.1,
     "gaa": 1.05,
     "sv_pct": 1.05
