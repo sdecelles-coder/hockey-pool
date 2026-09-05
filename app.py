@@ -601,14 +601,15 @@ def apply_filters(df, key_prefix, player_type):
         pool_sel = r1[2].selectbox("Pool Team", pool_opts, key=f"{key_prefix}_pool")
         # Filtre possession en boutons (renommé « Possession » pour éviter la
         # confusion avec la colonne « Statut » = statut roster du joueur).
-        status = st.segmented_control(
+        r1b = st.columns([2, 1])
+        status = r1b[0].segmented_control(
             "Possession", ["Tous", "Libres", "Possédés", "Mon équipe"],
             default="Tous", key=f"{key_prefix}_status") or "Tous"
         tier_order = ["🌟 Superstar", "🔥 Excellent", "⭐ Très bon", "✓ Bon", "· Moyen"]
         tier_present = set(df["Tier"].dropna().unique())
         tier_all = [t for t in tier_order if t in tier_present]
-        tier_sel = st.multiselect("Tier", tier_all, default=[],
-                                  key=f"{key_prefix}_tier")
+        tier_sel = r1b[1].multiselect("Tier", tier_all, default=[],
+                                      key=f"{key_prefix}_tier")
 
         # Ligne 2 : Position (multi, patineurs) + Âge + GP min + Cap min-max
         cmax_m = (int(df["Cap Hit"].max()) // 1_000_000) if not df["Cap Hit"].dropna().empty else 0
