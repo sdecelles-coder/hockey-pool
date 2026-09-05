@@ -1,10 +1,15 @@
 {
-  "updated_at": "2026-09-05T02:30:36.332706+00:00",
+  "updated_at": "2026-09-05T02:36:06.900387+00:00",
   "players": {
     "manual:alexander-zharovsky": {
       "status": "rookie",
       "name": "Alexander Zharovsky",
       "position": "LW"
+    },
+    "manual:gavin-mckenna": {
+      "status": "rookie",
+      "name": "Gavin McKenna",
+      "position": "C"
     }
   }
 }
