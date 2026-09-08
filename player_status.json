@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-05T02:36:06.900387+00:00",
+  "updated_at": "2026-09-08T01:54:32.860129+00:00",
   "players": {
     "manual:alexander-zharovsky": {
       "status": "rookie",
@@ -9,6 +9,11 @@
     "manual:gavin-mckenna": {
       "status": "rookie",
       "name": "Gavin McKenna",
+      "position": "C"
+    },
+    "manual:ivar-stenberg": {
+      "status": "rookie",
+      "name": "Ivar Stenberg",
       "position": "C"
     }
   }
