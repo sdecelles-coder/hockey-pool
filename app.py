@@ -1085,13 +1085,40 @@ def render_draft_tab():
     de.assign_tiers(go)
     by_id = {str(p["playerId"]): p for p in sk + go}
 
+    def player_truth(pid):
+        """Infos d'un joueur alignées sur les tableaux Patineurs/Gardiens.
+
+        Sources de vérité identiques aux tableaux principaux :
+          - Nom / Pos : stats (recrues incluses via PLAYERS_BY_ID, repli sur
+            l'override manuel) ;
+          - Cap Hit   : contrats (contract_for, résout les id manuels) ;
+          - Valeur / Valeur/$M / Tier : scores (by_id).
+        Un joueur non scoré (recrue sans stats ou GP < seuil) garde
+        Valeur/Valeur/$M à None — exactement comme dans les tableaux principaux.
+        """
+        pid = str(pid)
+        base = PLAYERS_BY_ID.get(pid, {})
+        entry = _STATUS.get(pid, {})
+        sc = by_id.get(pid, {})
+        c = contract_for(pid)
+        return {
+            "name": base.get("name") or entry.get("name") or pid,
+            "position": base.get("position") or entry.get("position"),
+            "cap_hit_value": (c.get("cap_hit_value", 0) if c else 0) or 0,
+            "value": sc.get("value"),
+            "value_per_m": sc.get("value_per_m"),
+            "tier": sc.get("tier", "—"),
+        }
+
     # --- Panneau Mon équipe ---
     mine_ids = [pid for pid, s in plan.items() if s == "mine"]
     added_ids = [pid for pid, s in plan.items() if s == "added"]
     target_ids = [pid for pid, s in plan.items() if s == "target"]
 
     def cap_sum(ids):
-        return sum(by_id.get(pid, {}).get("cap_hit_value", 0) for pid in ids)
+        # Cap Hit depuis les contrats (même source que les tableaux principaux) :
+        # inclut les recrues/ajoutés sans stats absents de by_id (ex. McKenna).
+        return sum(player_truth(pid)["cap_hit_value"] for pid in ids)
 
     # Masse salariale = protégés (moi) + ajoutés. Les cibles NE comptent pas.
     cap_total = cap_sum(mine_ids + added_ids)
@@ -1157,7 +1184,12 @@ def render_draft_tab():
     draft_mode = str(st.session_state.get("team_mode", "🏒 Repêchage")).startswith("🏒")
 
     # --- Compteur de slots par position (Protégés + Cibles) ---
+    # Roster : 7 attaquants + 4 défenseurs + 2 gardiens + 6 slots libres
+    # = 19 joueurs au maximum (minimum 16).
     SLOTS = {"F": 7, "D": 4, "G": 2}
+    FREE_SLOTS = 6
+    MAX_ROSTER = sum(SLOTS.values()) + FREE_SLOTS   # 19
+    MIN_ROSTER = 16
 
     def pos_group(pos):
         pos = (pos or "").upper()
@@ -1169,17 +1201,16 @@ def render_draft_tab():
 
     counts = {"F": 0, "D": 0, "G": 0}
     for pid in mine_ids + added_ids + target_ids:
-        p = by_id.get(pid, {})
-        counts[pos_group(p.get("position"))] += 1
+        counts[pos_group(player_truth(pid)["position"])] += 1
     total_sel = counts["F"] + counts["D"] + counts["G"]
     starters = sum(min(counts[g], SLOTS[g]) for g in SLOTS)
     bench = max(0, total_sel - starters)
 
     # Moy du budget restant par joueur qu'il reste à ajouter (repêchage).
-    # Dénominateur = slots vides = total roster (13) − (protégés + ajoutés).
-    # Le Restant est utilisé tel quel (protégés + ajoutés ; les cibles ne
-    # comptent pas dans le cap).
-    slots_to_fill = sum(SLOTS.values()) - (len(mine_ids) + len(added_ids))
+    # Dénominateur = slots vides jusqu'au roster MAX (19) − (protégés + ajoutés).
+    # Les cibles ne comptent pas (ni dans le cap, ni comme slots occupés).
+    roster_now = len(mine_ids) + len(added_ids)
+    slots_to_fill = MAX_ROSTER - roster_now
     avg_per_slot = remaining / slots_to_fill if slots_to_fill > 0 else None
 
     # Ligne unique compacte : protégés/cibles/cap + slots
@@ -1190,9 +1221,12 @@ def render_draft_tab():
         if avg_per_slot is not None:
             avg_html = (f" · <b>Moy/joueur restant:</b> "
                         f"${avg_per_slot:,.0f} <span style='color:gray'>"
-                        f"({slots_to_fill} slot{'s' if slots_to_fill > 1 else ''})</span>")
+                        f"({slots_to_fill} slot{'s' if slots_to_fill > 1 else ''} "
+                        f"jusqu'à {MAX_ROSTER})</span>")
         else:
-            avg_html = " · <b>Moy/joueur restant:</b> — <span style='color:gray'>(0 slot)</span>"
+            avg_html = (" · <b>Moy/joueur restant:</b> — "
+                        f"<span style='color:gray'>(0 slot — roster plein à {MAX_ROSTER})</span>")
+    roster_color = "red" if roster_now > MAX_ROSTER else "gray"
     st.markdown(
         f"<div style='font-size:0.9rem;line-height:1.6'>"
         f"<b>Protégés:</b> {len(mine_ids)}/{MAX_PROTECTED}{over} · "
@@ -1201,7 +1235,9 @@ def render_draft_tab():
         f"<b>F:</b> {counts['F']}/{SLOTS['F']} · "
         f"<b>D:</b> {counts['D']}/{SLOTS['D']} · "
         f"<b>G:</b> {counts['G']}/{SLOTS['G']} · "
-        f"<b>Banc:</b> {bench}  &nbsp;|&nbsp;  "
+        f"<b>Banc:</b> {bench} · "
+        f"<span style='color:{roster_color}'><b>Total:</b> {roster_now}/{MAX_ROSTER} "
+        f"(min {MIN_ROSTER})</span>  &nbsp;|&nbsp;  "
         f"<b>Cap:</b> ${cap_total:,.0f} / ${cap_limit:,.0f} · "
         f"<span style='color:{cap_color}'><b>Restant:</b> ${remaining:,.0f}</span>"
         f"{avg_html}"
@@ -1222,14 +1258,14 @@ def render_draft_tab():
                          expanded=False):
             rows = []
             for pid, s in marked:
-                p = by_id.get(pid, {})
+                r = player_truth(pid)
                 rows.append({
                     "Statut": status_label(s),
-                    "Nom": p.get("name", pid),
-                    "Pos": p.get("position"),
-                    "Cap Hit": p.get("cap_hit_value", 0),
-                    "Valeur": p.get("value"),
-                    "Valeur/$M": p.get("value_per_m"),
+                    "Nom": r["name"],
+                    "Pos": r["position"],
+                    "Cap Hit": r["cap_hit_value"],
+                    "Valeur": r["value"],
+                    "Valeur/$M": r["value_per_m"],
                 })
             mdf = pd.DataFrame(rows).sort_values("Statut")
             st.dataframe(mdf, hide_index=True, width="stretch",
@@ -1283,6 +1319,9 @@ def render_draft_tab():
                         continue
                     pid = str(p.get("playerId"))
                     info = by_id.get(pid, {})
+                    # Cap Hit depuis les contrats (même source que les tableaux
+                    # principaux), pas depuis les scores qui excluent les non-scorés.
+                    cap = contract_for(pid).get("cap_hit_value", 0) or 0
                     base = {
                         "_id": pid,
                         "On ice": lineup.get(pid) == "ice",
@@ -1294,7 +1333,7 @@ def render_draft_tab():
                             pool_for(p.get("name"))[0]) if pool_for(p.get("name"))[0] else "—",
                         "Pos": p.get("position"),
                         "Âge": int(p["age"]) if p.get("age") is not None else None,
-                        "Cap Hit": info.get("cap_hit_value") or None,
+                        "Cap Hit": cap or None,
                         "GP": p.get("gp"),
                         "Valeur": info.get("value"),
                         "Valeur/$M": info.get("value_per_m"),
