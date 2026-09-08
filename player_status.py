@@ -96,13 +96,18 @@ def make_rookie_row(player_id, entry, contract=None):
     Priorité aux méta saisies dans l'override, complétées par le contrat si dispo.
     """
     contract = contract or {}
-    pos = entry.get("position") or contract.get("pos")
+    # PuckPedia (le contrat) fait AUTORITÉ pour la position et l'âge ; la saisie
+    # manuelle ne sert que de repli quand le joueur n'a pas de contrat.
+    pos = contract.get("pos") or entry.get("position")
+    age = contract.get("age")
+    if age is None or age == "":
+        age = entry.get("age")
     return {
         "type": "goalie" if pos == "G" else "skater",
         "playerId": player_id,
-        "name": entry.get("name") or contract.get("name") or str(player_id),
+        "name": contract.get("name") or entry.get("name") or str(player_id),
         "team": entry.get("team") or None,
         "position": pos,
-        "age": entry.get("age") if entry.get("age") is not None else contract.get("age"),
+        "age": age,
         "gp": 0,
     }

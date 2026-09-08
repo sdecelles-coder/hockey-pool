@@ -291,12 +291,39 @@ _STATUS = ps.load_status()              # {id: {status, name, position, team, ag
 RETIRED_IDS = {pid for pid, e in _STATUS.items() if e.get("status") == "retired"}
 ROOKIE_IDS = {pid for pid, e in _STATUS.items() if e.get("status") == "rookie"}
 
+# Un override manuel peut avoir un id synthétique (« manual:… ») alors que le
+# joueur possède en réalité un contrat PuckPedia (ex. recrue saisie en libre :
+# Gavin McKenna, Ivar Stenberg…). On relie l'override à son vrai nhl_id via le
+# nom normalisé, pour que position, âge et infos de contrat s'affichent
+# automatiquement — aussi bien pour les recrues déjà saisies que pour les
+# futures. Purement calculé au chargement : aucun fichier n'est modifié.
+_CONTRACTS_BY_NAME = {}
+for _cid, _c in cache.items():
+    _nm = norm_name(_c.get("name") or "")
+    if _nm:
+        _CONTRACTS_BY_NAME.setdefault(_nm, _cid)
+
+MANUAL_CONTRACT_ID = {}
+for _pid, _e in _STATUS.items():
+    if _pid in cache:                    # déjà un vrai nhl_id -> contrat direct
+        continue
+    _cid = _CONTRACTS_BY_NAME.get(norm_name(_e.get("name") or ""))
+    if _cid:
+        MANUAL_CONTRACT_ID[_pid] = _cid
+
+
+def _contract_by_id(player_id):
+    """Contrat d'un joueur, en résolvant un éventuel id manuel vers son nhl_id."""
+    pid = str(player_id)
+    return cache.get(MANUAL_CONTRACT_ID.get(pid, pid), {})
+
+
 # Recrues absentes des stats : on fabrique une ligne « joueur » jouable (les
 # recrues déjà présentes dans les stats gardent leurs stats, juste marquées).
 for _pid in ROOKIE_IDS:
     if _pid in _stats_ids:
         continue
-    players.append(ps.make_rookie_row(_pid, _STATUS[_pid], cache.get(_pid)))
+    players.append(ps.make_rookie_row(_pid, _STATUS[_pid], _contract_by_id(_pid)))
 
 # Lookup des lignes joueur (augmentées) par id — sert à réinjecter les recrues
 # dans les tables scorées qui filtrent par GP.
@@ -340,7 +367,7 @@ if "_refresh_results" in st.session_state:
 def contract_for(player_id):
     if player_id is None:
         return {}
-    return cache.get(str(player_id), {})
+    return _contract_by_id(player_id)
 
 
 def pool_for(player_name):
