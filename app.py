@@ -4,7 +4,7 @@ Lance : python -m streamlit run app.py
 
 Sources :
 - nhl_stats.json     : stats (update_stats.py / tâche planifiée)
-- nhl_contracts.json : contrats (bouton 'Update All contracts')
+- nhl_contracts.json : contrats (script local refresh_contracts.py — lecture seule ici)
 - espn_owned.json    : rosters du pool ESPN (bouton 'Update pool')
 
 Jointures :
@@ -26,7 +26,6 @@ from datetime import datetime, timezone
 import pandas as pd
 import streamlit as st
 
-import update_contracts as uc
 import espn_roster as er
 import draft_engine as de
 import update_stats as us
@@ -38,15 +37,16 @@ CONTRACTS_FILE = "nhl_contracts.json"
 
 # PuckPedia (Cloudflare) renvoie 403 aux IP des serveurs Streamlit Community
 # Cloud (et aux runners GitHub Actions) : le fetch en direct des contrats y est
-# donc impossible. Les contrats se mettent à jour MANUELLEMENT : bouton
-# 🔄 Contrats en local (le fetch fonctionne depuis une IP résidentielle/corpo),
-# puis commit/push de nhl_contracts.json pour que Cloud le récupère.
+# donc impossible. Les contrats se mettent à jour EN DEHORS de l'app, via le
+# script local `refresh_contracts.py` (fetch depuis une IP résidentielle/corpo,
+# puis commit/push de nhl_contracts.json pour que Cloud le récupère). L'app ne
+# fait que LIRE nhl_contracts.json et afficher l'âge du cache.
 # Détection : Streamlit Community Cloud exécute l'app sous l'utilisateur
 # « appuser » (HOME=/home/appuser).
 IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
 
-# Mise à jour des contrats désormais manuelle et occasionnelle : on n'alerte sur
-# la fraîcheur qu'au-delà de 7 jours (au lieu de 25 h à l'époque du job nocturne).
+# Contrats mis à jour manuellement et occasionnellement (script local) : on
+# n'alerte sur la fraîcheur qu'au-delà de 7 jours.
 CONTRACTS_STALE_H = 24 * 7
 
 COLOR_MINE = "rgba(0, 114, 206, 0.60)"     # bleu Nordique
@@ -151,26 +151,19 @@ if "_auto_refreshed" not in st.session_state:
         _ph_stats = st.empty()
         _ph_pool = st.empty()
         _ph_contracts = st.empty()
-        # Stats & Contrats sont dispo chaque matin : on ne les re-télécharge pas
-        # si leur JSON est déjà daté d'aujourd'hui (heure locale). Le Pool ESPN,
-        # lui, est toujours rafraîchi à chaque ouverture. Les boutons manuels
-        # (📊/🔄) forcent toujours la MàJ (ils n'utilisent pas ce test).
+        # Les stats sont dispo chaque matin : on ne les re-télécharge pas si leur
+        # JSON est déjà daté d'aujourd'hui (heure locale). Le Pool ESPN, lui, est
+        # toujours rafraîchi à chaque ouverture. Le bouton 📊 force toujours la MàJ
+        # (il n'utilise pas ce test). Les contrats ne sont JAMAIS rafraîchis par
+        # l'app : mise à jour uniquement via le script local refresh_contracts.py.
         _stats_fresh = _updated_today(STATS_FILE)
-        _contracts_fresh = _updated_today(CONTRACTS_FILE)
 
         if _stats_fresh:
             _ph_stats.write("✅ **Stats NHL** : déjà à jour (aujourd'hui)")
         else:
             _ph_stats.write("📊 **Stats NHL** : récupération en cours…")
         _ph_pool.write("🏒 **Pool ESPN** : récupération en cours…")
-        # Sur Cloud, PuckPedia renvoie 403 : on ne tente pas le fetch en direct
-        # (les contrats se mettent à jour manuellement, en local).
-        if IS_CLOUD:
-            _ph_contracts.write("🔒 **Contrats** : mise à jour manuelle (indispo sur Cloud)")
-        elif _contracts_fresh:
-            _ph_contracts.write("✅ **Contrats** : déjà à jour (aujourd'hui)")
-        else:
-            _ph_contracts.write("🔄 **Contrats** : récupération en cours…")
+        _ph_contracts.write("🔒 **Contrats** : mise à jour via `refresh_contracts.py` (local)")
 
         def _task_stats():
             us.main()
@@ -178,20 +171,14 @@ if "_auto_refreshed" not in st.session_state:
         def _task_pool():
             er.update_owned()
 
-        def _task_contracts():
-            uc.update_contracts()
-
         _rf_res = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as _ex:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as _ex:
             _futures = {
                 _ex.submit(_task_pool): ("pool", _ph_pool, "🏒 Pool ESPN"),
             }
             if not _stats_fresh:
                 _futures[_ex.submit(_task_stats)] = (
                     "stats", _ph_stats, "📊 Stats NHL")
-            if not IS_CLOUD and not _contracts_fresh:
-                _futures[_ex.submit(_task_contracts)] = (
-                    "contracts", _ph_contracts, "🔄 Contrats")
             _done, _not_done = concurrent.futures.wait(
                 list(_futures.keys()), timeout=REFRESH_TIMEOUT
             )
@@ -441,39 +428,6 @@ def run_stats_update():
     st.rerun()
 
 
-def run_full_update():
-    # Sur Cloud, PuckPedia renvoie 403 : inutile de tenter, on informe.
-    if IS_CLOUD:
-        st.info(
-            "Sur Streamlit Cloud, PuckPedia bloque les mises à jour en direct "
-            "(403). Les contrats se mettent à jour **manuellement** : lance "
-            "l'app **en local**, clique sur 🔄 Contrats, puis commit/push de "
-            "`nhl_contracts.json` — cache actuel : "
-            f"{fmt_age(contracts_db.get('updated_at'))}."
-        )
-        return
-
-    bar = st.progress(0.0, text="Appel API PuckPedia…")
-
-    def cb(done, total, msg):
-        bar.progress(done / total if total else 1.0, text=msg)
-
-    try:
-        with st.spinner("Récupération de tous les contrats…"):
-            summary = uc.update_contracts(progress_cb=cb)
-        bar.empty()
-        st.success(f"Terminé : {summary['scraped']} contrats récupérés.")
-        st.rerun()
-    except Exception as e:
-        bar.empty()
-        st.warning(
-            f"Impossible de récupérer les contrats depuis PuckPedia : `{e}`\n\n"
-            "Les données de contrats en cache sont conservées "
-            f"(dernière mise à jour {fmt_age(contracts_db.get('updated_at'))}). "
-            "Réessaie plus tard avec le bouton 🔄 Contrats."
-        )
-
-
 def run_pool_update():
     with st.spinner("Récupération des rosters ESPN…"):
         try:
@@ -489,7 +443,7 @@ def run_pool_update():
 # En-tête compact
 # ----------------------------------------------------------------------
 st.markdown("#### 🏒 NHL — Stats, Contrats & Pool")
-hc1, hc2, hc3, hc4 = st.columns([4, 1.3, 1.3, 1.3])
+hc1, hc2, hc3 = st.columns([4, 1.3, 1.3])
 
 # Vérification ancienneté des contrats
 _contracts_age_h = None
@@ -510,23 +464,14 @@ hc1.caption(
 )
 
 if _contracts_age_h is not None and _contracts_age_h > CONTRACTS_STALE_H:
-    _retry_hint = (
-        "Mise à jour manuelle : lance l'app en local, clique sur 🔄 Contrats, "
-        "puis commit/push de nhl_contracts.json."
-        if IS_CLOUD else
-        "Utilise le bouton 🔄 Contrats pour les rafraîchir."
-    )
     st.warning(
         f"⚠️ Les contrats datent de plus de **{int(_contracts_age_h // 24)} j** — "
-        + _retry_hint,
+        "mise à jour manuelle : lance `python refresh_contracts.py` en local.",
         icon="🔔",
     )
 if hc2.button("📊 Stats", width="stretch", help="Mettre à jour les stats NHL"):
     run_stats_update()
-if hc3.button("🔄 Contrats", type="primary", width="stretch",
-              help="Update All contracts (PuckPedia)"):
-    run_full_update()
-if hc4.button("🏒 Pool", width="stretch", help="Update pool (ESPN)"):
+if hc3.button("🏒 Pool", width="stretch", help="Update pool (ESPN)"):
     run_pool_update()
 
 

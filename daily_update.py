@@ -5,10 +5,11 @@ Lancé chaque matin à 5h15 par le Planificateur de tâches Windows.
 Automatisé :
   nhl_stats.json    <- API publique NHL  (toujours possible)
   espn_owned.json   <- API ESPN Fantasy  (nécessite credentials .env)
-  nhl_contracts.json <- PuckPedia        (cloudscraper, peut échouer si Cloudflare bloque)
 
 Non automatisé (choix manuels) :
   draft_plan.json, lineup.json
+  nhl_contracts.json <- PuckPedia : mise à jour uniquement via le script local
+                        refresh_contracts.py (PuckPedia bloque les IP datacenter).
 """
 
 import sys
@@ -50,19 +51,9 @@ def update_espn():
     log(f"Pool ESPN OK : {res['count']} joueurs.")
 
 
-def update_contracts():
-    import update_contracts as uc
-    log("--- Contrats PuckPedia (nhl_contracts.json) ---")
-    res = uc.update_contracts()
-    log(f"Contrats OK : {res['scraped']} contrats, {len(res['errors'])} erreur(s).")
-    for err in res["errors"]:
-        log(f"  ERREUR contrats : {err}")
-
-
 TASKS = [
     ("Stats NHL",         update_stats),
     ("Pool ESPN",         update_espn),
-    ("Contrats PuckPedia", update_contracts),
 ]
 
 
