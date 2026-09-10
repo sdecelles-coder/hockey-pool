@@ -18,8 +18,8 @@
     "hits": 1.05,
     "goals": 1.05,
     "assists": 1.1,
-    "pim": 1.0,
-    "sog": 1.05
+    "pim": 1.05,
+    "sog": 1.1
   },
   "goalie": {
     "shutouts": 1.2,
