@@ -17,6 +17,7 @@ Deux modes :
 
 import json
 import math
+import re
 import time
 from datetime import datetime, timezone
 from urllib.parse import quote
@@ -32,10 +33,13 @@ if not VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 CONTRACTS_FILE = "nhl_contracts.json"
+STATS_FILE = "nhl_stats.json"  # sert à repérer les joueurs absents du flux liste
 PAGE_SIZE = 100  # l'API PuckPedia plafonne à 100 joueurs par page
 DELAY_SEC = 0.3  # pause entre pages (rester bien sous le timeout d'ouverture de l'app)
+PROFILE_DELAY = 0.2  # pause entre fetchs de fiches individuelles (fallback)
 TIMEOUT = 30  # secondes pour requests
 API_BASE = "https://puckpedia.com/players/api?q="
+PROFILE_BASE = "https://puckpedia.com/player/"
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -64,8 +68,10 @@ def current_season_id(today=None):
 def build_url(role, page, size=PAGE_SIZE, season=None):
     if season is None:
         season = current_season_id()
+    # NB : PAS de filtre "player_active". Le limiter à ["1"] écartait les
+    # joueurs sous contrat mais non-actifs sur le roster NHL (assignés aux
+    # mineures, ex. Reinbacher) — on veut 100% des contrats du flux.
     q = {
-        "player_active": ["1"],
         "player_role": role,
         "sortBy": "cap_hit",
         "sortDirection": "DESC",
@@ -157,6 +163,128 @@ def save_cache(contracts):
         json.dump(out, f, ensure_ascii=False, indent=2)
 
 
+# ----------------------------------------------------------------------
+# Fallback « fiche individuelle »
+#
+# Certains joueurs pourtant sous contrat sont ABSENTS du flux liste de
+# PuckPedia (players/api), quel que soit le filtre — ex. Sam Malinski. Leur
+# contrat n'existe que sur leur page profil (/player/<slug>). On la parse en
+# dernier recours pour les joueurs qu'on connaît (nhl_stats.json) mais que le
+# flux n'a pas renvoyés. Le HTML de la fiche est orienté affichage : on en tire
+# de façon fiable cap hit / statut d'expiration / année d'expiration / statut de
+# signature / position / âge. Les clauses ne sont PAS extractibles proprement
+# (ventilées par année) -> laissées vides plutôt qu'erronées.
+# ----------------------------------------------------------------------
+def _load_stats_players():
+    """Joueurs connus (nhl_stats.json) avec leur slug PuckPedia."""
+    try:
+        with open(STATS_FILE, encoding="utf-8") as f:
+            return json.load(f).get("players", [])
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def parse_profile(html, nhl_id, name=None, slug=None):
+    """Extrait un contrat de la page profil PuckPedia. None si aucun contrat."""
+    # Cap hit exact du contrat courant (onglet affiché par défaut sur la fiche).
+    m = re.search(r"val-lg['\"]>\$([\d,]+)", html)
+    if not m:
+        return None  # pas de contrat courant affiché -> rien à enregistrer
+    cap = int(m.group(1).replace(",", ""))
+
+    # Titre du contrat sélectionné (ex. "2026-2030") depuis le bloc d'onglets.
+    title = ""
+    tm = re.search(r"options:\s*(\[.*?\]),\s*tabSelected:\s*(\d+)", html, re.S)
+    if tm:
+        try:
+            opts = json.loads(tm.group(1))
+            sel = int(tm.group(2))
+            cur = next((o for o in opts if o.get("value") == sel),
+                       opts[-1] if opts else {})
+            title = cur.get("title", "") or ""
+        except (ValueError, KeyError, TypeError):
+            pass
+
+    # expiry_year = dernière saison du contrat ("2026-2030" -> "2029-2030").
+    # years_left = saisons restantes à partir de la saison courante.
+    expiry_year = ""
+    years_left = ""
+    ym = re.search(r"(\d{4})-(\d{4})", title)
+    if ym:
+        end = int(ym.group(2))
+        expiry_year = f"{end - 1}-{end}"
+        start_year = current_season_id() + SEASON_ID_BASE
+        years_left = str(max(0, end - start_year))
+
+    def _tip(label):
+        mm = re.search(label + r":\s*([A-Za-z0-9]+)", html)
+        return mm.group(1) if mm else ""
+
+    expiry_status = _tip("Expiry Status")
+    signing_status = _tip("Signing Status")
+
+    pm = re.search(r'pp_subset">pos</span><span[^>]*>([^<]+)</span>', html)
+    am = re.search(r'pp_subset">age</span><span[^>]*>([^<]+)</span>', html)
+    pos = pm.group(1).strip() if pm else ""
+    age = am.group(1).strip() if am else ""
+
+    return {
+        "nhl_id": str(nhl_id),
+        "name": name or "",
+        "pos": pos,
+        "age": age,
+        "cap_hit_value": cap,
+        "signing_status": signing_status,
+        "expiry_status": expiry_status,
+        "expiry_year": expiry_year,
+        "clauses": "",              # non extractible proprement depuis la fiche
+        "contract_level": "",
+        "years_left": years_left,
+        "ppg_points": "0.00",
+        "puckpedia_url": slug or "",
+        "source": "profile",        # trace: contrat venu du fallback fiche
+    }
+
+
+def fetch_contract_from_profile(slug, nhl_id, name=None):
+    """GET la fiche profil et renvoie le contrat parsé (ou None)."""
+    r = requests.get(PROFILE_BASE + slug, headers=HEADERS,
+                     timeout=TIMEOUT, verify=VERIFY_SSL)
+    r.raise_for_status()
+    return parse_profile(r.text, nhl_id, name=name, slug=slug)
+
+
+def _fill_missing_from_profiles(parsed_by_id, progress_cb=None):
+    """Complète parsed_by_id via les fiches, pour les joueurs connus absents.
+
+    Renvoie (added, failed) où failed est une liste de (nhl_id, message).
+    """
+    missing = [
+        p for p in _load_stats_players()
+        if str(p.get("playerId")) not in parsed_by_id and p.get("puckpedia_slug")
+    ]
+    total = len(missing)
+    added = 0
+    failed = []
+    now = datetime.now(timezone.utc).isoformat()
+    for i, p in enumerate(missing, 1):
+        pid = str(p.get("playerId"))
+        if progress_cb:
+            progress_cb(i, total, f"Fiche {i}/{total} : {p.get('name', pid)}")
+        try:
+            rec = fetch_contract_from_profile(p["puckpedia_slug"], pid,
+                                              name=p.get("name"))
+        except Exception as e:
+            failed.append((pid, f"{type(e).__name__}: {e}"))
+            rec = None
+        if rec:
+            rec["scraped_at"] = now
+            parsed_by_id[pid] = rec
+            added += 1
+        time.sleep(PROFILE_DELAY)
+    return added, failed
+
+
 def _fetch_all_parsed(progress_cb=None):
     all_players = []
     errors = []
@@ -182,13 +310,26 @@ def _fetch_all_parsed(progress_cb=None):
     return parsed_by_id, errors, no_id
 
 
-def update_contracts(progress_cb=None):
+def update_contracts(progress_cb=None, with_profile_fallback=True):
     parsed_by_id, errors, no_id = _fetch_all_parsed(progress_cb)
     if not parsed_by_id:
         raise RuntimeError(f"Aucun contrat récupéré — fichier non modifié. Erreurs : {errors}")
+
+    from_feed = len(parsed_by_id)
+
+    # Fallback fiches : rattrape les joueurs connus absents du flux liste.
+    profile_added = 0
+    profile_failed = []
+    if with_profile_fallback:
+        profile_added, profile_failed = _fill_missing_from_profiles(
+            parsed_by_id, progress_cb)
+
     save_cache(parsed_by_id)
     return {
         "scraped": len(parsed_by_id),
+        "from_feed": from_feed,
+        "profile_added": profile_added,
+        "profile_failed": profile_failed,
         "errors": errors,
         "no_id": no_id,
         "total_cached": len(parsed_by_id),
@@ -211,9 +352,34 @@ def update_contracts_for(player_ids, progress_cb=None):
         else:
             not_found.append(pid)
 
+    # Fallback fiches pour les cibles absentes du flux (ex. Malinski).
+    profile_added = 0
+    if not_found:
+        slugs = {str(p.get("playerId")): (p.get("puckpedia_slug"), p.get("name"))
+                 for p in _load_stats_players()}
+        now = datetime.now(timezone.utc).isoformat()
+        still_missing = []
+        for pid in not_found:
+            slug, name = slugs.get(pid, (None, None))
+            rec = None
+            if slug:
+                try:
+                    rec = fetch_contract_from_profile(slug, pid, name=name)
+                except Exception:
+                    rec = None
+                time.sleep(PROFILE_DELAY)
+            if rec:
+                rec["scraped_at"] = now
+                cache[pid] = rec
+                profile_added += 1
+            else:
+                still_missing.append(pid)
+        not_found = still_missing
+
     save_cache(cache)
     return {
-        "scraped": updated,
+        "scraped": updated + profile_added,
+        "profile_added": profile_added,
         "errors": errors,
         "not_found": not_found,
         "total_cached": len(cache),
@@ -227,7 +393,9 @@ if __name__ == "__main__":
         print(f"  {msg}")
 
     s = update_contracts(progress_cb=cb)
-    print(f"\nTerminé : {s['scraped']} contrats, "
-          f"{len(s['errors'])} erreurs, {s['no_id']} sans nhl_id")
+    print(f"\nTerminé : {s['scraped']} contrats "
+          f"({s['from_feed']} via le flux + {s['profile_added']} via fiches), "
+          f"{len(s['errors'])} erreurs, {s['no_id']} sans nhl_id, "
+          f"{len(s['profile_failed'])} fiches en échec")
     for e in s["errors"]:
         print("  ERREUR:", e)

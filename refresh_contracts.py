@@ -57,7 +57,12 @@ def main():
         print("  (Un 403 signifie que tu n'es PAS sur une IP locale autorisée.)")
         return 1
 
-    print(f"[OK] {summary['scraped']} contrats écrits dans {uc.CONTRACTS_FILE}")
+    print(f"[OK] {summary['scraped']} contrats écrits dans {uc.CONTRACTS_FILE} "
+          f"({summary.get('from_feed', '?')} via le flux + "
+          f"{summary.get('profile_added', 0)} via fiches individuelles).")
+    if summary.get("profile_failed"):
+        print(f"  ({len(summary['profile_failed'])} fiches n'ont pas pu être lues "
+              "— slug PuckPedia manquant/incorrect ou joueur sans contrat.)")
 
     if args.dry_run:
         print("-> --dry-run : aucune action git.")

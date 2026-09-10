@@ -325,6 +325,18 @@ for _pid in ROOKIE_IDS:
         continue
     players.append(ps.make_rookie_row(_pid, _STATUS[_pid], _contract_by_id(_pid)))
 
+# Contractants sans stats : PuckPedia a un contrat pour eux mais ils n'ont aucune
+# stat NHL cette saison (signés hors NHL, blessés, prospects sous contrat, ou
+# stats pas encore publiées en intersaison). On les injecte comme lignes jouables
+# (stats vides) pour que TOUS les joueurs sous contrat apparaissent dans les
+# tableaux Patineurs/Gardiens. On saute ceux déjà représentés (stats, recrues via
+# id manuel, retraités) pour éviter les doublons.
+_covered_ids = set(_stats_ids) | set(MANUAL_CONTRACT_ID.values()) | RETIRED_IDS
+for _cid, _c in cache.items():
+    if _cid in _covered_ids:
+        continue
+    players.append(ps.make_rookie_row(_cid, {}, _c))
+
 # Lookup des lignes joueur (augmentées) par id — sert à réinjecter les recrues
 # dans les tables scorées qui filtrent par GP.
 PLAYERS_BY_ID = {str(p.get("playerId")): p for p in players}
@@ -418,7 +430,7 @@ def build_df(player_type):
             "NHL Team": p.get("team"),
             "Pool Team": pool_abbr(pool_team) if pool_team else "—",
             "Pos": p.get("position"),
-            "Âge": int(p["age"]) if p.get("age") is not None else None,
+            "Âge": int(p["age"]) if str(p.get("age") or "").strip().isdigit() else None,
             "GP": p.get("gp"),
             "Cap Hit": c.get("cap_hit_value", 0) if c else 0,
             "Signing": c.get("signing_status") or "—",
@@ -804,7 +816,7 @@ def render_fa_tab():
             "NHL Team": p.get("team", ""),
             "Pool Team": pool_abbr(pool_team) if pool_team else "—",
             "Pos": p.get("position", ""),
-            "Âge": int(p["age"]) if p.get("age") is not None else None,
+            "Âge": int(p["age"]) if str(p.get("age") or "").strip().isdigit() else None,
             "GP": p.get("gp") or 0,
             "Cap Hit": (c.get("cap_hit_value") or 0) if c else 0,
             "FA": expiry_status,
@@ -1332,7 +1344,7 @@ def render_draft_tab():
                         "Pool Team": pool_abbr(
                             pool_for(p.get("name"))[0]) if pool_for(p.get("name"))[0] else "—",
                         "Pos": p.get("position"),
-                        "Âge": int(p["age"]) if p.get("age") is not None else None,
+                        "Âge": int(p["age"]) if str(p.get("age") or "").strip().isdigit() else None,
                         "Cap Hit": cap or None,
                         "GP": p.get("gp"),
                         "Valeur": info.get("value"),
