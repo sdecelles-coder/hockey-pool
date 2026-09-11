@@ -311,7 +311,9 @@ cache = contracts_db.get("contracts", {})
 # latérale) : Repêchage -> ancienne saison ESPN, Saison -> nouvelle. La saison
 # est dérivée du manifeste (seasons.py) — aucune saisie d'année manuelle.
 _draft_mode_now = str(st.session_state.get("team_mode", "🏒 Repêchage")).startswith("🏒")
-_espn_season = seasons_mod.espn_season_for_mode(_draft_mode_now)
+_espn_season = seasons_mod.espn_season_for_mode(_draft_mode_now)   # saison demandée
+_espn_effective = _espn_season                                     # saison réellement affichée
+_espn_fallback = False
 espn_db = er.load_owned(_espn_season)
 owned = espn_db.get("owned", {})
 # Si la nouvelle saison n'a pas encore de roster (fichier absent en intersaison),
@@ -323,6 +325,16 @@ if not owned and not _draft_mode_now:
         if _fb_db.get("owned"):
             espn_db = _fb_db
             owned = _fb_db.get("owned", {})
+            _espn_effective = _fallback_season
+            _espn_fallback = True
+
+# Indicateur visible de la saison ESPN active selon le mode (permet de vérifier
+# que le mode Repêchage/Saison change bien la saison interrogée).
+_pool_msg = f"🏒 Pool ESPN : saison **{_espn_season}**"
+if _espn_fallback:
+    _pool_msg += (f" — pas encore de roster, affichage de **{_espn_effective}** "
+                  "en attendant (bascule auto au repêchage ESPN)")
+st.sidebar.caption(_pool_msg)
 
 if _stats_from_last_season:
     st.sidebar.caption(
