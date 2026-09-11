@@ -1016,26 +1016,19 @@ def status_label(s):
 CONF_CATS = [c[0] for c in de.SKATER_CATS] + [c[0] for c in de.GOALIE_CATS]
 
 
-# Libellés de lignes « résumé » à ignorer dans la coloration (échelle + rendu).
-SUMMARY_ROWS = {"Moyenne"}
-
-
 def color_col(s):
     """Coloration d'une colonne de catégorie : vert (fort) -> rouge (faible).
 
     Relatif au min/max de la colonne affichée. GAA inversé (bas = mieux).
-    Les lignes résumé (ex. « Moyenne ») sont colorées sur la même échelle mais
-    exclues du calcul du min/max. Colonnes hors catégories (ex. « Pos ») et
-    cellules NaN : non colorées.
+    Colonnes hors catégories (ex. « Pos ») et cellules NaN : non colorées.
     """
     cat = s.name
     if cat not in de.CAT_DIRECTION:
         return ["" for _ in s]
     higher = de.CAT_DIRECTION[cat]
     vals = s.astype(float)
-    scale = vals[~s.index.isin(SUMMARY_ROWS)]
-    vmin, vmax = scale.min(), scale.max()
-    if pd.isna(vmin) or vmin == vmax:
+    vmin, vmax = vals.min(), vals.max()
+    if vmin == vmax:
         return ["" for _ in s]
     out = []
     for v in vals:
@@ -1050,6 +1043,68 @@ def color_col(s):
         g = int(180 * frac)
         out.append(f"background-color: rgba({r},{g},80,0.45)")
     return out
+
+
+def league_cat_bounds(min_gp):
+    """Moyenne (mu) et écart-type (sd) par catégorie sur TOUTE la ligue.
+
+    Base identique au calcul de la « Valeur » (z-score) : stats projetées sur
+    82 matchs pour les cumulatives (buts, aides…), valeurs brutes pour les taux
+    (GAA, SV%), sur les joueurs de la saison courante ayant `gp >= min_gp`.
+    Retourne {label: (mu, sd, higher_is_better)}.
+    """
+    from statistics import mean, pstdev
+    bounds = {}
+    for cats, ptype in ((de.SKATER_CATS, "skater"), (de.GOALIE_CATS, "goalie")):
+        cumulative = (de.SKATER_CUMULATIVE if ptype == "skater"
+                      else de.GOALIE_CUMULATIVE)
+        pool = [p for p in PLAYERS_BY_ID.values()
+                if p.get("type") == ptype and (p.get("gp") or 0) >= min_gp]
+        for label, src in cats:
+            vals = []
+            for p in pool:
+                v = p.get(src)
+                if v is None:
+                    continue
+                if src in cumulative:
+                    gp = p.get("gp") or 0
+                    if gp <= 0:
+                        continue
+                    v = v / gp * de.PROJECT_GAMES
+                vals.append(v)
+            if len(vals) >= 2:
+                bounds[label] = (mean(vals), pstdev(vals), de.CAT_DIRECTION[label])
+    return bounds
+
+
+def color_by_zscore(bounds, zclip=2.0):
+    """Fabrique une fonction de coloration relative à la ligue (z-score).
+
+    Chaque cellule est colorée selon son z-score vs la ligue (`bounds`), mappé
+    linéairement de [-zclip, +zclip] vers rouge->vert. La moyenne de la ligue
+    (z=0) tombe au milieu ; un joueur au-dessus de la moyenne penche vers le
+    vert. GAA inversé via `higher_is_better`. Convient aussi à la ligne
+    « Moyenne » : le z du moyen = moyenne des z des joueurs.
+    """
+    def _col(s):
+        cat = s.name
+        if cat not in bounds:
+            return ["" for _ in s]
+        mu, sd, higher = bounds[cat]
+        out = []
+        for v in s.astype(float):
+            if pd.isna(v) or sd == 0:
+                out.append("")
+                continue
+            z = (v - mu) / sd
+            if not higher:
+                z = -z
+            frac = max(0.0, min(1.0, (z + zclip) / (2 * zclip)))
+            r = int(255 * (1 - frac))
+            g = int(180 * frac)
+            out.append(f"background-color: rgba({r},{g},80,0.45)")
+        return out
+    return _col
 
 
 def render_draft_tab():
@@ -1331,8 +1386,12 @@ def render_draft_tab():
     # --- Forces & faiblesses de ma sélection (par joueur) ---
     st.markdown("**📊 Forces & faiblesses de ma sélection**")
     st.caption("Stats projetées sur 82 matchs, par joueur (protégés + ajoutés + "
-               "cibles). Vert = fort, rouge = faible dans la catégorie. "
-               "GAA : plus bas = mieux.")
+               "cibles). Coloration relative à toute la ligue (z-score, même base "
+               "que la Valeur) : vert = au-dessus de la moyenne de la ligue, rouge "
+               "= en dessous. GAA : plus bas = mieux. La ligne Moyenne exclut les "
+               "cibles.")
+
+    cat_bounds = league_cat_bounds(min_gp)
 
     sk_rows, go_rows = [], []
     for pid in mine_ids + added_ids + target_ids:
@@ -1340,14 +1399,15 @@ def render_draft_tab():
         gp = (p or {}).get("gp") or 0
         info = player_truth(pid)
         name = f"{info['name']} {status_label(plan.get(str(pid), ''))}"
+        is_target = plan.get(str(pid)) == "target"
         if p and p.get("type") == "skater" and gp:
-            row = {"Joueur": name, "Pos": info["position"]}
+            row = {"Joueur": name, "Pos": info["position"], "_is_target": is_target}
             for label, src in de.SKATER_CATS:
                 v = p.get(src)
                 row[label] = v / gp * 82 if v is not None else None
             sk_rows.append(row)
         elif p and p.get("type") == "goalie" and gp:
-            row = {"Joueur": name}
+            row = {"Joueur": name, "_is_target": is_target}
             for label, src in (("W", "wins"), ("SO", "shutouts")):
                 v = p.get(src)
                 row[label] = v / gp * 82 if v is not None else None
@@ -1357,13 +1417,14 @@ def render_draft_tab():
 
     def _show_sel_table(rows, cats, extra_cols):
         df = pd.DataFrame(rows).set_index("Joueur")
+        is_target = df.pop("_is_target").astype(bool)
         for c in cats:
             if c not in df.columns:
                 df[c] = None
         df = df[extra_cols + cats]
-        # ligne moyenne (exclue de la coloration via SUMMARY_ROWS)
-        df.loc["Moyenne"] = df.mean(numeric_only=True)
-        styled = df.style.apply(color_col, axis=0).format(
+        # ligne moyenne — exclut les cibles, colorée sur l'échelle ligue
+        df.loc["Moyenne (hors cibles)"] = df.loc[~is_target].mean(numeric_only=True)
+        styled = df.style.apply(color_by_zscore(cat_bounds), axis=0).format(
             precision=1, na_rep="—")
         st.dataframe(styled, width="stretch")
 
