@@ -49,6 +49,12 @@ IS_CLOUD = os.environ.get("HOME", "") == "/home/appuser"
 # n'alerte sur la fraîcheur qu'au-delà de 7 jours.
 CONTRACTS_STALE_H = 24 * 7
 
+# Anti-tableaux-vides en début de saison : tant que la saison LIVE cumule moins
+# de ce total de matchs joués (tous joueurs confondus), on affiche les stats de
+# la dernière saison archivée. ~200 = quelques soirées de matchs NHL ; au-delà,
+# bascule automatique vers la saison en cours.
+LIVE_SEASON_MIN_GP = 200
+
 COLOR_MINE = "rgba(0, 114, 206, 0.60)"     # bleu Nordique
 COLOR_OTHER = "rgba(128, 128, 128, 0.80)"  # gris
 COLOR_TARGET = "rgba(255, 224, 102, 0.45)" # jaune pâle (cibles au repêchage)
@@ -169,7 +175,19 @@ if "_auto_refreshed" not in st.session_state:
             us.main()
 
         def _task_pool():
-            er.update_owned()
+            # Rafraîchit les saisons ESPN pertinentes (Repêchage + Saison) dérivées
+            # du manifeste. Échec seulement si AUCUNE n'a pu être récupérée (la
+            # nouvelle saison peut ne pas encore exister sur ESPN en intersaison).
+            _errs = []
+            _got = 0
+            for _yr in seasons_mod.espn_seasons_to_refresh():
+                try:
+                    er.update_owned(_yr)
+                    _got += 1
+                except Exception as _e:
+                    _errs.append(f"{_yr}: {_e}")
+            if not _got:
+                raise RuntimeError("; ".join(_errs) or "aucune saison ESPN")
 
         _rf_res = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as _ex:
@@ -271,11 +289,46 @@ if stats is None:
         )
         st.stop()
 
+# Anti-tableaux-vides : en début de saison la nouvelle saison est quasi vide. On
+# affiche alors les stats de la dernière saison archivée (contrats restent live),
+# jusqu'à ce que la saison en cours ait assez de données -> bascule auto.
+_stats_from_last_season = None
+if _SEL_IS_LIVE and stats is not None:
+    _live_gp = sum((p.get("gp") or 0) for p in stats.get("players", []))
+    if _live_gp < LIVE_SEASON_MIN_GP:
+        _arch_sid = seasons_mod.latest_archived()
+        if _arch_sid:
+            _arch_stats_path, _ = seasons_mod.archive_paths(_arch_sid)
+            _arch_stats = load_json(str(_arch_stats_path), None)
+            if _arch_stats and _arch_stats.get("players"):
+                stats = _arch_stats
+                _stats_from_last_season = _arch_sid
+
 contracts_db = load_json(CONTRACTS_PATH, {"contracts": {}})
 cache = contracts_db.get("contracts", {})
 
-espn_db = er.load_owned()
+# Rosters ESPN selon le mode d'affichage (radio « team_mode » de la barre
+# latérale) : Repêchage -> ancienne saison ESPN, Saison -> nouvelle. La saison
+# est dérivée du manifeste (seasons.py) — aucune saisie d'année manuelle.
+_draft_mode_now = str(st.session_state.get("team_mode", "🏒 Repêchage")).startswith("🏒")
+_espn_season = seasons_mod.espn_season_for_mode(_draft_mode_now)
+espn_db = er.load_owned(_espn_season)
 owned = espn_db.get("owned", {})
+# Si la nouvelle saison n'a pas encore de roster (fichier absent en intersaison),
+# on retombe sur l'ancienne pour ne pas vider les tableaux de possession.
+if not owned and not _draft_mode_now:
+    _fallback_season = seasons_mod.espn_season_for_mode(True)
+    if _fallback_season != _espn_season:
+        _fb_db = er.load_owned(_fallback_season)
+        if _fb_db.get("owned"):
+            espn_db = _fb_db
+            owned = _fb_db.get("owned", {})
+
+if _stats_from_last_season:
+    st.sidebar.caption(
+        f"📊 Stats affichées : **{seasons_mod.fmt_season(_stats_from_last_season)}** "
+        "— la saison en cours n'a pas encore assez de données (bascule auto)."
+    )
 
 players = stats.get("players", [])
 
@@ -469,12 +522,20 @@ def run_stats_update():
 
 def run_pool_update():
     with st.spinner("Récupération des rosters ESPN…"):
-        try:
-            res = er.update_owned()
-            st.success(f"Pool mis à jour : {res['count']} joueurs possédés.")
-        except Exception as e:
-            st.error(f"Échec ESPN : {e}")
+        total = 0
+        errs = []
+        for yr in seasons_mod.espn_seasons_to_refresh():
+            try:
+                total += er.update_owned(yr)["count"]
+            except Exception as e:
+                errs.append(f"{yr}: {e}")
+        if errs and not total:
+            st.error("Échec ESPN : " + " ; ".join(errs))
             return
+        msg = f"Pool mis à jour : {total} joueurs possédés."
+        if errs:
+            msg += f" (saison ignorée — {' ; '.join(errs)})"
+        st.success(msg)
     st.rerun()
 
 

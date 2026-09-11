@@ -70,6 +70,44 @@ def archive_paths(sid):
     return d / "stats.json", d / "contracts.json"
 
 
+def latest_archived():
+    """Id de la saison archivée la plus récente (ou None)."""
+    archived = sorted(load_manifest().get("archived", []), reverse=True)
+    return archived[0] if archived else None
+
+
+def espn_year(sid):
+    """Année ESPN (int) d'une saison : '20252026' -> 2026 (année de fin)."""
+    return int(sid[4:])
+
+
+def espn_season_for_mode(draft_mode):
+    """Année ESPN (int) à interroger selon le mode d'affichage.
+
+    - Repêchage (draft_mode=True) : année de fin de `current_season` — pendant
+      l'intersaison c'est la saison qui vient de se terminer (« l'ancienne »).
+    - Saison (draft_mode=False)   : année de fin de la saison la plus récente,
+      c.-à-d. `upcoming_season` en intersaison (la nouvelle ligue déjà montée sur
+      ESPN par l'admin), sinon `current_season`.
+
+    Ex. intersaison current=20252026 / upcoming=20262027 :
+        Repêchage -> 2026, Saison -> 2027.
+    """
+    m = load_manifest()
+    if draft_mode:
+        sid = m["current_season"]
+    elif m["phase"] == "offseason":
+        sid = m.get("upcoming_season") or next_season_id(m["current_season"])
+    else:
+        sid = m["current_season"]
+    return espn_year(sid)
+
+
+def espn_seasons_to_refresh():
+    """Années ESPN à garder fraîches (Repêchage + Saison), triées et dédupliquées."""
+    return sorted({espn_season_for_mode(True), espn_season_for_mode(False)})
+
+
 def list_selectable():
     """Options ordonnées pour le sélecteur de saison de l'app.
 

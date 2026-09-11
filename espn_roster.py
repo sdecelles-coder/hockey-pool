@@ -18,8 +18,21 @@ import requests
 import urllib3
 import config
 
-OWNED_FILE = "espn_owned.json"
+OWNED_FILE = "espn_owned.json"  # legacy (saison non précisée)
 HEADERS = {"User-Agent": "Mozilla/5.0"}
+
+
+def owned_file(season=None):
+    """Chemin du cache roster pour une saison ESPN donnée.
+
+    Un fichier par saison (`espn_owned_2026.json`, `espn_owned_2027.json`…) afin
+    que le mode Repêchage (ancienne saison) et le mode Saison (nouvelle) ne
+    s'écrasent pas. `espn*.json` est gitignoré : ces caches sont refetchés à
+    chaque ouverture, jamais versionnés.
+    """
+    if season is None:
+        return OWNED_FILE
+    return f"espn_owned_{season}.json"
 
 
 def norm_name(name):
@@ -33,10 +46,15 @@ def norm_name(name):
     return s
 
 
-def fetch_rosters():
-    """Retourne {nom_normalisé: {'pool_team', 'is_mine', 'espn_name'}}."""
+def fetch_rosters(season=None):
+    """Retourne {nom_normalisé: {'pool_team', 'is_mine', 'espn_name'}}.
+
+    `season` : année ESPN (ex. 2026). Si None, on retombe sur le secret/env
+    `ESPN_SEASON` (override manuel optionnel, sinon la dérivation auto de l'app
+    via seasons.py doit fournir l'année).
+    """
     league_id = config.get("ESPN_LEAGUE_ID")
-    season    = config.get("ESPN_SEASON")
+    season    = season if season is not None else config.get("ESPN_SEASON")
     my_team_id = int(config.get("ESPN_TEAM_ID", "0"))
     swid      = config.get("ESPN_SWID")
     espn_s2   = config.get("ESPN_S2")
@@ -49,6 +67,10 @@ def fetch_rosters():
         raise RuntimeError(
             "Configuration ESPN manquante. Vérifie le fichier .env "
             "(ESPN_LEAGUE_ID, ESPN_SWID, ESPN_S2)."
+        )
+    if not season:
+        raise RuntimeError(
+            "Saison ESPN indéterminée : passe `season=` ou définis ESPN_SEASON."
         )
 
     base = (f"https://lm-api-reads.fantasy.espn.com/apis/v3/games/fhl"
@@ -78,28 +100,43 @@ def fetch_rosters():
     return owned, int(config.get("ESPN_TEAM_ID", "0"))
 
 
-def update_owned():
-    """Récupère et sauvegarde les rosters dans espn_owned.json."""
-    owned, my_team_id = fetch_rosters()
+def update_owned(season=None):
+    """Récupère et sauvegarde les rosters dans espn_owned_<season>.json."""
+    owned, my_team_id = fetch_rosters(season)
     out = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "my_team_id": my_team_id,
+        "season": season,
         "owned": owned,
     }
-    with open(OWNED_FILE, "w", encoding="utf-8") as f:
+    path = owned_file(season)
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
-    return {"count": len(owned)}
+    return {"count": len(owned), "season": season, "file": path}
 
 
-def load_owned():
-    """Lit espn_owned.json (ou {} si absent)."""
+def load_owned(season=None):
+    """Lit espn_owned_<season>.json (ou {} si absent)."""
     try:
-        with open(OWNED_FILE, encoding="utf-8") as f:
+        with open(owned_file(season), encoding="utf-8") as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {"owned": {}}
 
 
 if __name__ == "__main__":
-    res = update_owned()
-    print(f"{res['count']} joueurs possédés sauvegardés dans {OWNED_FILE}")
+    # Rafraîchit toutes les saisons pertinentes (Repêchage + Saison) dérivées du
+    # manifeste seasons.json — plus aucune saisie d'année manuelle.
+    import seasons as S
+    _years = S.espn_seasons_to_refresh()
+    _ok = 0
+    for _yr in _years:
+        try:
+            _res = update_owned(_yr)
+            _ok += 1
+            print(f"{_res['count']} joueurs (saison {_yr}) -> {_res['file']}")
+        except Exception as _e:
+            # Ex. nouvelle saison pas encore montée sur ESPN pendant l'intersaison.
+            print(f"Saison {_yr} : ignorée ({_e})")
+    if not _ok:
+        raise SystemExit("Aucune saison ESPN récupérée.")
