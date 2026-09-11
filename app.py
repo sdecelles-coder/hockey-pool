@@ -1013,6 +1013,45 @@ def status_label(s):
             "target": "🎯 Cible", None: "—"}.get(s, "—")
 
 
+CONF_CATS = [c[0] for c in de.SKATER_CATS] + [c[0] for c in de.GOALIE_CATS]
+
+
+# Libellés de lignes « résumé » à ignorer dans la coloration (échelle + rendu).
+SUMMARY_ROWS = {"Moyenne"}
+
+
+def color_col(s):
+    """Coloration d'une colonne de catégorie : vert (fort) -> rouge (faible).
+
+    Relatif au min/max de la colonne affichée. GAA inversé (bas = mieux).
+    Les lignes résumé (ex. « Moyenne ») sont colorées sur la même échelle mais
+    exclues du calcul du min/max. Colonnes hors catégories (ex. « Pos ») et
+    cellules NaN : non colorées.
+    """
+    cat = s.name
+    if cat not in de.CAT_DIRECTION:
+        return ["" for _ in s]
+    higher = de.CAT_DIRECTION[cat]
+    vals = s.astype(float)
+    scale = vals[~s.index.isin(SUMMARY_ROWS)]
+    vmin, vmax = scale.min(), scale.max()
+    if pd.isna(vmin) or vmin == vmax:
+        return ["" for _ in s]
+    out = []
+    for v in vals:
+        if pd.isna(v):
+            out.append("")
+            continue
+        frac = (v - vmin) / (vmax - vmin)
+        if not higher:
+            frac = 1 - frac          # GAA : bas = bon
+        # vert (bon) -> rouge (faible)
+        r = int(255 * (1 - frac))
+        g = int(180 * frac)
+        out.append(f"background-color: rgba({r},{g},80,0.45)")
+    return out
+
+
 def render_draft_tab():
     plan = de.load_plan()   # {player_id: 'mine'/'other'/'target'}
 
@@ -1289,6 +1328,60 @@ def render_draft_tab():
                              "Valeur/$M": st.column_config.NumberColumn(
                                  "Valeur/$M", format="%.2f")})
 
+    # --- Forces & faiblesses de ma sélection (par joueur) ---
+    st.markdown("**📊 Forces & faiblesses de ma sélection**")
+    st.caption("Stats projetées sur 82 matchs, par joueur (protégés + ajoutés + "
+               "cibles). Vert = fort, rouge = faible dans la catégorie. "
+               "GAA : plus bas = mieux.")
+
+    sk_rows, go_rows = [], []
+    for pid in mine_ids + added_ids + target_ids:
+        p = PLAYERS_BY_ID.get(str(pid))
+        gp = (p or {}).get("gp") or 0
+        info = player_truth(pid)
+        name = f"{info['name']} {status_label(plan.get(str(pid), ''))}"
+        if p and p.get("type") == "skater" and gp:
+            row = {"Joueur": name, "Pos": info["position"]}
+            for label, src in de.SKATER_CATS:
+                v = p.get(src)
+                row[label] = v / gp * 82 if v is not None else None
+            sk_rows.append(row)
+        elif p and p.get("type") == "goalie" and gp:
+            row = {"Joueur": name}
+            for label, src in (("W", "wins"), ("SO", "shutouts")):
+                v = p.get(src)
+                row[label] = v / gp * 82 if v is not None else None
+            row["GAA"] = p.get("gaa")
+            row["SV%"] = p.get("sv_pct")
+            go_rows.append(row)
+
+    def _show_sel_table(rows, cats, extra_cols):
+        df = pd.DataFrame(rows).set_index("Joueur")
+        for c in cats:
+            if c not in df.columns:
+                df[c] = None
+        df = df[extra_cols + cats]
+        # ligne moyenne (exclue de la coloration via SUMMARY_ROWS)
+        df.loc["Moyenne"] = df.mean(numeric_only=True)
+        styled = df.style.apply(color_col, axis=0).format(
+            precision=1, na_rep="—")
+        st.dataframe(styled, width="stretch")
+
+    sk_labels = [lbl for lbl, _ in de.SKATER_CATS]
+    go_labels = [c[0] for c in de.GOALIE_CATS]
+
+    st.markdown("_Patineurs_")
+    if sk_rows:
+        _show_sel_table(sk_rows, sk_labels, ["Pos"])
+    else:
+        st.info("Aucun patineur sélectionné.")
+
+    st.markdown("_Gardiens_")
+    if go_rows:
+        _show_sel_table(go_rows, go_labels, [])
+    else:
+        st.info("Aucun gardien sélectionné.")
+
     st.divider()
 
     # --- Mon équipe actuelle (ESPN) : décider Garder / Laisser ---
@@ -1485,9 +1578,6 @@ def all_players_with_cap():
     return out
 
 
-CONF_CATS = [c[0] for c in de.SKATER_CATS] + [c[0] for c in de.GOALIE_CATS]
-
-
 def render_conf_tab():
     if not owned:
         st.info("Aucune donnée de pool. Clique sur « 🏒 Pool » dans l'en-tête "
@@ -1584,29 +1674,6 @@ def render_conf_tab():
     cdf = pd.DataFrame(rows).set_index("DG")
 
     # Coloration par catégorie (vert haut / rouge bas), GAA inversé
-    def color_col(s):
-        cat = s.name
-        if cat not in de.CAT_DIRECTION:
-            return ["" for _ in s]
-        higher = de.CAT_DIRECTION[cat]
-        vals = s.astype(float)
-        vmin, vmax = vals.min(), vals.max()
-        if vmin == vmax:
-            return ["" for _ in s]
-        out = []
-        for v in vals:
-            if pd.isna(v):
-                out.append("")
-                continue
-            frac = (v - vmin) / (vmax - vmin)
-            if not higher:
-                frac = 1 - frac          # GAA : bas = bon
-            # vert (bon) -> rouge (faible)
-            r = int(255 * (1 - frac))
-            g = int(180 * frac)
-            out.append(f"background-color: rgba({r},{g},80,0.45)")
-        return out
-
     styled = cdf.style.apply(color_col, axis=0).format(precision=1)
     st.dataframe(styled, width="stretch", height=420)
 
