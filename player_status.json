@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-08T21:36:23.383594+00:00",
+  "updated_at": "2026-09-13T00:53:10.021944+00:00",
   "players": {
     "manual:alexander-zharovsky": {
       "status": "rookie",
@@ -20,6 +20,9 @@
       "status": "rookie",
       "name": "Caleb Malhotra",
       "position": "C"
+    },
+    "8471685": {
+      "status": "retired"
     }
   }
 }
