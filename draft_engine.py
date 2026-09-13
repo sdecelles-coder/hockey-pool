@@ -19,9 +19,13 @@ PLAN_FILE = "draft_plan.json"
 SETTINGS_FILE = "draft_settings.json"
 
 # Poids par défaut (ajustables ensuite via l'app)
+# NB : "pim" a un poids volontairement faible. Sur un petit nombre de matchs,
+# quelques bagarres suffisent à produire un taux de PIM extrême une fois
+# projeté sur 82 matchs (voir MAX_PROJECT_FACTOR) ; un poids élevé laisserait
+# ce bruit dominer le score d'un joueur autrement peu productif.
 DEFAULT_WEIGHTS_SKATER = {
     "goals": 1.0, "assists": 1.0, "plus_minus": 1.5,
-    "pim": 1.0, "ppp": 2.0, "sog": 1.0, "hits": 1.25,
+    "pim": 0.25, "ppp": 2.0, "sog": 1.0, "hits": 1.25,
 }
 DEFAULT_WEIGHTS_GOALIE = {
     "wins": 1.0, "shutouts": 2.0, "gaa": 1.0, "sv_pct": 1.0,
@@ -41,6 +45,12 @@ GOALIE_DIRECTION = {
 SKATER_CUMULATIVE = {"goals", "assists", "plus_minus", "pim", "ppp", "sog", "hits"}
 GOALIE_CUMULATIVE = {"wins", "shutouts"}   # gaa, sv_pct sont déjà des taux
 PROJECT_GAMES = 82
+
+# Facteur d'extrapolation maximal (82 / gp) pour la projection sur 82 matchs.
+# Sans ce plafond, un joueur à faible échantillon (proche de min_gp) voit son
+# taux multiplié jusqu'à 82/min_gp, ce qui amplifie énormément le bruit
+# statistique (ex. quelques bagarres en 26 matchs -> ~280 PIM projetées).
+MAX_PROJECT_FACTOR = 2.5
 
 CAP_FLOOR = 1_000_000   # plancher pour Valeur/$ (évite division par ~0
 
@@ -104,7 +114,12 @@ def compute_scores(players, player_type, weights=None, min_gp=1,
     cumulative = SKATER_CUMULATIVE if player_type == "skater" else GOALIE_CUMULATIVE
 
     def projected(p, cat):
-        """Stat projetée sur 82 matchs si cumulative, sinon valeur brute (taux)."""
+        """Stat projetée sur 82 matchs si cumulative, sinon valeur brute (taux).
+
+        Le facteur d'extrapolation (82 / gp) est plafonné à MAX_PROJECT_FACTOR
+        pour éviter qu'un tout petit échantillon (proche de min_gp) ne produise
+        un taux irréaliste une fois étiré sur 82 matchs.
+        """
         v = p.get(cat)
         if v is None:
             return None
@@ -112,7 +127,8 @@ def compute_scores(players, player_type, weights=None, min_gp=1,
             gp = p.get("gp") or 0
             if gp <= 0:
                 return None
-            return v / gp * PROJECT_GAMES
+            factor = min(PROJECT_GAMES / gp, MAX_PROJECT_FACTOR)
+            return v * factor
         return v   # taux (GAA, SV%) : pas de projection
 
     # z-scores par catégorie (sur stats projetées)
