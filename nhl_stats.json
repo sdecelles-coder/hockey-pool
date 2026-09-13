@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-12T12:49:58.922569+00:00",
+  "updated_at": "2026-09-13T13:47:21.256455+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -808,7 +808,7 @@
       "team": "LAK",
       "teams_all": "LAK",
       "position": "R",
-      "age": 29,
+      "age": 30,
       "gp": 81,
       "goals": 36,
       "assists": 37,
@@ -7534,7 +7534,7 @@
       "team": "CAR",
       "teams_all": "CAR",
       "position": "L",
-      "age": 31,
+      "age": 32,
       "gp": 68,
       "goals": 11,
       "assists": 10,
@@ -7553,7 +7553,7 @@
       "team": "MTL",
       "teams_all": "STL,MTL",
       "position": "L",
-      "age": 26,
+      "age": 27,
       "gp": 51,
       "goals": 8,
       "assists": 13,
@@ -9529,7 +9529,7 @@
       "team": "CBJ",
       "teams_all": "CBJ",
       "position": "L",
-      "age": 30,
+      "age": 31,
       "gp": 54,
       "goals": 8,
       "assists": 6,
