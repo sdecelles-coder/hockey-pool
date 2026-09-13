@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-13T00:54:11.378343+00:00",
+  "updated_at": "2026-09-13T00:54:24.104290+00:00",
   "players": {
     "manual:alexander-zharovsky": {
       "status": "rookie",
@@ -31,6 +31,9 @@
       "status": "retired"
     },
     "8475906": {
+      "status": "retired"
+    },
+    "8478971": {
       "status": "retired"
     }
   }
