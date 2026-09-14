@@ -1461,8 +1461,8 @@ def render_draft_tab():
     st.caption("Stats projetées sur 82 matchs, par joueur (protégés + ajoutés + "
                "cibles). Coloration relative à toute la ligue (z-score, même base "
                "que la Valeur) : vert = au-dessus de la moyenne de la ligue, rouge "
-               "= en dessous. GAA : plus bas = mieux. La ligne Moyenne exclut les "
-               "cibles.")
+               "= en dessous. GAA : plus bas = mieux. Les joueurs sans stats sont "
+               "affichés (—) mais exclus de la ligne Moyenne, comme les cibles.")
 
     cat_bounds = league_cat_bounds(min_gp)
 
@@ -1473,30 +1473,41 @@ def render_draft_tab():
         info = player_truth(pid)
         name = f"{info['name']} {status_label(plan.get(str(pid), ''))}"
         is_target = plan.get(str(pid)) == "target"
-        if p and p.get("type") == "skater" and gp:
-            row = {"Joueur": name, "Pos": info["position"], "_is_target": is_target}
+        # Joueur sans stats (recrue, GP=0 ou absent des stats) : on l'affiche
+        # quand même, mais il est exclu de la ligne Moyenne (comme les cibles).
+        has_stats = bool(p and gp)
+        # Type : source des stats si dispo, sinon déduit de la position.
+        ptype = (p or {}).get("type")
+        is_goalie = ptype == "goalie" or (
+            ptype is None and pos_group(info["position"]) == "G")
+        if not is_goalie:
+            row = {"Joueur": name, "Pos": info["position"],
+                   "_is_target": is_target, "_no_stats": not has_stats}
             for label, src in de.SKATER_CATS:
-                v = p.get(src)
-                row[label] = v / gp * 82 if v is not None else None
+                v = p.get(src) if has_stats else None
+                row[label] = v / gp * 82 if (has_stats and v is not None) else None
             sk_rows.append(row)
-        elif p and p.get("type") == "goalie" and gp:
-            row = {"Joueur": name, "_is_target": is_target}
+        else:
+            row = {"Joueur": name, "_is_target": is_target, "_no_stats": not has_stats}
             for label, src in (("W", "wins"), ("SO", "shutouts")):
-                v = p.get(src)
-                row[label] = v / gp * 82 if v is not None else None
-            row["GAA"] = p.get("gaa")
-            row["SV%"] = p.get("sv_pct")
+                v = p.get(src) if has_stats else None
+                row[label] = v / gp * 82 if (has_stats and v is not None) else None
+            row["GAA"] = p.get("gaa") if has_stats else None
+            row["SV%"] = p.get("sv_pct") if has_stats else None
             go_rows.append(row)
 
     def _show_sel_table(rows, cats, extra_cols):
         df = pd.DataFrame(rows).set_index("Joueur")
         is_target = df.pop("_is_target").astype(bool)
+        no_stats = df.pop("_no_stats").astype(bool)
         for c in cats:
             if c not in df.columns:
                 df[c] = None
         df = df[extra_cols + cats]
-        # ligne moyenne — exclut les cibles, colorée sur l'échelle ligue
-        df.loc["Moyenne (hors cibles)"] = df.loc[~is_target].mean(numeric_only=True)
+        # ligne moyenne — exclut les cibles et les joueurs sans stats,
+        # colorée sur l'échelle ligue
+        incl = ~is_target & ~no_stats
+        df.loc["Moyenne (hors cibles)"] = df.loc[incl].mean(numeric_only=True)
         styled = df.style.apply(color_by_zscore(cat_bounds), axis=0).format(
             precision=1, na_rep="—")
         st.dataframe(styled, width="stretch")
