@@ -8,7 +8,9 @@ Source unique : https://puckpedia.com/players/api
 - Jointure avec les stats NHL via nhl_id == playerId.
 
 Récupération via une simple requête HTTP `requests` (l'API répond en HTTP 200
-à un GET avec un User-Agent navigateur — plus besoin de Playwright/Chromium).
+à un GET avec un User-Agent navigateur). Cloudflare remet parfois un blocage
+(403) même en local : dans ce cas, fallback automatique sur Chromium headless
+(Playwright, voir _BrowserFetcher) pour le flux liste ET les fiches profil.
 
 Deux modes :
 - update_contracts()                 -> rafraîchit TOUS les contrats
@@ -127,6 +129,19 @@ class _BrowserFetcher:
         body = self._page.inner_text("body")
         return json.loads(body)
 
+    def fetch_html(self, url):
+        """Comme fetch(), mais renvoie le HTML brut (fiches profil, pas l'API JSON).
+
+        wait_until="domcontentloaded" : les fiches profil chargent des scripts
+        pub/tracking lourds qui empêchent l'événement "load" par défaut de se
+        déclencher avant le timeout — le DOM est prêt bien avant, ça suffit."""
+        self._ensure_page()
+        resp = self._page.goto(url, timeout=TIMEOUT * 1000, wait_until="domcontentloaded")
+        self._page.wait_for_timeout(3000)
+        if resp is not None and resp.status == 403:
+            self._page.goto(url, timeout=TIMEOUT * 1000, wait_until="domcontentloaded")
+        return self._page.content()
+
     def close(self):
         if self._browser:
             self._browser.close()
@@ -150,6 +165,21 @@ def _fetch_via_browser(url):
     if _browser_fetcher is None:
         _browser_fetcher = _BrowserFetcher()
     return _browser_fetcher.fetch(url)
+
+
+def _fetch_html_via_browser(url):
+    global _browser_fetcher
+    try:
+        import playwright  # noqa: F401
+    except ImportError:
+        raise RuntimeError(
+            "Cloudflare bloque `requests` (403/challenge JS) et Playwright "
+            "n'est pas installé pour basculer en mode navigateur. Installe-le : "
+            "pip install playwright && playwright install chromium"
+        )
+    if _browser_fetcher is None:
+        _browser_fetcher = _BrowserFetcher()
+    return _browser_fetcher.fetch_html(url)
 
 
 def _close_browser_fetcher():
@@ -312,9 +342,15 @@ def parse_profile(html, nhl_id, name=None, slug=None):
 
 
 def fetch_contract_from_profile(slug, nhl_id, name=None):
-    """GET la fiche profil et renvoie le contrat parsé (ou None)."""
+    """GET la fiche profil et renvoie le contrat parsé (ou None).
+
+    Bascule sur Chromium (Playwright) si Cloudflare renvoie un 403 — même
+    logique de fallback que _fetch(), mais pour du HTML plutôt que du JSON."""
     r = requests.get(PROFILE_BASE + slug, headers=HEADERS,
                      timeout=TIMEOUT, verify=VERIFY_SSL)
+    if r.status_code == 403:
+        html = _fetch_html_via_browser(PROFILE_BASE + slug)
+        return parse_profile(html, nhl_id, name=name, slug=slug)
     r.raise_for_status()
     return parse_profile(r.text, nhl_id, name=name, slug=slug)
 
