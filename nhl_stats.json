@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-13T13:47:21.256455+00:00",
+  "updated_at": "2026-09-14T15:52:50.578236+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -4836,7 +4836,7 @@
       "team": "ANA",
       "teams_all": "ANA",
       "position": "L",
-      "age": 36,
+      "age": 37,
       "gp": 82,
       "goals": 15,
       "assists": 18,
@@ -8351,7 +8351,7 @@
       "team": "CGY",
       "teams_all": "CGY",
       "position": "R",
-      "age": 25,
+      "age": 26,
       "gp": 79,
       "goals": 6,
       "assists": 12,
@@ -15723,7 +15723,7 @@
       "team": "CAR",
       "teams_all": "CAR",
       "position": "R",
-      "age": 20,
+      "age": 21,
       "gp": 1,
       "goals": 0,
       "assists": 1,
