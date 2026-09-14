@@ -1312,16 +1312,12 @@ def render_draft_tab():
         placeholder="Tape un nom pour filtrer la liste…")
 
     # Liste des joueurs assignables, indépendante du tableau ci-dessous :
-    # tous les joueurs scorés + les recrues sans stats.
-    assignable = list(by_id.values())
-    _seen_assign = {str(p["playerId"]) for p in assignable}
-    for _nid in ROOKIE_IDS:
-        if _nid in _seen_assign:
-            continue
-        _pr = PLAYERS_BY_ID.get(_nid)
-        if _pr:
-            assignable.append(_pr)
-    all_names = {f"{p.get('name')} ({p.get('position')})": str(p["playerId"])
+    # TOUS les joueurs connus (stats + recrues + contractants sans stats), et
+    # non seulement les joueurs scorés. Ainsi un joueur peut toujours recevoir
+    # un statut même s'il n'est pas scoré (GP < seuil ou absent des stats de la
+    # saison chargée) — sinon il disparaîtrait silencieusement du menu.
+    assignable = list(PLAYERS_BY_ID.values())
+    all_names = {f"{p.get('name')} ({p.get('position') or '—'})": str(p.get("playerId"))
                  for p in sorted(assignable, key=lambda x: (x.get("name") or ""))}
     if search_assign:
         names = {k: v for k, v in all_names.items()
