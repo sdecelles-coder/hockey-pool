@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-15T14:18:49.363551+00:00",
+  "updated_at": "2026-09-16T14:10:58.266634+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -1340,7 +1340,7 @@
       "team": "PIT",
       "teams_all": "PIT",
       "position": "R",
-      "age": 31,
+      "age": 32,
       "gp": 81,
       "goals": 33,
       "assists": 31,
@@ -1625,7 +1625,7 @@
       "team": "OTT",
       "teams_all": "OTT",
       "position": "L",
-      "age": 26,
+      "age": 27,
       "gp": 60,
       "goals": 22,
       "assists": 37,
