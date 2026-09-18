@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-17T14:16:37.268500+00:00",
+  "updated_at": "2026-09-18T13:34:45.759977+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -10796,8 +10796,8 @@
     },
     {
       "playerId": 8479705,
-      "name": "Jeffrey Truchon-Viel",
-      "puckpedia_slug": "jeffrey-truchon-viel",
+      "name": "Jeffrey Viel",
+      "puckpedia_slug": "jeffrey-viel",
       "type": "skater",
       "team": "ANA",
       "teams_all": "BOS,ANA",
@@ -11581,7 +11581,7 @@
       "team": "BUF",
       "teams_all": "BUF",
       "position": "D",
-      "age": 27,
+      "age": 28,
       "gp": 39,
       "goals": 0,
       "assists": 8,
