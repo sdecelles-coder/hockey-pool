@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-18T13:34:45.759977+00:00",
+  "updated_at": "2026-09-19T13:07:51.738802+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -2423,7 +2423,7 @@
       "team": "BUF",
       "teams_all": "BUF",
       "position": "R",
-      "age": 24,
+      "age": 25,
       "gp": 82,
       "goals": 20,
       "assists": 31,
@@ -12398,7 +12398,7 @@
       "team": "TOR",
       "teams_all": "TOR",
       "position": "D",
-      "age": 27,
+      "age": 28,
       "gp": 73,
       "goals": 0,
       "assists": 6,
@@ -13386,7 +13386,7 @@
       "team": "NJD",
       "teams_all": "NYI,NJD",
       "position": "R",
-      "age": 27,
+      "age": 28,
       "gp": 49,
       "goals": 2,
       "assists": 2,
@@ -18770,7 +18770,7 @@
       "team": "TBL",
       "teams_all": "TBL",
       "position": "G",
-      "age": 30,
+      "age": 31,
       "gp": 25,
       "wins": 11,
       "losses": 10,
