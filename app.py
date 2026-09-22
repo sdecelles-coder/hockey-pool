@@ -1458,7 +1458,9 @@ def render_draft_tab():
                "cibles). Coloration relative à toute la ligue (z-score, même base "
                "que la Valeur) : vert = au-dessus de la moyenne de la ligue, rouge "
                "= en dessous. GAA : plus bas = mieux. Les joueurs sans stats sont "
-               "affichés (—) mais exclus de la ligne Moyenne, comme les cibles.")
+               "affichés (—) mais exclus de la ligne Moyenne, comme les cibles. "
+               "La ligne **Moyenne (Autres DG)** = moyenne de tous les joueurs "
+               "dont la Dispo est « Autre DG ».")
 
     cat_bounds = league_cat_bounds(min_gp)
 
@@ -1492,7 +1494,42 @@ def render_draft_tab():
             row["SV%"] = p.get("sv_pct") if has_stats else None
             go_rows.append(row)
 
-    def _show_sel_table(rows, cats, extra_cols):
+    # --- Moyenne des joueurs « Autre DG » (Dispo = Autre DG, statut "other") ---
+    # Projetée sur 82 matchs comme les lignes de sélection, pour situer ma
+    # sélection par rapport aux joueurs protégés par les autres DG. Les joueurs
+    # sans stats (GP=0 ou absents) sont exclus de la moyenne.
+    other_ids = [pid for pid, s in plan.items() if s == "other"]
+    other_sk_proj, other_go_proj = [], []
+    for pid in other_ids:
+        p = PLAYERS_BY_ID.get(str(pid))
+        gp = (p or {}).get("gp") or 0
+        if not (p and gp):
+            continue
+        info = player_truth(pid)
+        ptype = (p or {}).get("type")
+        is_goalie = ptype == "goalie" or (
+            ptype is None and pos_group(info["position"]) == "G")
+        if not is_goalie:
+            d = {}
+            for label, src in de.SKATER_CATS:
+                v = p.get(src)
+                d[label] = v / gp * 82 if v is not None else None
+            other_sk_proj.append(d)
+        else:
+            d = {}
+            for label, src in (("W", "wins"), ("SO", "shutouts")):
+                v = p.get(src)
+                d[label] = v / gp * 82 if v is not None else None
+            d["GAA"] = p.get("gaa")
+            d["SV%"] = p.get("sv_pct")
+            other_go_proj.append(d)
+
+    other_sk_avg = (pd.DataFrame(other_sk_proj).mean(numeric_only=True).to_dict()
+                    if other_sk_proj else None)
+    other_go_avg = (pd.DataFrame(other_go_proj).mean(numeric_only=True).to_dict()
+                    if other_go_proj else None)
+
+    def _show_sel_table(rows, cats, extra_cols, other_avg=None):
         df = pd.DataFrame(rows).set_index("Joueur")
         is_target = df.pop("_is_target").astype(bool)
         no_stats = df.pop("_no_stats").astype(bool)
@@ -1504,6 +1541,9 @@ def render_draft_tab():
         # colorée sur l'échelle ligue
         incl = ~is_target & ~no_stats
         df.loc["Moyenne (hors cibles)"] = df.loc[incl].mean(numeric_only=True)
+        # ligne moyenne des joueurs « Autre DG » (comparatif)
+        if other_avg:
+            df.loc["Moyenne (Autres DG)"] = pd.Series(other_avg)
         styled = df.style.apply(color_by_zscore(cat_bounds), axis=0).format(
             precision=1, na_rep="—")
         st.dataframe(styled, width="stretch")
@@ -1513,13 +1553,13 @@ def render_draft_tab():
 
     st.markdown("_Patineurs_")
     if sk_rows:
-        _show_sel_table(sk_rows, sk_labels, ["Pos"])
+        _show_sel_table(sk_rows, sk_labels, ["Pos"], other_sk_avg)
     else:
         st.info("Aucun patineur sélectionné.")
 
     st.markdown("_Gardiens_")
     if go_rows:
-        _show_sel_table(go_rows, go_labels, [])
+        _show_sel_table(go_rows, go_labels, [], other_go_avg)
     else:
         st.info("Aucun gardien sélectionné.")
 
