@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-13T00:54:24.104290+00:00",
+  "updated_at": "2026-09-22T11:50:09.753611+00:00",
   "players": {
     "manual:alexander-zharovsky": {
       "status": "rookie",
@@ -35,6 +35,11 @@
     },
     "8478971": {
       "status": "retired"
+    },
+    "manual:michael-hage": {
+      "status": "rookie",
+      "name": "Michael Hage",
+      "position": "C"
     }
   }
 }
