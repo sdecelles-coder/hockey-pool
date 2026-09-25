@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-24T14:11:14.515616+00:00",
+  "updated_at": "2026-09-25T14:35:24.200172+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -6755,7 +6755,7 @@
       "team": "CGY",
       "teams_all": "CGY",
       "position": "C",
-      "age": 24,
+      "age": 25,
       "gp": 74,
       "goals": 12,
       "assists": 13,
@@ -11429,7 +11429,7 @@
       "team": "TOR",
       "teams_all": "TOR",
       "position": "C",
-      "age": 34,
+      "age": 35,
       "gp": 56,
       "goals": 6,
       "assists": 2,
@@ -16673,7 +16673,7 @@
       "team": "VGK",
       "teams_all": "VGK",
       "position": "C",
-      "age": 25,
+      "age": 26,
       "gp": 1,
       "goals": 0,
       "assists": 0,
