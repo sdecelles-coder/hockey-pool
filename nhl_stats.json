@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-26T13:44:02.829413+00:00",
+  "updated_at": "2026-09-27T14:40:51.486840+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -2056,8 +2056,8 @@
     },
     {
       "playerId": 8475692,
-      "name": "Mats Zuccarello Aasen",
-      "puckpedia_slug": "mats-zuccarello-aasen",
+      "name": "Mats Zuccarello",
+      "puckpedia_slug": "mats-zuccarello",
       "type": "skater",
       "team": "MIN",
       "teams_all": "MIN",
@@ -12208,7 +12208,7 @@
       "team": "DET",
       "teams_all": "DET",
       "position": "C",
-      "age": 21,
+      "age": 22,
       "gp": 28,
       "goals": 2,
       "assists": 5,
@@ -18728,8 +18728,8 @@
     },
     {
       "playerId": 8475660,
-      "name": "Cameron Talbot",
-      "puckpedia_slug": "cameron-talbot",
+      "name": "Cam Talbot",
+      "puckpedia_slug": "cam-talbot",
       "type": "goalie",
       "team": "DET",
       "teams_all": "DET",
