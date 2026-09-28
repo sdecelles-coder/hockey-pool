@@ -269,7 +269,7 @@ with st.sidebar:
     st.radio(
         "Mode d'affichage", _MODE_OPTS, horizontal=True,
         key="team_mode", on_change=_persist_team_mode,
-        help="Repêchage : dispo/couleurs selon ton plan (Pool STM). "
+        help="Repêchage : dispo/couleurs selon ton plan (Repêchage et Settings). "
              "Saison : possession réelle collectée par ESPN.",
     )
 _sel = next(o for o in _season_opts if o["label"] == _sel_label)
@@ -1069,7 +1069,7 @@ def render_fa_tab():
 # Onglets
 # ----------------------------------------------------------------------
 tab_s, tab_g, tab_d, tab_c, tab_fa, tab_ret, tab_aide = st.tabs(
-    ["⚡ Patineurs", "🥅 Gardiens", "🎯 Pool STM", "🥊 Confrontations",
+    ["⚡ Patineurs", "🥅 Gardiens", "🎯 Repêchage et Settings", "🥊 Pool STM",
      "🔍 Agents libres & Prospects", "🛠️ Statut joueurs", "📐 Comment ça marche ?"])
 
 with tab_s:
@@ -2181,7 +2181,7 @@ puis on les **pondère** et on les **additionne** pour obtenir un score unique.
 **Score composite = (1.5 × 1) + (2.0 × 2) + (−0.5 × 1) = 6.5**
 
 Les poids permettent de donner plus d'importance aux catégories qui comptent davantage
-dans ton pool (ex. PPP pondéré à 2× dans l'onglet *Pool STM*).
+dans ton pool (ex. PPP pondéré à 2× dans l'onglet *Repêchage et Settings*).
 """)
 
     st.subheader("4. Le seuil GP minimum z-score")
@@ -2193,8 +2193,8 @@ moyenne (μ) et de l'écart-type (σ).
 (= 0.67 buts/match), ce qui semblerait fantastique mais n'est pas représentatif.
 En l'excluant, on évite qu'il fausse la moyenne de référence et le classement.
 
-> Réglage par défaut : **20 GP**. Tu peux l'ajuster dans l'onglet *Pool STM*
-> ou *Confrontations* selon la phase de saison.
+> Réglage par défaut : **20 GP**. Tu peux l'ajuster dans l'onglet *Repêchage et Settings*
+> ou *Pool STM* selon la phase de saison.
 """)
 
     st.subheader("5. Valeur/$M — l'efficacité salariale")
