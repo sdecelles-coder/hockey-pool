@@ -31,6 +31,7 @@ import draft_engine as de
 import update_stats as us
 import player_status as ps
 import seasons as seasons_mod
+import app_settings
 
 STATS_FILE = "nhl_stats.json"
 CONTRACTS_FILE = "nhl_contracts.json"
@@ -249,9 +250,25 @@ with st.sidebar:
     # TOUS les onglets. Repêchage : dispo/couleurs pilotées par le plan manuel
     # (onglet Pool STM) — gris = Autre DG, bleu = mes joueurs, jaune = cibles,
     # « Pool Team » ESPN conservé à titre informatif. Saison : possession ESPN.
+    #
+    # Persistance : le choix est sauvegardé sur GitHub (via cloud_store, comme
+    # le plan de repêchage et les statuts manuels), donc il reste permanent
+    # d'une session à l'autre et survit aux redémarrages du Cloud, tant qu'on ne
+    # le change pas manuellement. On restaure la valeur persistée au 1er passage,
+    # puis on la réécrit à chaque modification via le callback on_change.
+    _MODE_OPTS = ["🏒 Repêchage", "📅 Saison"]
+    if "team_mode" not in st.session_state:
+        _saved_mode = app_settings.get("team_mode")
+        st.session_state["team_mode"] = (
+            _saved_mode if _saved_mode in _MODE_OPTS else _MODE_OPTS[0]
+        )
+
+    def _persist_team_mode():
+        app_settings.set("team_mode", st.session_state["team_mode"])
+
     st.radio(
-        "Mode d'affichage", ["🏒 Repêchage", "📅 Saison"], horizontal=True,
-        key="team_mode",
+        "Mode d'affichage", _MODE_OPTS, horizontal=True,
+        key="team_mode", on_change=_persist_team_mode,
         help="Repêchage : dispo/couleurs selon ton plan (Pool STM). "
              "Saison : possession réelle collectée par ESPN.",
     )
