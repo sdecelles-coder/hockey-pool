@@ -1769,8 +1769,13 @@ def render_my_espn_team():
                                 changed = True
                 return changed
 
-            order_cols = ["On ice", "Gardé", "Tier", "Nom", "Statut", "Pool Team",
-                          "Pos", "Âge", "Cap Hit", "GP", "Valeur", "Valeur/$M"]
+            # En mode Saison, la colonne « Gardé » (protection de repêchage)
+            # n'a pas de sens : on la masque en la retirant de l'ordre des
+            # colonnes (Streamlit n'affiche que les colonnes de column_order).
+            keep_col = ["Gardé"] if draft_mode else []
+            order_cols = ["On ice"] + keep_col + ["Tier", "Nom", "Statut",
+                          "Pool Team", "Pos", "Âge", "Cap Hit", "GP",
+                          "Valeur", "Valeur/$M"]
 
             sk_df = build_editable("skater", sk_stats)
             if not sk_df.empty:
