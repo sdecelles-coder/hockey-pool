@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-27T14:40:51.486840+00:00",
+  "updated_at": "2026-09-28T17:37:45.154904+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -17015,7 +17015,7 @@
       "team": "WPG",
       "teams_all": "WPG",
       "position": "D",
-      "age": 24,
+      "age": 25,
       "gp": 3,
       "goals": 0,
       "assists": 0,
@@ -18998,7 +18998,7 @@
     },
     {
       "playerId": 8482447,
-      "name": "Leevi Meriläinen",
+      "name": "Leevi Merilainen",
       "puckpedia_slug": "leevi-merilainen",
       "type": "goalie",
       "team": "OTT",
