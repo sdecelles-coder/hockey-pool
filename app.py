@@ -1197,6 +1197,15 @@ def color_by_zscore(bounds, zclip=2.0):
     return _col
 
 
+_STM_W_DEFAULTS = {
+    "skater": {"ppp": 2.0, "plus_minus": 1.5, "hits": 1.25, "goals": 1.0,
+               "assists": 1.0, "pim": 1.0, "sog": 1.0},
+    "def": {"ppp": 2.0, "plus_minus": 1.5, "hits": 1.25, "goals": 1.0,
+            "assists": 1.0, "pim": 1.0, "sog": 1.0},
+    "goalie": {"shutouts": 2.0, "wins": 1.0, "gaa": 1.0, "sv_pct": 1.0},
+}
+
+
 def render_draft_tab():
     plan = de.load_plan()   # {player_id: 'mine'/'other'/'target'}
 
@@ -1206,13 +1215,7 @@ def render_draft_tab():
     # depuis draft_settings.json, afin qu'elles soient disponibles pour le
     # calcul des scores plus bas.
     cfg = de.load_settings()
-    _W_DEFAULTS = {
-        "skater": {"ppp": 2.0, "plus_minus": 1.5, "hits": 1.25, "goals": 1.0,
-                   "assists": 1.0, "pim": 1.0, "sog": 1.0},
-        "def": {"ppp": 2.0, "plus_minus": 1.5, "hits": 1.25, "goals": 1.0,
-                "assists": 1.0, "pim": 1.0, "sog": 1.0},
-        "goalie": {"shutouts": 2.0, "wins": 1.0, "gaa": 1.0, "sv_pct": 1.0},
-    }
+    _W_DEFAULTS = _STM_W_DEFAULTS
     st.session_state.setdefault("stm_cap_limit", int(cfg.get("cap_limit", DEFAULT_CAP)))
     st.session_state.setdefault("stm_min_gp", int(cfg.get("min_gp", 20)))
     st.session_state.setdefault("stm_youth_w", float(cfg.get("youth_w", 0.15)))
@@ -1582,6 +1585,67 @@ def render_draft_tab():
 
     st.divider()
 
+    _render_settings_expander()
+
+
+with tab_d:
+    render_draft_tab()
+
+
+# ----------------------------------------------------------------------
+# Onglet Confrontations (forces/faiblesses des DG)
+# ----------------------------------------------------------------------
+def all_players_with_cap():
+    out = []
+    for p in players:
+        q = dict(p)
+        c = contract_for(p.get("playerId"))
+        q["cap_hit_value"] = c.get("cap_hit_value", 0) if c else 0
+        out.append(q)
+    return out
+
+
+def stm_by_id():
+    """Scores pondérés selon les réglages du Pool STM (Valeur/Valeur$M/Tier).
+
+    Mêmes réglages (poids, seuil GP, bonus jeunesse) que l'onglet Pool STM,
+    lus depuis session_state (initialisés depuis draft_settings.json). Sert au
+    tableau « Mon équipe ESPN » déplacé dans l'onglet Confrontations.
+    """
+    cfg = de.load_settings()
+    st.session_state.setdefault("stm_min_gp", int(cfg.get("min_gp", 20)))
+    st.session_state.setdefault("stm_youth_w", float(cfg.get("youth_w", 0.15)))
+    st.session_state.setdefault("stm_ref_age", int(cfg.get("ref_age", 27)))
+    for _section, _wd in _STM_W_DEFAULTS.items():
+        for _cat, _dv in _wd.items():
+            st.session_state.setdefault(
+                f"stm_w_{_section}_{_cat}",
+                float(cfg.get(_section, {}).get(_cat, _dv)))
+
+    def _wdict(section):
+        return {cat: st.session_state[f"stm_w_{section}_{cat}"]
+                for cat in _STM_W_DEFAULTS[section]}
+
+    min_gp = st.session_state["stm_min_gp"]
+    youth_w = st.session_state["stm_youth_w"]
+    ref_age = st.session_state["stm_ref_age"]
+    sk = de.compute_scores(players_with_cap("skater"), "skater", _wdict("skater"),
+                           min_gp, youth_weight=youth_w, ref_age=ref_age,
+                           weights_d=_wdict("def"))
+    go = de.compute_scores(players_with_cap("goalie"), "goalie", _wdict("goalie"),
+                           min_gp, youth_weight=youth_w, ref_age=ref_age)
+    de.assign_tiers(sk)
+    de.assign_tiers(go)
+    return {str(p["playerId"]): p for p in sk + go}
+
+
+def render_my_espn_team():
+    plan = de.load_plan()
+    mine_ids = [pid for pid, s in plan.items() if s == "mine"]
+    draft_mode = str(st.session_state.get("team_mode", "🏒 Repêchage")).startswith("🏒")
+    MAX_PROTECTED = 8
+    by_id = stm_by_id()
+
     # --- Mon équipe actuelle (ESPN) : décider Garder / Laisser ---
     _exp_team = st.expander("🏒 Mon équipe ESPN", expanded=True)
     with _exp_team:
@@ -1738,8 +1802,8 @@ def render_draft_tab():
                 if handle_edits(go_df, ed, "gardiens"):
                     st.rerun()
 
-    st.divider()
 
+def render_pool_cap_summary():
     # --- Cap Hit total par équipe de pool ---
     with st.expander("💰 Cap Hit total par équipe de pool", expanded=False):
         cap_df = pool_cap_summary()
@@ -1754,29 +1818,8 @@ def render_draft_tab():
                 },
             )
 
-    st.divider()
 
-    _render_settings_expander()
-
-
-with tab_d:
-    render_draft_tab()
-
-
-# ----------------------------------------------------------------------
-# Onglet Confrontations (forces/faiblesses des DG)
-# ----------------------------------------------------------------------
-def all_players_with_cap():
-    out = []
-    for p in players:
-        q = dict(p)
-        c = contract_for(p.get("playerId"))
-        q["cap_hit_value"] = c.get("cap_hit_value", 0) if c else 0
-        out.append(q)
-    return out
-
-
-def render_conf_tab():
+def _render_conf_matchups():
     if not owned:
         st.info("Aucune donnée de pool. Clique sur « 🏒 Pool » dans l'en-tête "
                 "pour récupérer les rosters ESPN.")
@@ -1929,6 +1972,14 @@ def render_conf_tab():
         st.error(f"Tu perdrais cette confrontation {my_wins}–{opp_wins}")
     else:
         st.info(f"Égalité {my_wins}–{opp_wins}")
+
+
+def render_conf_tab():
+    render_my_espn_team()
+    st.divider()
+    _render_conf_matchups()
+    st.divider()
+    render_pool_cap_summary()
 
 
 with tab_c:
