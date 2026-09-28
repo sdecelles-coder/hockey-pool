@@ -21,6 +21,11 @@ import config
 OWNED_FILE = "espn_owned.json"  # legacy (saison non précisée)
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+# Slots d'alignement ESPN hockey HORS partants : 7 = banc (BE), 8 = IR.
+# Tout autre slot (0-6 : C/AG/AD/F/D/G/Util) = joueur « on ice » (alignement
+# partant). Sert à dériver le statut On ice de la colonne « Mon équipe ESPN ».
+BENCH_IR_SLOTS = {7, 8}
+
 
 def owned_file(season=None):
     """Chemin du cache roster pour une saison ESPN donnée.
@@ -92,10 +97,13 @@ def fetch_rosters(season=None):
             full = player.get("fullName", "")
             key = norm_name(full)
             if key:
+                slot = entry.get("lineupSlotId")
                 owned[key] = {
                     "pool_team": tname,
                     "is_mine": is_mine,
                     "espn_name": full,
+                    "lineup_slot": slot,
+                    "on_ice": slot not in BENCH_IR_SLOTS,
                 }
     return owned, int(config.get("ESPN_TEAM_ID", "0"))
 

@@ -1663,12 +1663,47 @@ def render_my_espn_team():
             st.caption(f"{len(my_current)} joueurs dans ton équipe ESPN. "
                        "Garde (= Protégé) ou laisse (= retourne au repêchage).")
 
-            lineup = de.load_lineup()
             n_protected = len(mine_ids)
+
+            # --- Alignement On ice : défaut = alignement ESPN réel, en direct ---
+            # Chargé une fois par session (par saison) depuis ESPN ; ensuite les
+            # toggles manuels tiennent (pour tester des combos) jusqu'au prochain
+            # « Resync » ou à la prochaine session. Voir espn_roster.fetch_rosters.
+            work_key = f"onice_work_{_espn_effective}"
+            live_key = f"live_owned_{_espn_effective}"
+            if st.button("🔄 Resync alignement ESPN",
+                         help="Recharge les alignements On ice/Banc réels depuis "
+                              "ESPN (le mien ET ceux des adversaires) et annule "
+                              "tes essais manuels.",
+                         key="resync_onice"):
+                st.session_state.pop(work_key, None)
+                st.session_state.pop(live_key, None)
+
+            if work_key not in st.session_state:
+                # Un seul fetch ESPN récupère TOUTES les équipes : on le met en
+                # cache de session pour que la confrontation compare des
+                # alignements réels (le mien + adversaires), sans appel en plus.
+                try:
+                    with st.spinner("Chargement des alignements ESPN…"):
+                        live_owned, _ = er.fetch_rosters(_espn_effective)
+                except Exception as _e:
+                    st.warning(f"Alignements ESPN en direct indisponibles ({_e}) ; "
+                               "utilisation du dernier cache pool.")
+                    live_owned = owned
+                st.session_state[live_key] = live_owned
+                onice_by_norm = {k: bool(v.get("on_ice", True))
+                                 for k, v in live_owned.items() if v.get("is_mine")}
+                st.session_state[work_key] = {
+                    str(p.get("playerId")):
+                        bool(onice_by_norm.get(norm_name(p.get("name")), True))
+                    for p in my_current
+                }
+            work_lineup = st.session_state[work_key]
 
             st.caption(f"{len(my_current)} joueurs. Édite **Align.** (On ice/Bench) "
                        "et **Gardé** directement dans le tableau. "
-                       f"Max {MAX_PROTECTED} protégés.")
+                       f"Max {MAX_PROTECTED} protégés. "
+                       "L'alignement On ice reflète ESPN à l'ouverture.")
 
             def pos_rank(p):
                 pos = (p.get("position") or "").upper()
@@ -1691,7 +1726,7 @@ def render_my_espn_team():
                     cap = contract_for(pid).get("cap_hit_value", 0) or 0
                     base = {
                         "_id": pid,
-                        "On ice": lineup.get(pid) == "ice",
+                        "On ice": work_lineup.get(pid, True),
                         "Gardé": plan.get(pid) == "mine",
                         "Tier": info.get("tier", "—"),
                         "Nom": p.get("name"),
@@ -1743,11 +1778,13 @@ def render_my_espn_team():
                 changed = False
                 for i in range(len(edited)):
                     pid = original.iloc[i]["_id"]
-                    # Align
+                    # Align : essai manuel, gardé en session (pas persisté) ;
+                    # ESPN reprend le dessus au Resync / à la prochaine session.
                     new_ice = bool(edited.iloc[i]["On ice"])
                     old_ice = bool(original.iloc[i]["On ice"])
                     if new_ice != old_ice:
-                        de.set_lineup(pid, "ice" if new_ice else "bench")
+                        work_lineup[pid] = new_ice
+                        st.session_state[work_key] = work_lineup
                         changed = True
                     # Gardé (seulement en mode repêchage)
                     if draft_mode:
@@ -1765,7 +1802,8 @@ def render_my_espn_team():
                                     changed = True
                             else:
                                 de.set_status(pid, None)
-                                de.set_lineup(pid, None)
+                                work_lineup.pop(pid, None)
+                                st.session_state[work_key] = work_lineup
                                 changed = True
                 return changed
 
@@ -1824,20 +1862,60 @@ def render_pool_cap_summary():
             )
 
 
-def _render_conf_matchups():
+def _conf_setup():
+    """Contrôles communs (GP min, filtre On ice) + agrégation par équipe.
+
+    Retourne un dict de contexte partagé par les sections Confrontation, ou None
+    si aucune donnée. Mes toggles On ice de session priment sur ESPN.
+    """
     if not owned:
         st.info("Aucune donnée de pool. Clique sur « 🏒 Pool » dans l'en-tête "
                 "pour récupérer les rosters ESPN.")
-        return
+        return None
 
     min_gp = st.slider("GP minimum par joueur", 1, 60, 20, key="conf_gp")
-    teams, is_mine = de.aggregate_by_team(all_players_with_cap(), owned, min_gp)
+
+    # --- Alignements On ice : mes essais de session priment sur ESPN ---
+    # work_lineup (session, keyé par pid) reflète mes toggles du tableau « Mon
+    # équipe ESPN » ci-dessus ; on le fusionne dans une copie de `owned` (keyé
+    # par nom) pour que le calcul de confrontation respecte MON alignement.
+    only_onice = st.checkbox(
+        "🟢 Ne compter que les joueurs On ice (alignements partants)",
+        value=True, key="conf_onice",
+        help="Décoche un joueur On ice dans « Mon équipe ESPN » ci-dessus pour "
+             "le retirer de tes totaux et voir l'effet sur la confrontation. "
+             "Les adversaires utilisent leur alignement du dernier refresh pool.")
+    # Base = alignements ESPN live mis en cache par « Mon équipe ESPN » (toutes
+    # les équipes), sinon le cache pool du dernier refresh. Mes toggles de
+    # session (work_lineup, keyé par pid) priment ensuite sur MON équipe.
+    base_owned = st.session_state.get(f"live_owned_{_espn_effective}", owned)
+    work_key = f"onice_work_{_espn_effective}"
+    work_lineup = st.session_state.get(work_key, {})
+    _norm_by_pid = {str(p.get("playerId")): norm_name(p.get("name")) for p in players}
+    _onice_over = {_norm_by_pid[pid]: bool(v)
+                   for pid, v in work_lineup.items() if pid in _norm_by_pid}
+    owned_eff = {}
+    for k, v in base_owned.items():
+        vv = dict(v)
+        if k in _onice_over:
+            vv["on_ice"] = _onice_over[k]
+        owned_eff[k] = vv
+
+    teams, is_mine = de.aggregate_by_team(
+        all_players_with_cap(), owned_eff, min_gp, respect_on_ice=only_onice)
     if not teams:
         st.info("Pas assez de données. Vérifie le seuil GP ou lance les updates.")
-        return
+        return None
 
-    # nom de mon équipe
     my_team = next((t for t, m in is_mine.items() if m), None)
+    return {"min_gp": min_gp, "only_onice": only_onice, "owned_eff": owned_eff,
+            "teams": teams, "is_mine": is_mine, "my_team": my_team}
+
+
+def _render_conf_league(ctx):
+    """Classements de DG + tableau croisé Forces & faiblesses."""
+    teams, is_mine = ctx["teams"], ctx["is_mine"]
+    min_gp, only_onice, owned_eff = ctx["min_gp"], ctx["only_onice"], ctx["owned_eff"]
 
     # --- Classement des DG par Valeur et Valeur/$M ---
     # On agrège la Valeur (z-score) et le cap de chaque DG via les joueurs scorés.
@@ -1848,8 +1926,10 @@ def _render_conf_matchups():
     dg_value = {}   # team -> somme des Valeurs
     dg_cap = {}     # team -> somme des caps
     for p in players:
-        entry = owned.get(norm_name(p.get("name")))
+        entry = owned_eff.get(norm_name(p.get("name")))
         if not entry:
+            continue
+        if only_onice and not entry.get("on_ice", True):
             continue
         team = entry.get("pool_team")
         sc = score_by_id.get(str(p.get("playerId")))
@@ -1909,7 +1989,9 @@ def _render_conf_matchups():
     st.subheader("📊 Forces & faiblesses par DG")
     st.caption("Stats projetées sur 82 matchs, cumulées par équipe. "
                "Vert = fort dans la catégorie, rouge = faible. "
-               "GAA : plus bas = mieux.")
+               "GAA : plus bas = mieux. "
+               + ("Joueurs **On ice** seulement." if only_onice
+                  else "**Tout le roster** (banc inclus)."))
 
     rows = []
     for team, cats in teams.items():
@@ -1923,9 +2005,10 @@ def _render_conf_matchups():
     styled = cdf.style.apply(color_col, axis=0).format(precision=1)
     st.dataframe(styled, width="stretch", height=420)
 
-    st.divider()
 
-    # --- Vue Moi vs un DG ---
+def _render_conf_vs_opponent(ctx):
+    """Confrontation directe : mes catégories vs celles d'un adversaire."""
+    teams, my_team = ctx["teams"], ctx["my_team"]
     st.subheader("🥊 Moi vs un adversaire")
     if not my_team:
         st.warning("Ton équipe n'est pas identifiée (vérifie ESPN_TEAM_ID).")
@@ -1982,7 +2065,11 @@ def _render_conf_matchups():
 def render_conf_tab():
     render_my_espn_team()
     st.divider()
-    _render_conf_matchups()
+    ctx = _conf_setup()
+    if ctx:
+        _render_conf_vs_opponent(ctx)
+        st.divider()
+        _render_conf_league(ctx)
     st.divider()
     render_pool_cap_summary()
 

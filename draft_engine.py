@@ -302,11 +302,15 @@ CAT_DIRECTION = {
 }
 
 
-def aggregate_by_team(players, owned, min_gp=20, project_games=82):
+def aggregate_by_team(players, owned, min_gp=20, project_games=82,
+                      respect_on_ice=False):
     """Agrège les stats projetées sur 82 matchs par équipe de pool.
 
     players : liste de joueurs (avec stats brutes + 'name', 'gp', 'type').
-    owned   : dict {nom_normalisé: {pool_team, is_mine}} (depuis ESPN).
+    owned   : dict {nom_normalisé: {pool_team, is_mine, on_ice}} (depuis ESPN).
+    respect_on_ice : si True, on ignore les joueurs dont `entry['on_ice']` est
+        faux (banc/IR). Permet de comparer les alignements PARTANTS seulement
+        (onglet Confrontations). Défaut False = compte tout le roster.
 
     Retourne : (dict {pool_team: {cat: valeur}}, dict {pool_team: is_mine}).
     Patineurs : cumul des projections. Gardiens : W/SO projetés cumulés,
@@ -331,6 +335,8 @@ def aggregate_by_team(players, owned, min_gp=20, project_games=82):
             continue
         team = entry.get("pool_team")
         is_mine[team] = entry.get("is_mine", False)
+        if respect_on_ice and not entry.get("on_ice", True):
+            continue
         gp = p.get("gp") or 0
         if gp < min_gp:
             continue
