@@ -51,9 +51,24 @@ def update_espn():
     log(f"Pool ESPN OK : {res['count']} joueurs.")
 
 
+def update_matchup_log():
+    import matchup_log as ml
+    import seasons as S
+    log("--- Journal des confrontations (matchup_log.json) ---")
+    yr = S.espn_season_for_mode(False)  # saison en cours (H2H)
+    res = ml.record(yr)
+    if res.get("skipped"):
+        log(f"Journal ignoré : {res['skipped']}.")
+    else:
+        fin = res.get("finalized_period")
+        log(f"Journal OK : sem. {res['period']} vs {res['opponent']}"
+            + (f" ; période {fin} finalisée." if fin else "."))
+
+
 TASKS = [
     ("Stats NHL",         update_stats),
     ("Pool ESPN",         update_espn),
+    ("Journal matchups",  update_matchup_log),
 ]
 
 

@@ -11,7 +11,7 @@ Catégories gardiens  : W, SO, GAA, SV%  (GAA à minimiser => inversée)
 """
 
 import json
-from statistics import mean, pstdev
+from statistics import mean, median, pstdev
 
 import cloud_store
 
@@ -302,19 +302,57 @@ CAT_DIRECTION = {
 }
 
 
-def aggregate_by_team(players, owned, min_gp=20, project_games=82,
-                      respect_on_ice=False):
-    """Agrège les stats projetées sur 82 matchs par équipe de pool.
+def _category_baselines(players, pool_skaters=500, pool_goalies=50):
+    """Valeurs de remplissage (médiane du bassin de réguliers) par catégorie.
 
-    players : liste de joueurs (avec stats brutes + 'name', 'gp', 'type').
+    Pour chaque catégorie, on prend les N meilleurs joueurs de cette catégorie
+    (500 patineurs / 50 gardiens) et on retient la médiane (50e percentile). Sert
+    à créditer un joueur SANS échantillon exploitable (retour de blessure/recrue,
+    gp<=fill_gp_max) d'une contribution de « partant type » plutôt que ~0 (qui
+    ferait chuter la colonne) ou une extrapolation folle.
+
+    Retourne {'skater': {cat: médiane}, 'goalie': {cat: médiane, '_fill_gp':}}.
+    """
+    skaters = [p for p in players if p.get("type") == "skater"]
+    goalies = [p for p in players if p.get("type") == "goalie"]
+
+    def _median_topn(rows, src, n, reverse=True):
+        vals = [r.get(src) for r in rows if r.get(src) is not None]
+        if not vals:
+            return None
+        vals.sort(reverse=reverse)      # reverse=True: plus haut = meilleur
+        return median(vals[:n])
+
+    sk = {label: _median_topn(skaters, src, pool_skaters)
+          for label, src in SKATER_CATS}
+    go = {
+        "W":   _median_topn(goalies, "wins", pool_goalies),
+        "SO":  _median_topn(goalies, "shutouts", pool_goalies),
+        "GAA": _median_topn(goalies, "gaa", pool_goalies, reverse=False),  # bas = mieux
+        "SV%": _median_topn(goalies, "sv_pct", pool_goalies),
+    }
+    # Poids en matchs pour injecter les taux (GAA/SV%) d'un gardien rempli :
+    # médiane des GP du bassin de vrais partants, pour qu'il pèse comme un
+    # partant type dans la moyenne pondérée.
+    go["_fill_gp"] = _median_topn(goalies, "gp", pool_goalies) or 0
+    return {"skater": sk, "goalie": go}
+
+
+def aggregate_by_team(players, owned, respect_on_ice=False, fill_gp_max=5,
+                      pool_skaters=500, pool_goalies=50):
+    """Agrège les TOTAUX RÉELS (production réelle) par équipe de pool.
+
+    players : liste de joueurs (stats brutes + 'name', 'gp', 'type').
     owned   : dict {nom_normalisé: {pool_team, is_mine, on_ice}} (depuis ESPN).
-    respect_on_ice : si True, on ignore les joueurs dont `entry['on_ice']` est
-        faux (banc/IR). Permet de comparer les alignements PARTANTS seulement
-        (onglet Confrontations). Défaut False = compte tout le roster.
+    respect_on_ice : si True, ignore les joueurs hors alignement partant (banc/IR).
+    fill_gp_max : un joueur avec gp<=fill_gp_max (sans échantillon exploitable) est
+        crédité de la médiane du bassin de réguliers (voir _category_baselines)
+        au lieu de ses ~0 (retour de blessure/recrue). Les autres comptent leur
+        TOTAL réel — aucune projection, aucune exclusion.
 
     Retourne : (dict {pool_team: {cat: valeur}}, dict {pool_team: is_mine}).
-    Patineurs : cumul des projections. Gardiens : W/SO projetés cumulés,
-    GAA/SV% en moyenne pondérée par les matchs.
+    Patineurs : cumul des totaux réels. Gardiens : W/SO cumulés, GAA/SV% en
+    moyenne pondérée par les matchs.
     """
     import re, unicodedata
 
@@ -325,6 +363,7 @@ def aggregate_by_team(players, owned, min_gp=20, project_games=82,
         s = re.sub(r"[.'-]", "", s.lower())
         return re.sub(r"\s+", " ", s).strip()
 
+    base = _category_baselines(players, pool_skaters, pool_goalies)
     teams = {}       # pool_team -> {cat: value}
     is_mine = {}     # pool_team -> bool
     goalie_acc = {}  # pool_team -> {'gp':, 'gaa_w':, 'svp_w':} pour moyennes
@@ -338,31 +377,40 @@ def aggregate_by_team(players, owned, min_gp=20, project_games=82,
         if respect_on_ice and not entry.get("on_ice", True):
             continue
         gp = p.get("gp") or 0
-        if gp < min_gp:
-            continue
+        low = gp <= fill_gp_max          # sans échantillon exploitable -> remplissage
         teams.setdefault(team, {})
         goalie_acc.setdefault(team, {"gp": 0, "gaa_w": 0.0, "svp_w": 0.0})
 
         if p.get("type") == "skater":
             for label, src in SKATER_CATS:
-                v = p.get(src)
+                v = base["skater"].get(label) if low else p.get(src)
                 if v is None:
                     continue
-                proj = v / gp * project_games
-                teams[team][label] = teams[team].get(label, 0.0) + proj
+                teams[team][label] = teams[team].get(label, 0.0) + v
         else:  # gardien
-            for label, src in [("W", "wins"), ("SO", "shutouts")]:
-                v = p.get(src)
-                if v is not None:
-                    proj = v / gp * project_games
-                    teams[team][label] = teams[team].get(label, 0.0) + proj
-            # GAA / SV% : moyenne pondérée par GP
             acc = goalie_acc[team]
-            if p.get("gaa") is not None:
-                acc["gaa_w"] += p["gaa"] * gp
-            if p.get("sv_pct") is not None:
-                acc["svp_w"] += p["sv_pct"] * gp
-            acc["gp"] += gp
+            if low:
+                for label in ("W", "SO"):
+                    bv = base["goalie"].get(label)
+                    if bv is not None:
+                        teams[team][label] = teams[team].get(label, 0.0) + bv
+                w = base["goalie"].get("_fill_gp") or 0
+                gr, sr = base["goalie"].get("GAA"), base["goalie"].get("SV%")
+                if gr is not None and w:
+                    acc["gaa_w"] += gr * w
+                if sr is not None and w:
+                    acc["svp_w"] += sr * w
+                acc["gp"] += w
+            else:
+                for label, src in [("W", "wins"), ("SO", "shutouts")]:
+                    v = p.get(src)
+                    if v is not None:
+                        teams[team][label] = teams[team].get(label, 0.0) + v
+                if p.get("gaa") is not None:
+                    acc["gaa_w"] += p["gaa"] * gp
+                if p.get("sv_pct") is not None:
+                    acc["svp_w"] += p["sv_pct"] * gp
+                acc["gp"] += gp
 
     # finaliser GAA / SV% (moyenne pondérée)
     for team, acc in goalie_acc.items():

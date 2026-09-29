@@ -53,6 +53,24 @@ jobs:
           ESPN_S2:        ${{ secrets.ESPN_S2 }}
           VERIFY_SSL:     "true"
 
+      # Journal des confrontations : prédiction (totaux de saison) vs résultat
+      # réel H2H + blessures de la semaine. matchup_log.json EST committé
+      # (contrairement aux rosters espn*.json) pour survivre d'un run à l'autre :
+      # c'est ce qui permet le suivi des blessures survenues PENDANT la semaine.
+      - name: Journaliser la confrontation (matchup_log.json)
+        run: python matchup_log.py
+        continue-on-error: true  # ne bloque pas si les cookies ESPN sont expires
+        env:
+          ESPN_LEAGUE_ID: ${{ secrets.ESPN_LEAGUE_ID }}
+          ESPN_TEAM_ID:   ${{ secrets.ESPN_TEAM_ID }}
+          ESPN_SWID:      ${{ secrets.ESPN_SWID }}
+          ESPN_S2:        ${{ secrets.ESPN_S2 }}
+          VERIFY_SSL:     "true"
+          # Contexte OFFICIEL pour ce job : écrit la RÉFÉRENCE matchup_log.json
+          # (committée ci-dessous), pas un fichier .local. En local (sans token)
+          # les écritures vont dans matchup_log.local.json (gitignoré).
+          GITHUB_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
+
       # NOTE : les contrats (PuckPedia) ne sont PLUS rafraîchis ici. PuckPedia
       # (Cloudflare) renvoie 403 aux IP des runners GitHub — l'étape échouait en
       # silence. Les contrats se mettent à jour manuellement (bouton 🔄 Contrats
@@ -63,5 +81,6 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add nhl_stats.json
+          git add matchup_log.json || true  # absent si l'étape ESPN a échoué
           git diff --staged --quiet || git commit -m "chore: màj automatique JSON $(date -u +'%Y-%m-%d') [skip ci]"
           git push

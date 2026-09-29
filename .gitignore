@@ -21,6 +21,9 @@ Thumbs.db
 test_*.py
 blob.json
 
+# Journal opérationnel du job quotidien (local, rotatif — pas de données repo)
+daily_update.log
+
 # Overrides LOCAUX (tests) — ne JAMAIS committer. La référence officielle est le
 # fichier sans « .local » (committé, lu par le Cloud) : player_status.json,
 # draft_plan.json, lineup.json, draft_settings.json. Voir cloud_store.py.

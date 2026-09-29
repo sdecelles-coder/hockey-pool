@@ -28,6 +28,7 @@ import streamlit as st
 
 import espn_roster as er
 import draft_engine as de
+import matchup_log as ml
 import update_stats as us
 import player_status as ps
 import seasons as seasons_mod
@@ -1685,7 +1686,7 @@ def render_my_espn_team():
                 # alignements réels (le mien + adversaires), sans appel en plus.
                 try:
                     with st.spinner("Chargement des alignements ESPN…"):
-                        live_owned, _ = er.fetch_rosters(_espn_effective)
+                        live_owned, _, _ = er.fetch_rosters(_espn_effective)
                 except Exception as _e:
                     st.warning(f"Alignements ESPN en direct indisponibles ({_e}) ; "
                                "utilisation du dernier cache pool.")
@@ -1863,7 +1864,7 @@ def render_pool_cap_summary():
 
 
 def _conf_setup():
-    """Contrôles communs (GP min, filtre On ice) + agrégation par équipe.
+    """Contrôle commun (filtre On ice) + agrégation par équipe.
 
     Retourne un dict de contexte partagé par les sections Confrontation, ou None
     si aucune donnée. Mes toggles On ice de session priment sur ESPN.
@@ -1872,8 +1873,6 @@ def _conf_setup():
         st.info("Aucune donnée de pool. Clique sur « 🏒 Pool » dans l'en-tête "
                 "pour récupérer les rosters ESPN.")
         return None
-
-    min_gp = st.slider("GP minimum par joueur", 1, 60, 20, key="conf_gp")
 
     # --- Alignements On ice : mes essais de session priment sur ESPN ---
     # work_lineup (session, keyé par pid) reflète mes toggles du tableau « Mon
@@ -1901,14 +1900,24 @@ def _conf_setup():
             vv["on_ice"] = _onice_over[k]
         owned_eff[k] = vv
 
+    # Confrontation = totaux RÉELS (production réelle), avec remplissage médian
+    # pour les joueurs sans échantillon (gp<=5). Aucun seuil GP à régler ici.
+    # Dataset choisi par critère par joueur (live vs dernière saison complète),
+    # partagé avec le journal pour rester cohérent.
+    conf_players, _conf_src = ml.select_conf_players(owned_eff)
+    if _conf_src == "archived":
+        st.caption("📊 Confrontation basée sur la **dernière saison complète** "
+                   "(la saison en cours n'a pas encore assez d'échantillon).")
     teams, is_mine = de.aggregate_by_team(
-        all_players_with_cap(), owned_eff, min_gp, respect_on_ice=only_onice)
+        conf_players, owned_eff, respect_on_ice=only_onice)
     if not teams:
-        st.info("Pas assez de données. Vérifie le seuil GP ou lance les updates.")
+        st.info("Pas assez de données. Lance les updates (stats + pool).")
         return None
 
     my_team = next((t for t, m in is_mine.items() if m), None)
-    return {"min_gp": min_gp, "only_onice": only_onice, "owned_eff": owned_eff,
+    # min_gp fixe (20) réservé au z-score des classements DG (_render_conf_league),
+    # indépendant du modèle de confrontation ci-dessus.
+    return {"min_gp": 20, "only_onice": only_onice, "owned_eff": owned_eff,
             "teams": teams, "is_mine": is_mine, "my_team": my_team}
 
 
@@ -2006,16 +2015,12 @@ def _render_conf_league(ctx):
     st.dataframe(styled, width="stretch", height=420)
 
 
-def _render_conf_vs_opponent(ctx):
-    """Confrontation directe : mes catégories vs celles d'un adversaire."""
-    teams, my_team = ctx["teams"], ctx["my_team"]
-    st.subheader("🥊 Moi vs un adversaire")
-    if not my_team:
-        st.warning("Ton équipe n'est pas identifiée (vérifie ESPN_TEAM_ID).")
-        return
-    others = [t for t in teams if t != my_team]
-    opp = st.selectbox("Adversaire", others, key="conf_opp")
+def _matchup_compare(my_team, opp, teams):
+    """DataFrame stylé + décompte de catégories pour my_team vs opp.
 
+    Comparaison sur les totaux de saison (dict `teams`). Retourne
+    (styled_df, my_wins, opp_wins).
+    """
     mine_cats = teams.get(my_team, {})
     opp_cats = teams.get(opp, {})
 
@@ -2047,19 +2052,118 @@ def _render_conf_vs_opponent(ctx):
             styles[1] = "background-color: rgba(0,180,80,0.5)"
         return styles
 
-    styled2 = (comp[[my_team, opp, "Gagnant"]].style
-               .apply(hl, axis=1).format(precision=1, subset=[my_team, opp]))
-    st.dataframe(styled2, width="stretch", height=440)
+    styled = (comp[[my_team, opp, "Gagnant"]].style
+              .apply(hl, axis=1).format(precision=1, subset=[my_team, opp]))
+    return styled, my_wins, opp_wins
 
-    m1, m2 = st.columns(2)
-    m1.metric(f"{my_team} (moi)", f"{my_wins} cat.")
-    m2.metric(opp, f"{opp_wins} cat.")
-    if my_wins > opp_wins:
-        st.success(f"Tu gagnerais cette confrontation {my_wins}–{opp_wins}")
-    elif opp_wins > my_wins:
-        st.error(f"Tu perdrais cette confrontation {my_wins}–{opp_wins}")
-    else:
-        st.info(f"Égalité {my_wins}–{opp_wins}")
+
+def _render_matchup_col(col, title, my_team, opp, teams):
+    """Rend un tableau de confrontation (une colonne) pour un adversaire auto."""
+    with col:
+        st.markdown(f"**{title}**")
+        if not opp:
+            st.info("Aucune confrontation programmée.")
+            return
+        if opp not in teams:
+            st.warning(f"Adversaire « {opp} » sans données de possession.")
+            return
+        st.caption(f"vs **{opp}**")
+        styled, my_wins, opp_wins = _matchup_compare(my_team, opp, teams)
+        st.dataframe(styled, width="stretch", height=440)
+        if my_wins > opp_wins:
+            st.success(f"Tu gagnerais {my_wins}–{opp_wins}")
+        elif opp_wins > my_wins:
+            st.error(f"Tu perdrais {my_wins}–{opp_wins}")
+        else:
+            st.info(f"Égalité {my_wins}–{opp_wins}")
+
+
+def _render_conf_vs_opponent(ctx):
+    """Confrontation directe : matchup en cours + semaine suivante, côte à côte.
+
+    Les adversaires suivent automatiquement le calendrier H2H ESPN (aucune
+    sélection manuelle). Mode Saison uniquement.
+    """
+    teams, my_team = ctx["teams"], ctx["my_team"]
+    st.subheader("🥊 Moi vs un adversaire")
+    if not my_team:
+        st.warning("Ton équipe n'est pas identifiée (vérifie ESPN_TEAM_ID).")
+        return
+
+    sched = espn_db.get("schedule") or {}
+    my_id = espn_db.get("my_team_id")
+    cur = sched.get("current_period")
+    if cur is None or not sched.get("matchups"):
+        st.info("Calendrier des matchups ESPN indisponible. Clique sur "
+                "« 🏒 Pool » dans l'en-tête pour rafraîchir les rosters.")
+        return
+
+    opp_cur = er.opponent_for(espn_db, my_id, cur)
+    opp_next = er.opponent_for(espn_db, my_id, cur + 1)
+
+    c1, c2 = st.columns(2)
+    _render_matchup_col(c1, f"📅 Matchup en cours (sem. {cur})",
+                        my_team, opp_cur, teams)
+    _render_matchup_col(c2, f"⏭️ Semaine suivante (sem. {cur + 1})",
+                        my_team, opp_next, teams)
+
+    _render_matchup_log_history()
+
+
+_WINNER_LBL = {"mine": "moi", "opp": "adv", "tie": "égalité", None: "—"}
+
+
+def _render_matchup_log_history():
+    """Historique du journal des confrontations : prédiction vs résultat réel.
+
+    Lecture seule ; le journal est alimenté par le job quotidien
+    (matchup_log.record). Sert à comparer prédictions et réalité pour ajuster.
+    """
+    log = ml.load_log()
+    sdata = log.get("seasons", {}).get(str(_espn_effective), {})
+    history = sdata.get("history", [])
+    cur = sdata.get("current") or {}
+    cur_inj = cur.get("injury_events", [])
+    if not history and not cur_inj:
+        return
+
+    with st.expander("📒 Journal des confrontations (prédiction vs réel)",
+                     expanded=False):
+        st.caption("Alimenté automatiquement par le job quotidien. La prédiction "
+                   "est basée sur les totaux de saison ; le résultat réel vient "
+                   "du pointage H2H ESPN de fin de semaine.")
+
+        if cur_inj:
+            st.markdown(f"**🚑 Blessures cette semaine (sem. {cur.get('period')})**")
+            for ev in cur_inj:
+                who = "🟦 moi" if ev["team"] == "mine" else "🟥 adv"
+                st.write(f"- {who} · **{ev['name']}** → {ev.get('to') or 'blessé'} "
+                         f"({ev.get('date')})")
+
+        if history:
+            rows = []
+            for h in reversed(history):
+                pred = h.get("prediction") or {}
+                act = h.get("actual") or {}
+                hit = h.get("predicted_correctly")
+                rows.append({
+                    "Sem.": h.get("period"),
+                    "Adversaire": h.get("opponent"),
+                    "Prédit": f"{pred.get('my_wins','?')}–{pred.get('opp_wins','?')} "
+                              f"({_WINNER_LBL.get(pred.get('predicted_winner'))})",
+                    "Réel": (f"{act.get('my_wins','?')}–{act.get('opp_wins','?')} "
+                             f"({_WINNER_LBL.get(act.get('winner'))})"
+                             if act else "—"),
+                    "✓": "✅" if hit else ("❌" if hit is False else "—"),
+                    "Blessures": len(h.get("injuries", [])),
+                })
+            st.dataframe(pd.DataFrame(rows).set_index("Sem."),
+                         width="stretch")
+            hits = [h for h in history if h.get("predicted_correctly") is not None]
+            if hits:
+                ok = sum(1 for h in hits if h["predicted_correctly"])
+                st.caption(f"Prédictions correctes : {ok}/{len(hits)} "
+                           f"({100*ok/len(hits):.0f} %)")
 
 
 def render_conf_tab():
@@ -2067,8 +2171,12 @@ def render_conf_tab():
     st.divider()
     ctx = _conf_setup()
     if ctx:
-        _render_conf_vs_opponent(ctx)
-        st.divider()
+        # « Moi vs un adversaire » suit le calendrier H2H : n'a de sens qu'en
+        # mode Saison (pas de matchups en Repêchage) — section cachée sinon.
+        draft_mode = str(st.session_state.get("team_mode", "🏒 Repêchage")).startswith("🏒")
+        if not draft_mode:
+            _render_conf_vs_opponent(ctx)
+            st.divider()
         _render_conf_league(ctx)
     st.divider()
     render_pool_cap_summary()
