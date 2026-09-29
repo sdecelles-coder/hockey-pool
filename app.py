@@ -1938,15 +1938,19 @@ def _render_conf_league(ctx):
         entry = owned_eff.get(norm_name(p.get("name")))
         if not entry:
             continue
+        team = entry.get("pool_team")
+        # Cap Hit : TOUJOURS tout le roster (banc/IR inclus), jamais filtré par
+        # On ice ni par la présence d'un score — le cap compte pour l'équipe
+        # entière, peu importe l'alignement.
+        c = contract_for(p.get("playerId"))
+        dg_cap[team] = dg_cap.get(team, 0) + (c.get("cap_hit_value", 0) if c else 0)
+        # Valeur : production des joueurs scorés, respecte le filtre On ice.
         if only_onice and not entry.get("on_ice", True):
             continue
-        team = entry.get("pool_team")
         sc = score_by_id.get(str(p.get("playerId")))
         if not sc:
             continue
         dg_value[team] = dg_value.get(team, 0.0) + (sc.get("value") or 0)
-        c = contract_for(p.get("playerId"))
-        dg_cap[team] = dg_cap.get(team, 0) + (c.get("cap_hit_value", 0) if c else 0)
 
     if dg_value:
         rank_val = sorted(dg_value.items(), key=lambda x: x[1], reverse=True)
