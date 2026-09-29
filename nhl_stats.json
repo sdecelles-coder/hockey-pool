@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-28T17:37:45.154904+00:00",
+  "updated_at": "2026-09-29T15:46:56.665889+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -4241,8 +4241,8 @@
     },
     {
       "playerId": 8478458,
-      "name": "Jack Roslovic",
-      "puckpedia_slug": "jack-roslovic",
+      "name": "John (Jack) Roslovic",
+      "puckpedia_slug": "john-jack-roslovic",
       "type": "skater",
       "team": "EDM",
       "teams_all": "EDM",
@@ -7135,7 +7135,7 @@
       "team": "UTA",
       "teams_all": "UTA",
       "position": "R",
-      "age": 27,
+      "age": 28,
       "gp": 59,
       "goals": 13,
       "assists": 10,
@@ -8535,8 +8535,8 @@
     },
     {
       "playerId": 8476927,
-      "name": "Teddy Blueger",
-      "puckpedia_slug": "teddy-blueger",
+      "name": "Theodor Blueger",
+      "puckpedia_slug": "theodor-blueger",
       "type": "skater",
       "team": "VAN",
       "teams_all": "VAN",
@@ -9276,8 +9276,8 @@
     },
     {
       "playerId": 8477426,
-      "name": "Nick Paul",
-      "puckpedia_slug": "nick-paul",
+      "name": "Nicholas Paul",
+      "puckpedia_slug": "nicholas-paul",
       "type": "skater",
       "team": "TBL",
       "teams_all": "TBL",
@@ -14602,7 +14602,7 @@
       "team": "OTT",
       "teams_all": "OTT",
       "position": "D",
-      "age": 20,
+      "age": 21,
       "gp": 4,
       "goals": 1,
       "assists": 1,
