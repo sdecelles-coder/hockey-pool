@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-09-30T15:53:59.219475+00:00",
+  "updated_at": "2026-10-01T16:24:16.512476+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -2911,8 +2911,8 @@
     },
     {
       "playerId": 8482175,
-      "name": "John-Jason Peterka",
-      "puckpedia_slug": "john-jason-peterka",
+      "name": "JJ Peterka",
+      "puckpedia_slug": "jj-peterka",
       "type": "skater",
       "team": "UTA",
       "teams_all": "UTA",
@@ -3405,8 +3405,8 @@
     },
     {
       "playerId": 8478438,
-      "name": "Thomas Novak",
-      "puckpedia_slug": "thomas-novak",
+      "name": "Tommy Novak",
+      "puckpedia_slug": "tommy-novak",
       "type": "skater",
       "team": "PIT",
       "teams_all": "PIT",
@@ -4241,8 +4241,8 @@
     },
     {
       "playerId": 8478458,
-      "name": "John (Jack) Roslovic",
-      "puckpedia_slug": "john-jack-roslovic",
+      "name": "Jack Roslovic",
+      "puckpedia_slug": "jack-roslovic",
       "type": "skater",
       "team": "EDM",
       "teams_all": "EDM",
@@ -8535,8 +8535,8 @@
     },
     {
       "playerId": 8476927,
-      "name": "Theodor Blueger",
-      "puckpedia_slug": "theodor-blueger",
+      "name": "Teddy Blueger",
+      "puckpedia_slug": "teddy-blueger",
       "type": "skater",
       "team": "VAN",
       "teams_all": "VAN",
@@ -9200,8 +9200,8 @@
     },
     {
       "playerId": 8476467,
-      "name": "Jamieson Oleksiak",
-      "puckpedia_slug": "jamieson-oleksiak",
+      "name": "Jamie Oleksiak",
+      "puckpedia_slug": "jamie-oleksiak",
       "type": "skater",
       "team": "SEA",
       "teams_all": "SEA",
@@ -9276,8 +9276,8 @@
     },
     {
       "playerId": 8477426,
-      "name": "Nicholas Paul",
-      "puckpedia_slug": "nicholas-paul",
+      "name": "Nick Paul",
+      "puckpedia_slug": "nick-paul",
       "type": "skater",
       "team": "TBL",
       "teams_all": "TBL",
@@ -10131,8 +10131,8 @@
     },
     {
       "playerId": 8476891,
-      "name": "Matt Grzelcyk",
-      "puckpedia_slug": "matt-grzelcyk",
+      "name": "Matthew Grzelcyk",
+      "puckpedia_slug": "matthew-grzelcyk",
       "type": "skater",
       "team": "CHI",
       "teams_all": "CHI",
@@ -16008,7 +16008,7 @@
       "team": "NYR",
       "teams_all": "NYR",
       "position": "C",
-      "age": 35,
+      "age": 36,
       "gp": 2,
       "goals": 0,
       "assists": 0,
@@ -17433,7 +17433,7 @@
       "team": "FLA",
       "teams_all": "FLA",
       "position": "R",
-      "age": 22,
+      "age": 23,
       "gp": 6,
       "goals": 0,
       "assists": 0,

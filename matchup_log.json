@@ -165,7 +165,7 @@
           }
         },
         "injury_events": [],
-        "last_snapshot": "2026-09-30",
+        "last_snapshot": "2026-10-01",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -236,8 +236,8 @@
               "result": "LOSS"
             },
             "PPP": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             },
             "SO": {
               "me": 0.0,
@@ -256,19 +256,19 @@
               "result": "TIE"
             },
             "A": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             },
             "+/-": {
-              "me": 0.0,
-              "result": "LOSS"
+              "me": 1.0,
+              "result": "WIN"
             },
             "PIM": {
               "me": 0.0,
               "result": "LOSS"
             },
             "SOG": {
-              "me": 6.0,
+              "me": 10.0,
               "result": "WIN"
             },
             "HIT": {
@@ -276,14 +276,14 @@
               "result": "LOSS"
             }
           },
-          "my_wins": 1,
-          "opp_wins": 7,
-          "ties": 3,
+          "my_wins": 4,
+          "opp_wins": 6,
+          "ties": 1,
           "winner": "opp"
         }
       },
       "history": []
     }
   },
-  "updated_at": "2026-09-30T15:54:00.775012+00:00"
+  "updated_at": "2026-10-01T16:24:18.012925+00:00"
 }
