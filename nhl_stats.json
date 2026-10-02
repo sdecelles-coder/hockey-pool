@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-10-01T16:24:16.512476+00:00",
+  "updated_at": "2026-10-02T15:45:48.391307+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -4969,7 +4969,7 @@
       "team": "CAR",
       "teams_all": "CAR",
       "position": "D",
-      "age": 24,
+      "age": 25,
       "gp": 81,
       "goals": 11,
       "assists": 22,
@@ -10853,7 +10853,7 @@
     },
     {
       "playerId": 8482765,
-      "name": "Isak Rosen",
+      "name": "Isak Rosén",
       "puckpedia_slug": "isak-rosen",
       "type": "skater",
       "team": "WPG",
@@ -15058,7 +15058,7 @@
       "team": "NJD",
       "teams_all": "NJD",
       "position": "C",
-      "age": 26,
+      "age": 27,
       "gp": 8,
       "goals": 1,
       "assists": 0,
@@ -18500,7 +18500,7 @@
       "team": "CAR",
       "teams_all": "CAR",
       "position": "G",
-      "age": 36,
+      "age": 37,
       "gp": 35,
       "wins": 16,
       "losses": 14,
