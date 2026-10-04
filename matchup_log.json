@@ -165,7 +165,7 @@
           }
         },
         "injury_events": [],
-        "last_snapshot": "2026-10-03",
+        "last_snapshot": "2026-10-04",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -232,58 +232,58 @@
         "actual_live": {
           "cats": {
             "W": {
-              "me": 1.0,
-              "result": "LOSS"
+              "me": 2.0,
+              "result": "TIE"
             },
             "PPP": {
-              "me": 1.0,
-              "result": "TIE"
+              "me": 3.0,
+              "result": "WIN"
             },
             "SO": {
               "me": 1.0,
               "result": "LOSS"
             },
             "GAA": {
-              "me": 2.07134638,
+              "me": 1.70583776,
               "result": "LOSS"
             },
             "SV%": {
-              "me": 0.91836735,
+              "me": 0.92857143,
               "result": "LOSS"
             },
             "G": {
-              "me": 2.0,
-              "result": "TIE"
+              "me": 3.0,
+              "result": "LOSS"
             },
             "A": {
-              "me": 1.0,
-              "result": "TIE"
+              "me": 4.0,
+              "result": "LOSS"
             },
             "+/-": {
-              "me": 0.0,
+              "me": 4.0,
               "result": "WIN"
             },
             "PIM": {
-              "me": 13.0,
+              "me": 25.0,
               "result": "WIN"
             },
             "SOG": {
-              "me": 27.0,
-              "result": "WIN"
+              "me": 39.0,
+              "result": "LOSS"
             },
             "HIT": {
-              "me": 17.0,
-              "result": "LOSS"
+              "me": 26.0,
+              "result": "WIN"
             }
           },
-          "my_wins": 3,
-          "opp_wins": 5,
-          "ties": 3,
+          "my_wins": 4,
+          "opp_wins": 6,
+          "ties": 1,
           "winner": "opp"
         }
       },
       "history": []
     }
   },
-  "updated_at": "2026-10-03T14:18:18.522891+00:00"
+  "updated_at": "2026-10-04T14:47:06.710652+00:00"
 }
