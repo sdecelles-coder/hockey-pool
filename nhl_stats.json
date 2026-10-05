@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-10-04T14:47:05.100939+00:00",
+  "updated_at": "2026-10-05T18:23:16.436686+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -10061,7 +10061,7 @@
       "team": "COL",
       "teams_all": "COL",
       "position": "C",
-      "age": 21,
+      "age": 22,
       "gp": 56,
       "goals": 6,
       "assists": 7,
@@ -12968,7 +12968,7 @@
       "team": "OTT",
       "teams_all": "OTT",
       "position": "D",
-      "age": 27,
+      "age": 28,
       "gp": 50,
       "goals": 0,
       "assists": 5,
@@ -15799,7 +15799,7 @@
       "team": "DET",
       "teams_all": "DET",
       "position": "R",
-      "age": 20,
+      "age": 21,
       "gp": 14,
       "goals": 0,
       "assists": 1,
@@ -18986,7 +18986,7 @@
       "team": "BUF",
       "teams_all": "BUF",
       "position": "G",
-      "age": 25,
+      "age": 26,
       "gp": 16,
       "wins": 8,
       "losses": 4,
