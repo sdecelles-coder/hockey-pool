@@ -106,8 +106,8 @@
           "macklin celebrini": {
             "name": "Macklin Celebrini",
             "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
+            "status": "DAY_TO_DAY",
+            "injured": true
           },
           "nico hischier": {
             "name": "Nico Hischier",
@@ -164,8 +164,16 @@
             "injured": false
           }
         },
-        "injury_events": [],
-        "last_snapshot": "2026-10-05",
+        "injury_events": [
+          {
+            "name": "Macklin Celebrini",
+            "team": "opp",
+            "from": "ACTIVE",
+            "to": "DAY_TO_DAY",
+            "date": "2026-10-06"
+          }
+        ],
+        "last_snapshot": "2026-10-06",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -232,8 +240,8 @@
         "actual_live": {
           "cats": {
             "W": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             },
             "PPP": {
               "me": 0.0,
@@ -244,42 +252,42 @@
               "result": "TIE"
             },
             "GAA": {
-              "me": null,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             },
             "SV%": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 0.92857143,
+              "result": "WIN"
             },
             "G": {
               "me": 0.0,
               "result": "TIE"
             },
             "A": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             },
             "+/-": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             },
             "PIM": {
               "me": 0.0,
               "result": "TIE"
             },
             "SOG": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 4.0,
+              "result": "WIN"
             },
             "HIT": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 2.0,
+              "result": "WIN"
             }
           },
-          "my_wins": 0,
+          "my_wins": 7,
           "opp_wins": 0,
-          "ties": 11,
-          "winner": "tie"
+          "ties": 4,
+          "winner": "mine"
         }
       },
       "history": [
@@ -408,5 +416,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-05T18:23:17.527213+00:00"
+  "updated_at": "2026-10-06T15:55:04.697193+00:00"
 }
