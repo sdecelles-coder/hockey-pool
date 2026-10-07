@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-10-06T15:55:03.058623+00:00",
+  "updated_at": "2026-10-07T16:25:51.388535+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -5311,7 +5311,7 @@
       "team": "COL",
       "teams_all": "COL",
       "position": "D",
-      "age": 34,
+      "age": 35,
       "gp": 79,
       "goals": 5,
       "assists": 26,
@@ -8370,7 +8370,7 @@
       "team": "NYI",
       "teams_all": "NYI",
       "position": "R",
-      "age": 25,
+      "age": 26,
       "gp": 44,
       "goals": 5,
       "assists": 13,
