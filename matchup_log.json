@@ -173,7 +173,7 @@
             "date": "2026-10-06"
           }
         ],
-        "last_snapshot": "2026-10-07",
+        "last_snapshot": "2026-10-08",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -264,11 +264,11 @@
               "result": "TIE"
             },
             "A": {
-              "me": 6.0,
+              "me": 7.0,
               "result": "WIN"
             },
             "+/-": {
-              "me": 0.0,
+              "me": 3.0,
               "result": "WIN"
             },
             "PIM": {
@@ -276,7 +276,7 @@
               "result": "WIN"
             },
             "SOG": {
-              "me": 25.0,
+              "me": 30.0,
               "result": "WIN"
             },
             "HIT": {
@@ -416,5 +416,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-07T16:25:52.820895+00:00"
+  "updated_at": "2026-10-08T16:26:25.840908+00:00"
 }

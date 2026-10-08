@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-10-07T16:25:51.388535+00:00",
+  "updated_at": "2026-10-08T16:26:24.218110+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -3145,7 +3145,7 @@
       "team": "NJD",
       "teams_all": "NJD",
       "position": "R",
-      "age": 29,
+      "age": 30,
       "gp": 77,
       "goals": 24,
       "assists": 20,
@@ -7268,7 +7268,7 @@
       "team": "MTL",
       "teams_all": "MTL",
       "position": "D",
-      "age": 29,
+      "age": 30,
       "gp": 73,
       "goals": 7,
       "assists": 15,
@@ -16692,7 +16692,7 @@
       "team": "TBL",
       "teams_all": "TBL",
       "position": "D",
-      "age": 25,
+      "age": 26,
       "gp": 1,
       "goals": 0,
       "assists": 0,
