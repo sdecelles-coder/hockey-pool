@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-10-09T16:09:40.333802+00:00",
+  "updated_at": "2026-10-10T15:20:48.122293+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -4361,7 +4361,7 @@
       "team": "CHI",
       "teams_all": "CHI",
       "position": "R",
-      "age": 31,
+      "age": 32,
       "gp": 77,
       "goals": 18,
       "assists": 18,
@@ -12854,7 +12854,7 @@
       "team": "PIT",
       "teams_all": "PIT",
       "position": "R",
-      "age": 23,
+      "age": 24,
       "gp": 16,
       "goals": 5,
       "assists": 0,
@@ -17186,7 +17186,7 @@
       "team": "PIT",
       "teams_all": "PIT",
       "position": "C",
-      "age": 23,
+      "age": 24,
       "gp": 1,
       "goals": 0,
       "assists": 0,
@@ -17566,7 +17566,7 @@
       "team": "BOS",
       "teams_all": "BOS",
       "position": "C",
-      "age": 25,
+      "age": 26,
       "gp": 1,
       "goals": 0,
       "assists": 0,

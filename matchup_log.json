@@ -173,7 +173,7 @@
             "date": "2026-10-06"
           }
         ],
-        "last_snapshot": "2026-10-09",
+        "last_snapshot": "2026-10-10",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -244,8 +244,8 @@
               "result": "TIE"
             },
             "PPP": {
-              "me": 7.0,
-              "result": "TIE"
+              "me": 8.0,
+              "result": "WIN"
             },
             "SO": {
               "me": 0.0,
@@ -253,18 +253,18 @@
             },
             "GAA": {
               "me": 2.01005025,
-              "result": "WIN"
+              "result": "LOSS"
             },
             "SV%": {
               "me": 0.90163934,
               "result": "LOSS"
             },
             "G": {
-              "me": 3.0,
-              "result": "TIE"
+              "me": 4.0,
+              "result": "WIN"
             },
             "A": {
-              "me": 12.0,
+              "me": 15.0,
               "result": "WIN"
             },
             "+/-": {
@@ -276,17 +276,17 @@
               "result": "LOSS"
             },
             "SOG": {
-              "me": 37.0,
+              "me": 47.0,
               "result": "WIN"
             },
             "HIT": {
-              "me": 12.0,
-              "result": "LOSS"
+              "me": 15.0,
+              "result": "TIE"
             }
           },
-          "my_wins": 4,
+          "my_wins": 5,
           "opp_wins": 3,
-          "ties": 4,
+          "ties": 3,
           "winner": "mine"
         }
       },
@@ -416,5 +416,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-09T16:09:41.759776+00:00"
+  "updated_at": "2026-10-10T15:20:49.952292+00:00"
 }
