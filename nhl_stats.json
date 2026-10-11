@@ -1,6 +1,6 @@
 {
   "season": "20252026",
-  "updated_at": "2026-10-10T15:20:48.122293+00:00",
+  "updated_at": "2026-10-11T15:37:31.042545+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -1891,7 +1891,7 @@
       "team": "NYR",
       "teams_all": "NYR",
       "position": "L",
-      "age": 24,
+      "age": 25,
       "gp": 82,
       "goals": 24,
       "assists": 33,

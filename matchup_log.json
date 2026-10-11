@@ -106,8 +106,8 @@
           "macklin celebrini": {
             "name": "Macklin Celebrini",
             "team": "opp",
-            "status": "DAY_TO_DAY",
-            "injured": true
+            "status": "ACTIVE",
+            "injured": false
           },
           "nico hischier": {
             "name": "Nico Hischier",
@@ -173,7 +173,7 @@
             "date": "2026-10-06"
           }
         ],
-        "last_snapshot": "2026-10-10",
+        "last_snapshot": "2026-10-11",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -240,47 +240,47 @@
         "actual_live": {
           "cats": {
             "W": {
-              "me": 1.0,
-              "result": "TIE"
+              "me": 2.0,
+              "result": "WIN"
             },
             "PPP": {
               "me": 8.0,
-              "result": "WIN"
+              "result": "LOSS"
             },
             "SO": {
               "me": 0.0,
               "result": "TIE"
             },
             "GAA": {
-              "me": 2.01005025,
-              "result": "LOSS"
+              "me": 2.25846926,
+              "result": "WIN"
             },
             "SV%": {
-              "me": 0.90163934,
+              "me": 0.89285714,
               "result": "LOSS"
             },
             "G": {
-              "me": 4.0,
-              "result": "WIN"
+              "me": 7.0,
+              "result": "LOSS"
             },
             "A": {
-              "me": 15.0,
-              "result": "WIN"
+              "me": 16.0,
+              "result": "TIE"
             },
             "+/-": {
-              "me": 5.0,
+              "me": 6.0,
               "result": "WIN"
             },
             "PIM": {
-              "me": 4.0,
-              "result": "LOSS"
+              "me": 15.0,
+              "result": "WIN"
             },
             "SOG": {
-              "me": 47.0,
+              "me": 75.0,
               "result": "WIN"
             },
             "HIT": {
-              "me": 15.0,
+              "me": 29.0,
               "result": "TIE"
             }
           },
@@ -416,5 +416,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-10T15:20:49.952292+00:00"
+  "updated_at": "2026-10-11T15:37:32.533566+00:00"
 }
