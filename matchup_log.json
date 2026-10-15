@@ -100,7 +100,7 @@
           "wyatt johnston": {
             "name": "Wyatt Johnston",
             "team": "mine",
-            "status": "OUT",
+            "status": "DAY_TO_DAY",
             "injured": true
           },
           "alex debrincat": {
@@ -173,7 +173,7 @@
             "date": "2026-10-14"
           }
         ],
-        "last_snapshot": "2026-10-14",
+        "last_snapshot": "2026-10-15",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -188,8 +188,8 @@
               "winner": "opp"
             },
             "+/-": {
-              "me": 24.0,
-              "opp": 17.0,
+              "me": 23.0,
+              "opp": 18.0,
               "winner": "mine"
             },
             "PIM": {
@@ -204,13 +204,13 @@
             },
             "SOG": {
               "me": 154.0,
-              "opp": 194.0,
+              "opp": 197.0,
               "winner": "opp"
             },
             "HIT": {
-              "me": 58.0,
-              "opp": 56.0,
-              "winner": "mine"
+              "me": 59.0,
+              "opp": 59.0,
+              "winner": "tie"
             },
             "W": {
               "me": 4.0,
@@ -228,12 +228,12 @@
               "winner": "tie"
             },
             "SV%": {
-              "me": 0.9042,
-              "opp": 0.9042,
+              "me": 0.9034,
+              "opp": 0.9034,
               "winner": "tie"
             }
           },
-          "my_wins": 3,
+          "my_wins": 2,
           "opp_wins": 4,
           "predicted_winner": "opp"
         },
@@ -281,12 +281,12 @@
             },
             "HIT": {
               "me": 7.0,
-              "result": "WIN"
+              "result": "TIE"
             }
           },
-          "my_wins": 8,
+          "my_wins": 7,
           "opp_wins": 2,
-          "ties": 1,
+          "ties": 2,
           "winner": "mine"
         }
       },
@@ -546,5 +546,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-14T14:29:14.585454+00:00"
+  "updated_at": "2026-10-15T14:08:40.942222+00:00"
 }
