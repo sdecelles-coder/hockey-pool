@@ -173,49 +173,49 @@
             "date": "2026-10-14"
           }
         ],
-        "last_snapshot": "2026-10-15",
+        "last_snapshot": "2026-10-16",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
-              "me": 17.0,
-              "opp": 28.0,
+              "me": 21.0,
+              "opp": 35.0,
               "winner": "opp"
             },
             "A": {
-              "me": 37.0,
-              "opp": 47.0,
+              "me": 40.0,
+              "opp": 51.0,
               "winner": "opp"
             },
             "+/-": {
-              "me": 23.0,
-              "opp": 18.0,
+              "me": 27.0,
+              "opp": 17.0,
               "winner": "mine"
             },
             "PIM": {
-              "me": 46.0,
-              "opp": 40.0,
+              "me": 48.0,
+              "opp": 42.0,
               "winner": "mine"
             },
             "PPP": {
-              "me": 16.0,
-              "opp": 30.0,
+              "me": 17.0,
+              "opp": 33.0,
               "winner": "opp"
             },
             "SOG": {
-              "me": 154.0,
-              "opp": 197.0,
+              "me": 177.0,
+              "opp": 217.0,
               "winner": "opp"
             },
             "HIT": {
-              "me": 59.0,
-              "opp": 59.0,
-              "winner": "tie"
+              "me": 62.0,
+              "opp": 67.0,
+              "winner": "opp"
             },
             "W": {
-              "me": 4.0,
+              "me": 6.0,
               "opp": 4.0,
-              "winner": "tie"
+              "winner": "mine"
             },
             "SO": {
               "me": 0.0,
@@ -223,69 +223,69 @@
               "winner": "tie"
             },
             "GAA": {
-              "me": 2.595,
-              "opp": 2.595,
-              "winner": "tie"
+              "me": 2.615,
+              "opp": 2.714,
+              "winner": "mine"
             },
             "SV%": {
-              "me": 0.9034,
-              "opp": 0.9034,
-              "winner": "tie"
+              "me": 0.894,
+              "opp": 0.9033,
+              "winner": "opp"
             }
           },
-          "my_wins": 2,
-          "opp_wins": 4,
+          "my_wins": 4,
+          "opp_wins": 6,
           "predicted_winner": "opp"
         },
         "actual_live": {
           "cats": {
             "W": {
-              "me": 1.0,
+              "me": 2.0,
               "result": "WIN"
             },
             "PPP": {
-              "me": 5.0,
-              "result": "WIN"
+              "me": 6.0,
+              "result": "TIE"
             },
             "SO": {
               "me": 0.0,
               "result": "TIE"
             },
             "GAA": {
-              "me": 2.57216348,
+              "me": 3.3022862,
               "result": "WIN"
             },
             "SV%": {
-              "me": 0.87179487,
+              "me": 0.87619048,
               "result": "WIN"
             },
             "G": {
-              "me": 4.0,
+              "me": 8.0,
               "result": "LOSS"
             },
             "A": {
-              "me": 11.0,
+              "me": 14.0,
               "result": "WIN"
             },
             "+/-": {
-              "me": 5.0,
+              "me": 8.0,
               "result": "WIN"
             },
             "PIM": {
-              "me": 21.0,
+              "me": 23.0,
               "result": "WIN"
             },
             "SOG": {
-              "me": 21.0,
+              "me": 42.0,
               "result": "LOSS"
             },
             "HIT": {
-              "me": 7.0,
-              "result": "TIE"
+              "me": 9.0,
+              "result": "LOSS"
             }
           },
-          "my_wins": 7,
-          "opp_wins": 2,
+          "my_wins": 6,
+          "opp_wins": 3,
           "ties": 2,
           "winner": "mine"
         }
@@ -546,5 +546,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-15T14:08:40.942222+00:00"
+  "updated_at": "2026-10-16T13:56:10.410114+00:00"
 }
