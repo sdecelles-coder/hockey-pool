@@ -130,8 +130,8 @@
           "jake sanderson": {
             "name": "Jake Sanderson",
             "team": "opp",
-            "status": "DAY_TO_DAY",
-            "injured": true
+            "status": "ACTIVE",
+            "injured": false
           },
           "jesper wallstedt": {
             "name": "Jesper Wallstedt",
@@ -142,8 +142,8 @@
           "william nylander": {
             "name": "William Nylander",
             "team": "opp",
-            "status": "DAY_TO_DAY",
-            "injured": true
+            "status": "ACTIVE",
+            "injured": false
           },
           "tristan jarry": {
             "name": "Tristan Jarry",
@@ -180,23 +180,23 @@
             "date": "2026-10-19"
           }
         ],
-        "last_snapshot": "2026-10-19",
+        "last_snapshot": "2026-10-20",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
-              "me": 29.0,
+              "me": 30.0,
               "opp": 34.0,
               "winner": "opp"
             },
             "A": {
-              "me": 48.0,
-              "opp": 66.0,
+              "me": 51.0,
+              "opp": 68.0,
               "winner": "opp"
             },
             "+/-": {
               "me": 36.0,
-              "opp": 39.0,
+              "opp": 40.0,
               "winner": "opp"
             },
             "PIM": {
@@ -205,17 +205,17 @@
               "winner": "mine"
             },
             "PPP": {
-              "me": 23.0,
-              "opp": 23.0,
-              "winner": "tie"
+              "me": 26.0,
+              "opp": 25.0,
+              "winner": "mine"
             },
             "SOG": {
-              "me": 208.0,
-              "opp": 221.0,
+              "me": 214.0,
+              "opp": 230.0,
               "winner": "opp"
             },
             "HIT": {
-              "me": 89.0,
+              "me": 90.0,
               "opp": 125.0,
               "winner": "opp"
             },
@@ -230,17 +230,17 @@
               "winner": "tie"
             },
             "GAA": {
-              "me": 2.566,
-              "opp": 2.227,
+              "me": 2.579,
+              "opp": 2.238,
               "winner": "opp"
             },
             "SV%": {
-              "me": 0.8941,
-              "opp": 0.9146,
+              "me": 0.8934,
+              "opp": 0.914,
               "winner": "opp"
             }
           },
-          "my_wins": 1,
+          "my_wins": 2,
           "opp_wins": 8,
           "predicted_winner": "opp"
         },
@@ -251,8 +251,8 @@
               "result": "TIE"
             },
             "PPP": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 3.0,
+              "result": "WIN"
             },
             "SO": {
               "me": 0.0,
@@ -267,34 +267,34 @@
               "result": "TIE"
             },
             "G": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             },
             "A": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 3.0,
+              "result": "WIN"
             },
             "+/-": {
               "me": 0.0,
-              "result": "TIE"
+              "result": "LOSS"
             },
             "PIM": {
               "me": 0.0,
               "result": "TIE"
             },
             "SOG": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 6.0,
+              "result": "LOSS"
             },
             "HIT": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             }
           },
-          "my_wins": 0,
-          "opp_wins": 0,
-          "ties": 11,
-          "winner": "tie"
+          "my_wins": 4,
+          "opp_wins": 2,
+          "ties": 5,
+          "winner": "mine"
         }
       },
       "history": [
@@ -683,5 +683,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-19T16:26:04.377481+00:00"
+  "updated_at": "2026-10-20T14:16:54.703419+00:00"
 }
