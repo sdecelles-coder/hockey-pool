@@ -180,42 +180,42 @@
             "date": "2026-10-19"
           }
         ],
-        "last_snapshot": "2026-10-21",
+        "last_snapshot": "2026-10-22",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
               "me": 32.0,
-              "opp": 36.0,
+              "opp": 37.0,
               "winner": "opp"
             },
             "A": {
-              "me": 55.0,
-              "opp": 74.0,
+              "me": 56.0,
+              "opp": 75.0,
               "winner": "opp"
             },
             "+/-": {
-              "me": 38.0,
-              "opp": 37.0,
-              "winner": "mine"
+              "me": 36.0,
+              "opp": 38.0,
+              "winner": "opp"
             },
             "PIM": {
-              "me": 89.0,
+              "me": 112.0,
               "opp": 46.0,
               "winner": "mine"
             },
             "PPP": {
-              "me": 30.0,
-              "opp": 31.0,
+              "me": 31.0,
+              "opp": 33.0,
               "winner": "opp"
             },
             "SOG": {
-              "me": 230.0,
-              "opp": 248.0,
+              "me": 232.0,
+              "opp": 249.0,
               "winner": "opp"
             },
             "HIT": {
-              "me": 96.0,
+              "me": 101.0,
               "opp": 131.0,
               "winner": "opp"
             },
@@ -236,12 +236,12 @@
             },
             "SV%": {
               "me": 0.9076,
-              "opp": 0.909,
+              "opp": 0.9092,
               "winner": "opp"
             }
           },
-          "my_wins": 4,
-          "opp_wins": 7,
+          "my_wins": 3,
+          "opp_wins": 8,
           "predicted_winner": "opp"
         },
         "actual_live": {
@@ -251,7 +251,7 @@
               "result": "WIN"
             },
             "PPP": {
-              "me": 7.0,
+              "me": 8.0,
               "result": "LOSS"
             },
             "SO": {
@@ -268,32 +268,32 @@
             },
             "G": {
               "me": 3.0,
-              "result": "WIN"
+              "result": "TIE"
             },
             "A": {
-              "me": 7.0,
+              "me": 8.0,
               "result": "LOSS"
             },
             "+/-": {
-              "me": 2.0,
-              "result": "WIN"
+              "me": 0.0,
+              "result": "TIE"
             },
             "PIM": {
-              "me": 8.0,
+              "me": 31.0,
               "result": "WIN"
             },
             "SOG": {
-              "me": 22.0,
+              "me": 24.0,
               "result": "LOSS"
             },
             "HIT": {
-              "me": 7.0,
+              "me": 12.0,
               "result": "WIN"
             }
           },
-          "my_wins": 7,
+          "my_wins": 5,
           "opp_wins": 3,
-          "ties": 1,
+          "ties": 3,
           "winner": "mine"
         }
       },
@@ -683,5 +683,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-21T14:28:11.055465+00:00"
+  "updated_at": "2026-10-22T14:29:30.149942+00:00"
 }
