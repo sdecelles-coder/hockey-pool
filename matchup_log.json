@@ -52,8 +52,8 @@
           "mattias ekholm": {
             "name": "Mattias Ekholm",
             "team": "mine",
-            "status": "ACTIVE",
-            "injured": false
+            "status": "OUT",
+            "injured": true
           },
           "andrei vasilevskiy": {
             "name": "Andrei Vasilevskiy",
@@ -76,8 +76,8 @@
           "igor chernyshov": {
             "name": "Igor Chernyshov",
             "team": "mine",
-            "status": "ACTIVE",
-            "injured": false
+            "status": "OUT",
+            "injured": true
           },
           "alexis lafreniere": {
             "name": "Alexis Lafreniere",
@@ -178,51 +178,65 @@
             "from": "ACTIVE",
             "to": "DAY_TO_DAY",
             "date": "2026-10-19"
+          },
+          {
+            "name": "Mattias Ekholm",
+            "team": "mine",
+            "from": "ACTIVE",
+            "to": "OUT",
+            "date": "2026-10-23"
+          },
+          {
+            "name": "Igor Chernyshov",
+            "team": "mine",
+            "from": "ACTIVE",
+            "to": "OUT",
+            "date": "2026-10-23"
           }
         ],
-        "last_snapshot": "2026-10-22",
+        "last_snapshot": "2026-10-23",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
-              "me": 32.0,
-              "opp": 37.0,
+              "me": 35.0,
+              "opp": 43.0,
               "winner": "opp"
             },
             "A": {
-              "me": 56.0,
-              "opp": 75.0,
+              "me": 60.0,
+              "opp": 81.0,
               "winner": "opp"
             },
             "+/-": {
-              "me": 36.0,
-              "opp": 38.0,
-              "winner": "opp"
+              "me": 40.0,
+              "opp": 35.0,
+              "winner": "mine"
             },
             "PIM": {
-              "me": 112.0,
-              "opp": 46.0,
+              "me": 116.0,
+              "opp": 48.0,
               "winner": "mine"
             },
             "PPP": {
-              "me": 31.0,
-              "opp": 33.0,
+              "me": 34.0,
+              "opp": 38.0,
               "winner": "opp"
             },
             "SOG": {
-              "me": 232.0,
-              "opp": 249.0,
+              "me": 256.0,
+              "opp": 276.0,
               "winner": "opp"
             },
             "HIT": {
-              "me": 101.0,
-              "opp": 131.0,
+              "me": 111.0,
+              "opp": 147.0,
               "winner": "opp"
             },
             "W": {
-              "me": 8.0,
+              "me": 9.0,
               "opp": 9.0,
-              "winner": "opp"
+              "winner": "tie"
             },
             "SO": {
               "me": 1.0,
@@ -230,28 +244,28 @@
               "winner": "mine"
             },
             "GAA": {
-              "me": 2.335,
+              "me": 2.311,
               "opp": 2.427,
               "winner": "mine"
             },
             "SV%": {
-              "me": 0.9076,
-              "opp": 0.9092,
-              "winner": "opp"
+              "me": 0.9093,
+              "opp": 0.9083,
+              "winner": "mine"
             }
           },
-          "my_wins": 3,
-          "opp_wins": 8,
-          "predicted_winner": "opp"
+          "my_wins": 5,
+          "opp_wins": 5,
+          "predicted_winner": "tie"
         },
         "actual_live": {
           "cats": {
             "W": {
-              "me": 2.0,
+              "me": 3.0,
               "result": "WIN"
             },
             "PPP": {
-              "me": 8.0,
+              "me": 11.0,
               "result": "LOSS"
             },
             "SO": {
@@ -259,42 +273,42 @@
               "result": "TIE"
             },
             "GAA": {
-              "me": 1.5054363,
+              "me": 1.6706887,
               "result": "WIN"
             },
             "SV%": {
-              "me": 0.95522388,
+              "me": 0.94791667,
               "result": "WIN"
             },
             "G": {
-              "me": 3.0,
-              "result": "TIE"
+              "me": 6.0,
+              "result": "LOSS"
             },
             "A": {
-              "me": 8.0,
+              "me": 12.0,
               "result": "LOSS"
             },
             "+/-": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 4.0,
+              "result": "WIN"
             },
             "PIM": {
-              "me": 31.0,
+              "me": 35.0,
               "result": "WIN"
             },
             "SOG": {
-              "me": 24.0,
+              "me": 48.0,
               "result": "LOSS"
             },
             "HIT": {
-              "me": 12.0,
-              "result": "WIN"
+              "me": 22.0,
+              "result": "LOSS"
             }
           },
           "my_wins": 5,
-          "opp_wins": 3,
-          "ties": 3,
-          "winner": "mine"
+          "opp_wins": 5,
+          "ties": 1,
+          "winner": "tie"
         }
       },
       "history": [
@@ -683,5 +697,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-22T14:29:30.149942+00:00"
+  "updated_at": "2026-10-23T14:12:43.993430+00:00"
 }
