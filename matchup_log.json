@@ -154,8 +154,8 @@
           "victor hedman": {
             "name": "Victor Hedman",
             "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
+            "status": "DAY_TO_DAY",
+            "injured": true
           },
           "vasily podkolzin": {
             "name": "Vasily Podkolzin",
@@ -192,9 +192,16 @@
             "from": "ACTIVE",
             "to": "OUT",
             "date": "2026-10-23"
+          },
+          {
+            "name": "Victor Hedman",
+            "team": "opp",
+            "from": "ACTIVE",
+            "to": "DAY_TO_DAY",
+            "date": "2026-10-24"
           }
         ],
-        "last_snapshot": "2026-10-23",
+        "last_snapshot": "2026-10-24",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -210,7 +217,7 @@
             },
             "+/-": {
               "me": 40.0,
-              "opp": 35.0,
+              "opp": 34.0,
               "winner": "mine"
             },
             "PIM": {
@@ -225,11 +232,11 @@
             },
             "SOG": {
               "me": 256.0,
-              "opp": 276.0,
+              "opp": 277.0,
               "winner": "opp"
             },
             "HIT": {
-              "me": 111.0,
+              "me": 110.0,
               "opp": 147.0,
               "winner": "opp"
             },
@@ -244,19 +251,19 @@
               "winner": "mine"
             },
             "GAA": {
-              "me": 2.311,
+              "me": 2.493,
               "opp": 2.427,
-              "winner": "mine"
+              "winner": "opp"
             },
             "SV%": {
-              "me": 0.9093,
-              "opp": 0.9083,
-              "winner": "mine"
+              "me": 0.9009,
+              "opp": 0.9085,
+              "winner": "opp"
             }
           },
-          "my_wins": 5,
-          "opp_wins": 5,
-          "predicted_winner": "tie"
+          "my_wins": 3,
+          "opp_wins": 7,
+          "predicted_winner": "opp"
         },
         "actual_live": {
           "cats": {
@@ -273,11 +280,11 @@
               "result": "TIE"
             },
             "GAA": {
-              "me": 1.6706887,
+              "me": 2.50591675,
               "result": "WIN"
             },
             "SV%": {
-              "me": 0.94791667,
+              "me": 0.91596639,
               "result": "WIN"
             },
             "G": {
@@ -697,5 +704,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-23T14:12:43.993430+00:00"
+  "updated_at": "2026-10-24T13:17:59.373707+00:00"
 }
