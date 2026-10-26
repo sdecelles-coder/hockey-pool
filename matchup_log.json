@@ -2,11 +2,89 @@
   "seasons": {
     "2027": {
       "current": {
-        "period": 4,
+        "period": 5,
         "my_team": "Quebec Nordic",
-        "opponent": "Ottawa Senators",
-        "started": "2026-10-19",
+        "opponent": "Buffalo Sabres",
+        "started": "2026-10-26",
         "injury_seen": {
+          "martin necas": {
+            "name": "Martin Necas",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "kyle connor": {
+            "name": "Kyle Connor",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "mark stone": {
+            "name": "Mark Stone",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "sam reinhart": {
+            "name": "Sam Reinhart",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "logan cooley": {
+            "name": "Logan Cooley",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "nick schmaltz": {
+            "name": "Nick Schmaltz",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "zach werenski": {
+            "name": "Zach Werenski",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "jakob chychrun": {
+            "name": "Jakob Chychrun",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "rasmus andersson": {
+            "name": "Rasmus Andersson",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "brandon bussi": {
+            "name": "Brandon Bussi",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "mackenzie blackwood": {
+            "name": "Mackenzie Blackwood",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "matvei gridin": {
+            "name": "Matvei Gridin",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
+          "daxon rudolph": {
+            "name": "Daxon Rudolph",
+            "team": "opp",
+            "status": "ACTIVE",
+            "injured": false
+          },
           "matthew tkachuk": {
             "name": "Matthew Tkachuk",
             "team": "mine",
@@ -49,11 +127,11 @@
             "status": "ACTIVE",
             "injured": false
           },
-          "mattias ekholm": {
-            "name": "Mattias Ekholm",
+          "jj moser": {
+            "name": "J.J. Moser",
             "team": "mine",
-            "status": "OUT",
-            "injured": true
+            "status": "ACTIVE",
+            "injured": false
           },
           "andrei vasilevskiy": {
             "name": "Andrei Vasilevskiy",
@@ -73,177 +151,63 @@
             "status": "ACTIVE",
             "injured": false
           },
-          "igor chernyshov": {
-            "name": "Igor Chernyshov",
+          "seth jarvis": {
+            "name": "Seth Jarvis",
             "team": "mine",
-            "status": "OUT",
-            "injured": true
+            "status": "ACTIVE",
+            "injured": false
           },
           "alexis lafreniere": {
             "name": "Alexis Lafreniere",
             "team": "mine",
             "status": "ACTIVE",
             "injured": false
-          },
-          "connor mcdavid": {
-            "name": "Connor McDavid",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "tim stutzle": {
-            "name": "Tim Stutzle",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "anton frondell": {
-            "name": "Anton Frondell",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "sebastian aho": {
-            "name": "Sebastian Aho",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "tom wilson": {
-            "name": "Tom Wilson",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "matthew schaefer": {
-            "name": "Matthew Schaefer",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "darren raddysh": {
-            "name": "Darren Raddysh",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "jake sanderson": {
-            "name": "Jake Sanderson",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "jesper wallstedt": {
-            "name": "Jesper Wallstedt",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "william nylander": {
-            "name": "William Nylander",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "tristan jarry": {
-            "name": "Tristan Jarry",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
-          },
-          "victor hedman": {
-            "name": "Victor Hedman",
-            "team": "opp",
-            "status": "DAY_TO_DAY",
-            "injured": true
-          },
-          "vasily podkolzin": {
-            "name": "Vasily Podkolzin",
-            "team": "opp",
-            "status": "ACTIVE",
-            "injured": false
           }
         },
-        "injury_events": [
-          {
-            "name": "Jake Sanderson",
-            "team": "opp",
-            "from": "ACTIVE",
-            "to": "DAY_TO_DAY",
-            "date": "2026-10-19"
-          },
-          {
-            "name": "William Nylander",
-            "team": "opp",
-            "from": "ACTIVE",
-            "to": "DAY_TO_DAY",
-            "date": "2026-10-19"
-          },
-          {
-            "name": "Mattias Ekholm",
-            "team": "mine",
-            "from": "ACTIVE",
-            "to": "OUT",
-            "date": "2026-10-23"
-          },
-          {
-            "name": "Igor Chernyshov",
-            "team": "mine",
-            "from": "ACTIVE",
-            "to": "OUT",
-            "date": "2026-10-23"
-          },
-          {
-            "name": "Victor Hedman",
-            "team": "opp",
-            "from": "ACTIVE",
-            "to": "DAY_TO_DAY",
-            "date": "2026-10-24"
-          }
-        ],
-        "last_snapshot": "2026-10-25",
+        "injury_events": [],
+        "last_snapshot": "2026-10-26",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
               "me": 36.0,
-              "opp": 46.0,
+              "opp": 43.0,
               "winner": "opp"
             },
             "A": {
               "me": 62.0,
-              "opp": 86.0,
-              "winner": "opp"
+              "opp": 56.0,
+              "winner": "mine"
             },
             "+/-": {
-              "me": 41.0,
-              "opp": 36.0,
+              "me": 28.0,
+              "opp": 0.0,
               "winner": "mine"
             },
             "PIM": {
-              "me": 120.0,
-              "opp": 51.0,
+              "me": 116.0,
+              "opp": 37.0,
               "winner": "mine"
             },
             "PPP": {
-              "me": 34.0,
-              "opp": 42.0,
+              "me": 37.0,
+              "opp": 39.0,
               "winner": "opp"
             },
             "SOG": {
-              "me": 279.0,
-              "opp": 291.0,
-              "winner": "opp"
+              "me": 292.0,
+              "opp": 284.0,
+              "winner": "mine"
             },
             "HIT": {
-              "me": 116.0,
-              "opp": 163.0,
-              "winner": "opp"
+              "me": 125.0,
+              "opp": 82.0,
+              "winner": "mine"
             },
             "W": {
               "me": 9.0,
-              "opp": 10.0,
-              "winner": "opp"
+              "opp": 7.0,
+              "winner": "mine"
             },
             "SO": {
               "me": 1.0,
@@ -252,69 +216,69 @@
             },
             "GAA": {
               "me": 2.588,
-              "opp": 2.364,
-              "winner": "opp"
+              "opp": 3.063,
+              "winner": "mine"
             },
             "SV%": {
               "me": 0.9001,
-              "opp": 0.911,
-              "winner": "opp"
+              "opp": 0.8807,
+              "winner": "mine"
             }
           },
-          "my_wins": 3,
-          "opp_wins": 8,
-          "predicted_winner": "opp"
+          "my_wins": 9,
+          "opp_wins": 2,
+          "predicted_winner": "mine"
         },
         "actual_live": {
           "cats": {
             "W": {
-              "me": 3.0,
-              "result": "WIN"
+              "me": 0.0,
+              "result": "TIE"
             },
             "PPP": {
-              "me": 11.0,
-              "result": "LOSS"
+              "me": 0.0,
+              "result": "TIE"
             },
             "SO": {
               "me": 0.0,
               "result": "TIE"
             },
             "GAA": {
-              "me": 2.8052989,
-              "result": "WIN"
+              "me": null,
+              "result": "TIE"
             },
             "SV%": {
-              "me": 0.91082803,
-              "result": "WIN"
+              "me": 0.0,
+              "result": "TIE"
             },
             "G": {
-              "me": 7.0,
-              "result": "LOSS"
+              "me": 0.0,
+              "result": "TIE"
             },
             "A": {
-              "me": 14.0,
-              "result": "LOSS"
+              "me": 0.0,
+              "result": "TIE"
             },
             "+/-": {
-              "me": 5.0,
-              "result": "WIN"
+              "me": 0.0,
+              "result": "TIE"
             },
             "PIM": {
-              "me": 39.0,
-              "result": "WIN"
+              "me": 0.0,
+              "result": "TIE"
             },
             "SOG": {
-              "me": 71.0,
-              "result": "LOSS"
+              "me": 0.0,
+              "result": "TIE"
             },
             "HIT": {
-              "me": 27.0,
-              "result": "LOSS"
+              "me": 0.0,
+              "result": "TIE"
             }
           },
-          "my_wins": 5,
-          "opp_wins": 5,
-          "ties": 1,
+          "my_wins": 0,
+          "opp_wins": 0,
+          "ties": 11,
           "winner": "tie"
         }
       },
@@ -700,9 +664,167 @@
             }
           ],
           "finalized_at": "2026-10-19"
+        },
+        {
+          "period": 4,
+          "my_team": "Quebec Nordic",
+          "opponent": "Ottawa Senators",
+          "prediction": {
+            "cats": {
+              "G": {
+                "me": 36.0,
+                "opp": 46.0,
+                "winner": "opp"
+              },
+              "A": {
+                "me": 62.0,
+                "opp": 86.0,
+                "winner": "opp"
+              },
+              "+/-": {
+                "me": 41.0,
+                "opp": 36.0,
+                "winner": "mine"
+              },
+              "PIM": {
+                "me": 120.0,
+                "opp": 51.0,
+                "winner": "mine"
+              },
+              "PPP": {
+                "me": 34.0,
+                "opp": 42.0,
+                "winner": "opp"
+              },
+              "SOG": {
+                "me": 279.0,
+                "opp": 291.0,
+                "winner": "opp"
+              },
+              "HIT": {
+                "me": 116.0,
+                "opp": 163.0,
+                "winner": "opp"
+              },
+              "W": {
+                "me": 9.0,
+                "opp": 10.0,
+                "winner": "opp"
+              },
+              "SO": {
+                "me": 1.0,
+                "opp": 0.0,
+                "winner": "mine"
+              },
+              "GAA": {
+                "me": 2.588,
+                "opp": 2.364,
+                "winner": "opp"
+              },
+              "SV%": {
+                "me": 0.9001,
+                "opp": 0.911,
+                "winner": "opp"
+              }
+            },
+            "my_wins": 3,
+            "opp_wins": 8,
+            "predicted_winner": "opp"
+          },
+          "actual": {
+            "cats": {
+              "W": {
+                "me": 3.0,
+                "result": "WIN"
+              },
+              "PPP": {
+                "me": 13.0,
+                "result": "LOSS"
+              },
+              "SO": {
+                "me": 0.0,
+                "result": "TIE"
+              },
+              "GAA": {
+                "me": 2.8052989,
+                "result": "WIN"
+              },
+              "SV%": {
+                "me": 0.91082803,
+                "result": "WIN"
+              },
+              "G": {
+                "me": 8.0,
+                "result": "LOSS"
+              },
+              "A": {
+                "me": 15.0,
+                "result": "LOSS"
+              },
+              "+/-": {
+                "me": 5.0,
+                "result": "WIN"
+              },
+              "PIM": {
+                "me": 43.0,
+                "result": "WIN"
+              },
+              "SOG": {
+                "me": 77.0,
+                "result": "TIE"
+              },
+              "HIT": {
+                "me": 30.0,
+                "result": "LOSS"
+              }
+            },
+            "my_wins": 5,
+            "opp_wins": 4,
+            "ties": 2,
+            "winner": "mine"
+          },
+          "predicted_correctly": false,
+          "injuries": [
+            {
+              "name": "Jake Sanderson",
+              "team": "opp",
+              "from": "ACTIVE",
+              "to": "DAY_TO_DAY",
+              "date": "2026-10-19"
+            },
+            {
+              "name": "William Nylander",
+              "team": "opp",
+              "from": "ACTIVE",
+              "to": "DAY_TO_DAY",
+              "date": "2026-10-19"
+            },
+            {
+              "name": "Mattias Ekholm",
+              "team": "mine",
+              "from": "ACTIVE",
+              "to": "OUT",
+              "date": "2026-10-23"
+            },
+            {
+              "name": "Igor Chernyshov",
+              "team": "mine",
+              "from": "ACTIVE",
+              "to": "OUT",
+              "date": "2026-10-23"
+            },
+            {
+              "name": "Victor Hedman",
+              "team": "opp",
+              "from": "ACTIVE",
+              "to": "DAY_TO_DAY",
+              "date": "2026-10-24"
+            }
+          ],
+          "finalized_at": "2026-10-26"
         }
       ]
     }
   },
-  "updated_at": "2026-10-25T13:41:48.869773+00:00"
+  "updated_at": "2026-10-26T16:05:35.330882+00:00"
 }
