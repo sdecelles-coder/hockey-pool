@@ -171,7 +171,7 @@
           }
         },
         "injury_events": [],
-        "last_snapshot": "2026-10-28",
+        "last_snapshot": "2026-10-29",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -182,12 +182,12 @@
             },
             "A": {
               "me": 77.0,
-              "opp": 61.0,
+              "opp": 62.0,
               "winner": "mine"
             },
             "+/-": {
               "me": 32.0,
-              "opp": 6.0,
+              "opp": 7.0,
               "winner": "mine"
             },
             "PIM": {
@@ -197,22 +197,22 @@
             },
             "PPP": {
               "me": 45.0,
-              "opp": 41.0,
+              "opp": 42.0,
               "winner": "mine"
             },
             "SOG": {
               "me": 320.0,
-              "opp": 304.0,
+              "opp": 310.0,
               "winner": "mine"
             },
             "HIT": {
-              "me": 112.0,
-              "opp": 86.0,
+              "me": 113.0,
+              "opp": 87.0,
               "winner": "mine"
             },
             "W": {
               "me": 9.0,
-              "opp": 7.0,
+              "opp": 8.0,
               "winner": "mine"
             },
             "SO": {
@@ -222,12 +222,12 @@
             },
             "GAA": {
               "me": 2.588,
-              "opp": 3.063,
+              "opp": 2.993,
               "winner": "mine"
             },
             "SV%": {
               "me": 0.9001,
-              "opp": 0.8807,
+              "opp": 0.8824,
               "winner": "mine"
             }
           },
@@ -239,7 +239,7 @@
           "cats": {
             "W": {
               "me": 0.0,
-              "result": "TIE"
+              "result": "LOSS"
             },
             "PPP": {
               "me": 6.0,
@@ -251,11 +251,11 @@
             },
             "GAA": {
               "me": null,
-              "result": "TIE"
+              "result": "LOSS"
             },
             "SV%": {
               "me": 0.0,
-              "result": "TIE"
+              "result": "LOSS"
             },
             "G": {
               "me": 0.0,
@@ -274,7 +274,7 @@
               "result": "WIN"
             },
             "SOG": {
-              "me": 15.0,
+              "me": 14.0,
               "result": "LOSS"
             },
             "HIT": {
@@ -283,9 +283,9 @@
             }
           },
           "my_wins": 4,
-          "opp_wins": 3,
-          "ties": 4,
-          "winner": "mine"
+          "opp_wins": 6,
+          "ties": 1,
+          "winner": "opp"
         }
       },
       "history": [
@@ -832,5 +832,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-28T15:58:45.404495+00:00"
+  "updated_at": "2026-10-29T16:05:25.528996+00:00"
 }
