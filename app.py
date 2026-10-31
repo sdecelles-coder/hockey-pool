@@ -16,6 +16,7 @@ Filtres combinables au-dessus de chaque tableau.
 """
 
 import concurrent.futures
+import difflib
 import json
 import os
 import re
@@ -361,6 +362,10 @@ if _stats_from_last_season:
     )
 
 players = stats.get("players", [])
+# Saison en cours entamée (stats de la saison courante avec des matchs joués) :
+# une recrue manuelle toujours sans vrai nhl_id devient alors suspecte.
+SEASON_STARTED = (not _stats_from_last_season
+                  and any((p.get("gp") or 0) > 0 for p in players))
 
 
 # ----------------------------------------------------------------------
@@ -371,34 +376,69 @@ players = stats.get("players", [])
 # ----------------------------------------------------------------------
 _stats_ids = {str(p.get("playerId")) for p in players}
 _STATUS = ps.load_status()              # {id: {status, name, position, team, age, note}}
-RETIRED_IDS = {pid for pid, e in _STATUS.items() if e.get("status") == "retired"}
-ROOKIE_IDS = {pid for pid, e in _STATUS.items() if e.get("status") == "rookie"}
 
 # Un override manuel peut avoir un id synthétique (« manual:… ») alors que le
-# joueur possède en réalité un contrat PuckPedia (ex. recrue saisie en libre :
-# Gavin McKenna, Ivar Stenberg…). On relie l'override à son vrai nhl_id via le
-# nom normalisé, pour que position, âge et infos de contrat s'affichent
-# automatiquement — aussi bien pour les recrues déjà saisies que pour les
-# futures. Purement calculé au chargement : aucun fichier n'est modifié.
-_CONTRACTS_BY_NAME = {}
+# joueur possède en réalité un vrai nhl_id (stats NHL ou contrat PuckPedia ;
+# ex. recrue saisie en libre : Gavin McKenna, Ivar Stenberg…). Garder les deux
+# ids créait des DOUBLONS (une ligne recrue + la ligne stats). On relie donc
+# l'id manuel à son vrai nhl_id via le nom normalisé et on MIGRE tout vers ce
+# dernier : statut manuel, plan de repêchage et alignement. Migration
+# persistée une seule fois (ensuite il n'y a plus d'alias à résoudre).
+_REAL_ID_BY_NAME = {}
+for _p in players:                       # les stats priment sur les contrats
+    _nm = norm_name(_p.get("name") or "")
+    if _nm:
+        _REAL_ID_BY_NAME.setdefault(_nm, str(_p.get("playerId")))
 for _cid, _c in cache.items():
     _nm = norm_name(_c.get("name") or "")
     if _nm:
-        _CONTRACTS_BY_NAME.setdefault(_nm, _cid)
+        _REAL_ID_BY_NAME.setdefault(_nm, _cid)
 
-MANUAL_CONTRACT_ID = {}
+MANUAL_ALIAS = {}                        # {id manuel: vrai nhl_id}
 for _pid, _e in _STATUS.items():
-    if _pid in cache:                    # déjà un vrai nhl_id -> contrat direct
+    if _pid in cache or _pid in _stats_ids:   # déjà un vrai nhl_id
         continue
-    _cid = _CONTRACTS_BY_NAME.get(norm_name(_e.get("name") or ""))
-    if _cid:
-        MANUAL_CONTRACT_ID[_pid] = _cid
+    if _e.get("distinct"):               # homonyme confirmé : jamais fusionné
+        continue
+    _rid = _REAL_ID_BY_NAME.get(norm_name(_e.get("name") or ""))
+    if _rid and _rid != _pid:
+        MANUAL_ALIAS[_pid] = _rid
+
+
+def _migrate_aliases(data, aliases):
+    """Re-keye {id: valeur} vers les vrais ids. Une entrée déjà présente sous
+    le vrai id gagne. Retourne (nouveau dict, modifié ?)."""
+    if not any(a in data for a in aliases):
+        return data, False
+    out = {}
+    for k, v in data.items():
+        rid = aliases.get(k)
+        if rid is None:
+            out[k] = v
+        elif rid not in data:
+            out[rid] = v
+    return out, True
+
+
+if MANUAL_ALIAS:
+    _STATUS, _chg = _migrate_aliases(_STATUS, MANUAL_ALIAS)
+    if _chg:
+        ps.save_status(_STATUS)
+    _plan, _chg = _migrate_aliases(de.load_plan(), MANUAL_ALIAS)
+    if _chg:
+        de.save_plan(_plan)
+    _lineup, _chg = _migrate_aliases(de.load_lineup(), MANUAL_ALIAS)
+    if _chg:
+        de.save_lineup(_lineup)
+
+RETIRED_IDS = {pid for pid, e in _STATUS.items() if e.get("status") == "retired"}
+ROOKIE_IDS = {pid for pid, e in _STATUS.items() if e.get("status") == "rookie"}
 
 
 def _contract_by_id(player_id):
     """Contrat d'un joueur, en résolvant un éventuel id manuel vers son nhl_id."""
     pid = str(player_id)
-    return cache.get(MANUAL_CONTRACT_ID.get(pid, pid), {})
+    return cache.get(MANUAL_ALIAS.get(pid, pid), {})
 
 
 # Recrues absentes des stats : on fabrique une ligne « joueur » jouable (les
@@ -414,7 +454,7 @@ for _pid in ROOKIE_IDS:
 # (stats vides) pour que TOUS les joueurs sous contrat apparaissent dans les
 # tableaux Patineurs/Gardiens. On saute ceux déjà représentés (stats, recrues via
 # id manuel, retraités) pour éviter les doublons.
-_covered_ids = set(_stats_ids) | set(MANUAL_CONTRACT_ID.values()) | RETIRED_IDS
+_covered_ids = set(_stats_ids) | ROOKIE_IDS | RETIRED_IDS
 for _cid, _c in cache.items():
     if _cid in _covered_ids:
         continue
@@ -2233,6 +2273,48 @@ def render_status_tab():
         c = cache.get(pid, {})
         return e.get("name") or p.get("name") or c.get("name") or pid
 
+    def _real_label(rid):
+        """« Nom (Pos, Équipe) » d'un vrai joueur NHL, depuis stats ou contrat."""
+        p = by_id.get(rid, {})
+        c = cache.get(rid, {})
+        name = p.get("name") or c.get("name") or rid
+        pos = p.get("position") or c.get("pos") or "?"
+        team = p.get("team") or "sans équipe"
+        return f"{name} ({pos}, {team})"
+
+    def _close_names(name):
+        """Vrais joueurs au nom proche (fautes d'orthographe, translittérations)."""
+        hits = difflib.get_close_matches(norm_name(name), list(_REAL_ID_BY_NAME),
+                                         n=3, cutoff=0.8)
+        return [_real_label(_REAL_ID_BY_NAME[h]) for h in hits]
+
+    # ---------------- Vérifications des recrues saisies en libre ----------------
+    # Les ids « manual:… » qui matchent un vrai joueur sont fusionnés au
+    # chargement ; restent les homonymes confirmés et les recrues sans
+    # correspondance (suspectes une fois la saison entamée : faute de frappe ?).
+    _homonyms, _unmatched = [], []
+    for pid, e in status_data.items():
+        if not pid.startswith("manual:"):
+            continue
+        rid = _REAL_ID_BY_NAME.get(norm_name(e.get("name") or ""))
+        if e.get("distinct") and rid:
+            _homonyms.append((e.get("name"), _real_label(rid)))
+        elif not rid and e.get("status") == "rookie" and SEASON_STARTED:
+            _unmatched.append((e.get("name") or pid, _close_names(e.get("name") or "")))
+    if _unmatched:
+        lines = []
+        for name, close in _unmatched:
+            hint = f" — vouliez-vous dire {', '.join(close)} ?" if close else ""
+            lines.append(f"- **{name}**{hint}")
+        st.warning(
+            "⚠️ Recrues saisies en libre **toujours sans correspondance** NHL alors "
+            "que la saison est commencée (ni stats ni contrat à ce nom). Vérifie "
+            "l'orthographe (comme sur NHL.com) : un nom mal écrit ne sera jamais "
+            "fusionné et créera un doublon.\n\n" + "\n".join(lines))
+    if _homonyms:
+        st.info("ℹ️ Homonymes confirmés (gardés séparés du joueur NHL du même "
+                "nom) :\n\n" + "\n".join(f"- **{n}** ≠ {r}" for n, r in _homonyms))
+
     # ---------------- Overrides actuels ----------------
     st.markdown("#### Joueurs avec un statut manuel")
     if not status_data:
@@ -2308,14 +2390,34 @@ def render_status_tab():
         f_status = st.selectbox("Statut", ["rookie", "retired"],
                                 format_func=lambda s: STATUS_LABELS[s],
                                 key="st_free_status")
+        # Contrôle à la saisie : le nom existe-t-il déjà (stats ou contrat) ?
+        # Si oui, c'est en principe le même joueur -> statut posé sur son vrai
+        # nhl_id (aucun doublon). Seul un homonyme confirmé garde un id manuel.
+        f_rid = _REAL_ID_BY_NAME.get(norm_name(f_name)) if f_name.strip() else None
+        f_homonym = False
+        if f_rid:
+            st.warning(f"⚠️ Un joueur NHL porte déjà ce nom : **{_real_label(f_rid)}**. "
+                       "Le statut sera posé sur ce joueur, sauf si c'est un homonyme.")
+            f_homonym = st.checkbox("C'est un homonyme (un autre joueur)",
+                                    key="st_free_homonym")
+        elif f_name.strip():
+            close = _close_names(f_name)
+            if close:
+                st.info(f"Nom proche d'un joueur existant : {', '.join(close)}. "
+                        "Si c'est lui, utilise « Chercher un joueur connu » "
+                        "(sinon un doublon apparaîtra).")
         if st.button("Ajouter", key="st_free_btn"):
             if not f_name.strip():
                 st.warning("Entre un nom.")
+            elif f_rid and not f_homonym:
+                ps.set_status(f_rid, f_status)
+                st.rerun()
             else:
                 # Id synthétique stable (pas de playerId NHL pour un joueur libre).
                 pid = "manual:" + (norm_name(f_name).replace(" ", "-") or "joueur")
                 ps.set_status(pid, f_status, name=f_name.strip(), position=f_pos,
-                              team=f_team.strip() or None)
+                              team=f_team.strip() or None,
+                              distinct=True if f_homonym else None)
                 st.rerun()
 
 

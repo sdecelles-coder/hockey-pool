@@ -67,7 +67,8 @@ def set_status(player_id, status, **meta):
     """Ajoute/modifie un override. status=None efface l'override.
 
     meta accepte name, position, team, age, note (utile pour une recrue en
-    saisie libre, absente des stats et des contrats).
+    saisie libre, absente des stats et des contrats) et distinct=True pour un
+    homonyme confirmé (jamais fusionné avec le joueur NHL du même nom).
     """
     if status is not None and status not in VALID_STATUSES:
         raise ValueError(f"statut invalide : {status!r}")
@@ -78,7 +79,7 @@ def set_status(player_id, status, **meta):
     else:
         entry = data.get(pid, {})
         entry["status"] = status
-        for k in ("name", "position", "team", "age", "note"):
+        for k in ("name", "position", "team", "age", "note", "distinct"):
             v = meta.get(k)
             if v is not None and v != "":
                 entry[k] = v
