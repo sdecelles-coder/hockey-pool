@@ -171,23 +171,23 @@
           }
         },
         "injury_events": [],
-        "last_snapshot": "2026-10-30",
+        "last_snapshot": "2026-10-31",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
               "me": 40.0,
-              "opp": 51.0,
+              "opp": 55.0,
               "winner": "opp"
             },
             "A": {
               "me": 81.0,
-              "opp": 65.0,
+              "opp": 67.0,
               "winner": "mine"
             },
             "+/-": {
               "me": 37.0,
-              "opp": 4.0,
+              "opp": -3.0,
               "winner": "mine"
             },
             "PIM": {
@@ -197,17 +197,17 @@
             },
             "PPP": {
               "me": 47.0,
-              "opp": 43.0,
-              "winner": "mine"
+              "opp": 48.0,
+              "winner": "opp"
             },
             "SOG": {
-              "me": 340.0,
-              "opp": 327.0,
-              "winner": "mine"
+              "me": 342.0,
+              "opp": 342.0,
+              "winner": "tie"
             },
             "HIT": {
-              "me": 116.0,
-              "opp": 92.0,
+              "me": 117.0,
+              "opp": 98.0,
               "winner": "mine"
             },
             "W": {
@@ -226,13 +226,13 @@
               "winner": "mine"
             },
             "SV%": {
-              "me": 0.8996,
+              "me": 0.8995,
               "opp": 0.8824,
               "winner": "mine"
             }
           },
-          "my_wins": 10,
-          "opp_wins": 1,
+          "my_wins": 8,
+          "opp_wins": 2,
           "predicted_winner": "mine"
         },
         "actual_live": {
@@ -243,7 +243,7 @@
             },
             "PPP": {
               "me": 8.0,
-              "result": "WIN"
+              "result": "LOSS"
             },
             "SO": {
               "me": 0.0,
@@ -274,18 +274,18 @@
               "result": "WIN"
             },
             "SOG": {
-              "me": 36.0,
+              "me": 38.0,
               "result": "LOSS"
             },
             "HIT": {
-              "me": 11.0,
-              "result": "WIN"
+              "me": 12.0,
+              "result": "LOSS"
             }
           },
-          "my_wins": 6,
-          "opp_wins": 4,
+          "my_wins": 4,
+          "opp_wins": 6,
           "ties": 1,
-          "winner": "mine"
+          "winner": "opp"
         }
       },
       "history": [
@@ -832,5 +832,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-30T15:53:27.554527+00:00"
+  "updated_at": "2026-10-31T15:17:42.296454+00:00"
 }
