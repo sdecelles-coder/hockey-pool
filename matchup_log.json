@@ -128,7 +128,7 @@
             "injured": false
           },
           "jj moser": {
-            "name": "J.J. Moser",
+            "name": "JJ Moser",
             "team": "mine",
             "status": "ACTIVE",
             "injured": false
@@ -171,48 +171,48 @@
           }
         },
         "injury_events": [],
-        "last_snapshot": "2026-10-31",
+        "last_snapshot": "2026-11-01",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
-              "me": 40.0,
-              "opp": 55.0,
+              "me": 42.0,
+              "opp": 56.0,
               "winner": "opp"
             },
             "A": {
-              "me": 81.0,
-              "opp": 67.0,
+              "me": 87.0,
+              "opp": 69.0,
               "winner": "mine"
             },
             "+/-": {
               "me": 37.0,
-              "opp": -3.0,
+              "opp": 0.0,
               "winner": "mine"
             },
             "PIM": {
-              "me": 98.0,
+              "me": 100.0,
               "opp": 39.0,
               "winner": "mine"
             },
             "PPP": {
-              "me": 47.0,
-              "opp": 48.0,
-              "winner": "opp"
+              "me": 50.0,
+              "opp": 49.0,
+              "winner": "mine"
             },
             "SOG": {
-              "me": 342.0,
-              "opp": 342.0,
-              "winner": "tie"
+              "me": 360.0,
+              "opp": 350.0,
+              "winner": "mine"
             },
             "HIT": {
-              "me": 117.0,
-              "opp": 98.0,
+              "me": 124.0,
+              "opp": 101.0,
               "winner": "mine"
             },
             "W": {
-              "me": 11.0,
-              "opp": 8.0,
+              "me": 12.0,
+              "opp": 9.0,
               "winner": "mine"
             },
             "SO": {
@@ -221,48 +221,48 @@
               "winner": "mine"
             },
             "GAA": {
-              "me": 2.578,
-              "opp": 2.993,
+              "me": 2.71,
+              "opp": 2.931,
               "winner": "mine"
             },
             "SV%": {
-              "me": 0.8995,
-              "opp": 0.8824,
+              "me": 0.8965,
+              "opp": 0.8852,
               "winner": "mine"
             }
           },
-          "my_wins": 8,
-          "opp_wins": 2,
+          "my_wins": 10,
+          "opp_wins": 1,
           "predicted_winner": "mine"
         },
         "actual_live": {
           "cats": {
             "W": {
-              "me": 2.0,
+              "me": 3.0,
               "result": "WIN"
             },
             "PPP": {
-              "me": 8.0,
-              "result": "LOSS"
+              "me": 11.0,
+              "result": "WIN"
             },
             "SO": {
               "me": 0.0,
               "result": "TIE"
             },
             "GAA": {
-              "me": 2.5,
+              "me": 3.19061903,
               "result": "LOSS"
             },
             "SV%": {
-              "me": 0.90566038,
+              "me": 0.88596491,
               "result": "LOSS"
             },
             "G": {
-              "me": 4.0,
+              "me": 6.0,
               "result": "LOSS"
             },
             "A": {
-              "me": 15.0,
+              "me": 20.0,
               "result": "WIN"
             },
             "+/-": {
@@ -270,22 +270,22 @@
               "result": "WIN"
             },
             "PIM": {
-              "me": 9.0,
+              "me": 11.0,
               "result": "WIN"
             },
             "SOG": {
-              "me": 38.0,
+              "me": 55.0,
               "result": "LOSS"
             },
             "HIT": {
-              "me": 12.0,
-              "result": "LOSS"
+              "me": 19.0,
+              "result": "TIE"
             }
           },
-          "my_wins": 4,
-          "opp_wins": 6,
-          "ties": 1,
-          "winner": "opp"
+          "my_wins": 5,
+          "opp_wins": 4,
+          "ties": 2,
+          "winner": "mine"
         }
       },
       "history": [
@@ -832,5 +832,5 @@
       ]
     }
   },
-  "updated_at": "2026-10-31T15:17:42.296454+00:00"
+  "updated_at": "2026-11-01T15:59:01.902021+00:00"
 }
