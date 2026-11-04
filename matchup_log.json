@@ -173,47 +173,47 @@
             "date": "2026-11-02"
           }
         ],
-        "last_snapshot": "2026-11-03",
+        "last_snapshot": "2026-11-04",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
-              "me": 54.0,
-              "opp": 47.0,
+              "me": 55.0,
+              "opp": 49.0,
               "winner": "mine"
             },
             "A": {
-              "me": 92.0,
-              "opp": 78.0,
+              "me": 97.0,
+              "opp": 82.0,
               "winner": "mine"
             },
             "+/-": {
               "me": 68.0,
-              "opp": 17.0,
+              "opp": 12.0,
               "winner": "mine"
             },
             "PIM": {
-              "me": 114.0,
-              "opp": 68.0,
+              "me": 112.0,
+              "opp": 72.0,
               "winner": "mine"
             },
             "PPP": {
-              "me": 48.0,
-              "opp": 41.0,
+              "me": 47.0,
+              "opp": 46.0,
               "winner": "mine"
             },
             "SOG": {
-              "me": 372.0,
-              "opp": 367.0,
+              "me": 389.0,
+              "opp": 382.0,
               "winner": "mine"
             },
             "HIT": {
-              "me": 139.0,
-              "opp": 157.0,
+              "me": 136.0,
+              "opp": 166.0,
               "winner": "opp"
             },
             "W": {
-              "me": 12.0,
+              "me": 13.0,
               "opp": 15.0,
               "winner": "opp"
             },
@@ -223,13 +223,13 @@
               "winner": "opp"
             },
             "GAA": {
-              "me": 2.71,
-              "opp": 2.12,
+              "me": 2.648,
+              "opp": 2.248,
               "winner": "opp"
             },
             "SV%": {
-              "me": 0.8963,
-              "opp": 0.9202,
+              "me": 0.8982,
+              "opp": 0.9179,
               "winner": "opp"
             }
           },
@@ -240,54 +240,54 @@
         "actual_live": {
           "cats": {
             "W": {
-              "me": 0.0,
-              "result": "LOSS"
+              "me": 1.0,
+              "result": "TIE"
             },
             "PPP": {
               "me": 0.0,
-              "result": "TIE"
+              "result": "LOSS"
             },
             "SO": {
               "me": 0.0,
               "result": "TIE"
             },
             "GAA": {
-              "me": null,
-              "result": "LOSS"
+              "me": 2.02446225,
+              "result": "WIN"
             },
             "SV%": {
-              "me": 0.0,
-              "result": "LOSS"
+              "me": 0.92156863,
+              "result": "WIN"
             },
             "G": {
-              "me": 1.0,
+              "me": 3.0,
               "result": "TIE"
             },
             "A": {
-              "me": 2.0,
-              "result": "TIE"
+              "me": 5.0,
+              "result": "LOSS"
             },
             "+/-": {
-              "me": 0.0,
+              "me": -5.0,
               "result": "TIE"
             },
             "PIM": {
-              "me": 0.0,
+              "me": 4.0,
               "result": "LOSS"
             },
             "SOG": {
-              "me": 9.0,
+              "me": 35.0,
               "result": "WIN"
             },
             "HIT": {
-              "me": 4.0,
-              "result": "WIN"
+              "me": 10.0,
+              "result": "TIE"
             }
           },
-          "my_wins": 2,
-          "opp_wins": 4,
+          "my_wins": 3,
+          "opp_wins": 3,
           "ties": 5,
-          "winner": "opp"
+          "winner": "tie"
         }
       },
       "history": [
@@ -956,5 +956,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-03T16:59:51.948784+00:00"
+  "updated_at": "2026-11-04T17:10:56.719132+00:00"
 }
