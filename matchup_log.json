@@ -173,22 +173,22 @@
             "date": "2026-11-13"
           }
         ],
-        "last_snapshot": "2026-11-13",
+        "last_snapshot": "2026-11-14",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
-              "me": 65.0,
+              "me": 66.0,
               "opp": 64.0,
               "winner": "mine"
             },
             "A": {
-              "me": 128.0,
+              "me": 129.0,
               "opp": 111.0,
               "winner": "mine"
             },
             "+/-": {
-              "me": 74.0,
+              "me": 75.0,
               "opp": 36.0,
               "winner": "mine"
             },
@@ -203,8 +203,8 @@
               "winner": "mine"
             },
             "SOG": {
-              "me": 516.0,
-              "opp": 471.0,
+              "me": 518.0,
+              "opp": 475.0,
               "winner": "mine"
             },
             "HIT": {
@@ -260,15 +260,15 @@
               "result": "WIN"
             },
             "G": {
-              "me": 6.0,
+              "me": 7.0,
               "result": "WIN"
             },
             "A": {
-              "me": 11.0,
+              "me": 12.0,
               "result": "WIN"
             },
             "+/-": {
-              "me": 4.0,
+              "me": 5.0,
               "result": "WIN"
             },
             "PIM": {
@@ -276,7 +276,7 @@
               "result": "WIN"
             },
             "SOG": {
-              "me": 38.0,
+              "me": 40.0,
               "result": "LOSS"
             },
             "HIT": {
@@ -1086,5 +1086,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-13T17:09:59.752303+00:00"
+  "updated_at": "2026-11-14T15:46:42.887755+00:00"
 }
