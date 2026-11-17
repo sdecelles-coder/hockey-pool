@@ -1,6 +1,6 @@
 {
   "season": "20262027",
-  "updated_at": "2026-11-16T19:32:09.199736+00:00",
+  "updated_at": "2026-11-17T18:31:05.880847+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -193,6 +193,25 @@
       "hits": 6
     },
     {
+      "playerId": 8479343,
+      "name": "Clayton Keller",
+      "puckpedia_slug": "clayton-keller",
+      "type": "skater",
+      "team": "UTA",
+      "teams_all": "UTA",
+      "position": "R",
+      "age": 28,
+      "gp": 22,
+      "goals": 5,
+      "assists": 23,
+      "points": 28,
+      "plus_minus": -7,
+      "pim": 22,
+      "ppp": 17,
+      "sog": 60,
+      "hits": 7
+    },
+    {
       "playerId": 8478403,
       "name": "Jack Eichel",
       "puckpedia_slug": "jack-eichel",
@@ -210,25 +229,6 @@
       "ppp": 11,
       "sog": 61,
       "hits": 8
-    },
-    {
-      "playerId": 8479343,
-      "name": "Clayton Keller",
-      "puckpedia_slug": "clayton-keller",
-      "type": "skater",
-      "team": "UTA",
-      "teams_all": "UTA",
-      "position": "R",
-      "age": 28,
-      "gp": 21,
-      "goals": 5,
-      "assists": 22,
-      "points": 27,
-      "plus_minus": -7,
-      "pim": 20,
-      "ppp": 16,
-      "sog": 56,
-      "hits": 7
     },
     {
       "playerId": 8481559,
@@ -459,6 +459,25 @@
       "hits": 13
     },
     {
+      "playerId": 8479323,
+      "name": "Adam Fox",
+      "puckpedia_slug": "adam-fox",
+      "type": "skater",
+      "team": "NYR",
+      "teams_all": "NYR",
+      "position": "D",
+      "age": 28,
+      "gp": 22,
+      "goals": 2,
+      "assists": 22,
+      "points": 24,
+      "plus_minus": 6,
+      "pim": 10,
+      "ppp": 7,
+      "sog": 34,
+      "hits": 8
+    },
+    {
       "playerId": 8479542,
       "name": "Brandon Hagel",
       "puckpedia_slug": "brandon-hagel",
@@ -512,7 +531,7 @@
       "plus_minus": 4,
       "pim": 12,
       "ppp": 11,
-      "sog": 57,
+      "sog": 58,
       "hits": 11
     },
     {
@@ -554,23 +573,23 @@
       "hits": 23
     },
     {
-      "playerId": 8479323,
-      "name": "Adam Fox",
-      "puckpedia_slug": "adam-fox",
+      "playerId": 8478444,
+      "name": "Brock Boeser",
+      "puckpedia_slug": "brock-boeser",
       "type": "skater",
-      "team": "NYR",
-      "teams_all": "NYR",
-      "position": "D",
-      "age": 28,
-      "gp": 21,
-      "goals": 2,
-      "assists": 21,
+      "team": "VAN",
+      "teams_all": "VAN",
+      "position": "R",
+      "age": 29,
+      "gp": 23,
+      "goals": 8,
+      "assists": 15,
       "points": 23,
-      "plus_minus": 5,
+      "plus_minus": -10,
       "pim": 10,
-      "ppp": 7,
-      "sog": 33,
-      "hits": 7
+      "ppp": 13,
+      "sog": 37,
+      "hits": 22
     },
     {
       "playerId": 8480012,
@@ -581,7 +600,7 @@
       "teams_all": "VAN",
       "position": "C",
       "age": 28,
-      "gp": 22,
+      "gp": 23,
       "goals": 6,
       "assists": 17,
       "points": 23,
@@ -714,14 +733,14 @@
       "teams_all": "UTA",
       "position": "D",
       "age": 28,
-      "gp": 21,
+      "gp": 22,
       "goals": 6,
       "assists": 16,
       "points": 22,
-      "plus_minus": -2,
+      "plus_minus": -3,
       "pim": 19,
       "ppp": 12,
-      "sog": 52,
+      "sog": 58,
       "hits": 13
     },
     {
@@ -760,7 +779,7 @@
       "pim": 14,
       "ppp": 12,
       "sog": 15,
-      "hits": 19
+      "hits": 18
     },
     {
       "playerId": 8482109,
@@ -771,15 +790,34 @@
       "teams_all": "NYR",
       "position": "L",
       "age": 25,
-      "gp": 21,
+      "gp": 22,
       "goals": 10,
       "assists": 12,
       "points": 22,
       "plus_minus": 0,
       "pim": 14,
       "ppp": 6,
-      "sog": 45,
-      "hits": 22
+      "sog": 48,
+      "hits": 24
+    },
+    {
+      "playerId": 8483431,
+      "name": "Logan Cooley",
+      "puckpedia_slug": "logan-cooley",
+      "type": "skater",
+      "team": "UTA",
+      "teams_all": "UTA",
+      "position": "C",
+      "age": 22,
+      "gp": 19,
+      "goals": 11,
+      "assists": 11,
+      "points": 22,
+      "plus_minus": -5,
+      "pim": 8,
+      "ppp": 13,
+      "sog": 31,
+      "hits": 30
     },
     {
       "playerId": 8475913,
@@ -934,25 +972,6 @@
       "hits": 6
     },
     {
-      "playerId": 8483431,
-      "name": "Logan Cooley",
-      "puckpedia_slug": "logan-cooley",
-      "type": "skater",
-      "team": "UTA",
-      "teams_all": "UTA",
-      "position": "C",
-      "age": 22,
-      "gp": 18,
-      "goals": 11,
-      "assists": 10,
-      "points": 21,
-      "plus_minus": -5,
-      "pim": 8,
-      "ppp": 12,
-      "sog": 31,
-      "hits": 28
-    },
-    {
       "playerId": 8485366,
       "name": "Matthew Schaefer",
       "puckpedia_slug": "matthew-schaefer",
@@ -1067,25 +1086,6 @@
       "hits": 10
     },
     {
-      "playerId": 8478444,
-      "name": "Brock Boeser",
-      "puckpedia_slug": "brock-boeser",
-      "type": "skater",
-      "team": "VAN",
-      "teams_all": "VAN",
-      "position": "R",
-      "age": 29,
-      "gp": 22,
-      "goals": 7,
-      "assists": 13,
-      "points": 20,
-      "plus_minus": -11,
-      "pim": 10,
-      "ppp": 11,
-      "sog": 35,
-      "hits": 20
-    },
-    {
       "playerId": 8478458,
       "name": "Jack Roslovic",
       "puckpedia_slug": "jack-roslovic",
@@ -1151,14 +1151,14 @@
       "teams_all": "NYR",
       "position": "C",
       "age": 33,
-      "gp": 21,
+      "gp": 22,
       "goals": 5,
       "assists": 14,
       "points": 19,
-      "plus_minus": -2,
-      "pim": 4,
+      "plus_minus": -1,
+      "pim": 6,
       "ppp": 4,
-      "sog": 40,
+      "sog": 42,
       "hits": 30
     },
     {
@@ -1188,7 +1188,7 @@
       "team": "DAL",
       "teams_all": "DAL",
       "position": "C",
-      "age": 29,
+      "age": 30,
       "gp": 20,
       "goals": 8,
       "assists": 11,
@@ -1246,15 +1246,15 @@
       "teams_all": "MTL",
       "position": "R",
       "age": 25,
-      "gp": 20,
+      "gp": 21,
       "goals": 12,
       "assists": 7,
       "points": 19,
-      "plus_minus": 6,
+      "plus_minus": 5,
       "pim": 10,
       "ppp": 4,
-      "sog": 67,
-      "hits": 16
+      "sog": 69,
+      "hits": 17
     },
     {
       "playerId": 8482097,
@@ -1295,6 +1295,25 @@
       "hits": 27
     },
     {
+      "playerId": 8483457,
+      "name": "Lane Hutson",
+      "puckpedia_slug": "lane-hutson",
+      "type": "skater",
+      "team": "MTL",
+      "teams_all": "MTL",
+      "position": "D",
+      "age": 22,
+      "gp": 21,
+      "goals": 3,
+      "assists": 16,
+      "points": 19,
+      "plus_minus": 4,
+      "pim": 10,
+      "ppp": 5,
+      "sog": 43,
+      "hits": 5
+    },
+    {
       "playerId": 8482660,
       "name": "Kent Johnson",
       "puckpedia_slug": "kent-johnson",
@@ -1333,23 +1352,23 @@
       "hits": 15
     },
     {
-      "playerId": 8483457,
-      "name": "Lane Hutson",
-      "puckpedia_slug": "lane-hutson",
+      "playerId": 8483476,
+      "name": "Jonathan Lekkerimaki",
+      "puckpedia_slug": "jonathan-lekkerimaki",
       "type": "skater",
-      "team": "MTL",
-      "teams_all": "MTL",
-      "position": "D",
+      "team": "VAN",
+      "teams_all": "VAN",
+      "position": "R",
       "age": 22,
-      "gp": 20,
-      "goals": 3,
-      "assists": 15,
+      "gp": 23,
+      "goals": 7,
+      "assists": 11,
       "points": 18,
-      "plus_minus": 5,
-      "pim": 10,
-      "ppp": 5,
-      "sog": 42,
-      "hits": 3
+      "plus_minus": -9,
+      "pim": 8,
+      "ppp": 9,
+      "sog": 39,
+      "hits": 22
     },
     {
       "playerId": 8484227,
@@ -1407,6 +1426,25 @@
       "ppp": 8,
       "sog": 60,
       "hits": 10
+    },
+    {
+      "playerId": 8476468,
+      "name": "J.T. Miller",
+      "puckpedia_slug": "jt-miller",
+      "type": "skater",
+      "team": "NYR",
+      "teams_all": "NYR",
+      "position": "C",
+      "age": 33,
+      "gp": 22,
+      "goals": 4,
+      "assists": 13,
+      "points": 17,
+      "plus_minus": 1,
+      "pim": 31,
+      "ppp": 3,
+      "sog": 42,
+      "hits": 23
     },
     {
       "playerId": 8476881,
@@ -1474,15 +1512,15 @@
       "teams_all": "MTL",
       "position": "C",
       "age": 27,
-      "gp": 14,
+      "gp": 15,
       "goals": 8,
       "assists": 9,
       "points": 17,
-      "plus_minus": 10,
+      "plus_minus": 9,
       "pim": 2,
       "ppp": 3,
-      "sog": 36,
-      "hits": 20
+      "sog": 38,
+      "hits": 21
     },
     {
       "playerId": 8480797,
@@ -1618,25 +1656,6 @@
       "hits": 43
     },
     {
-      "playerId": 8476468,
-      "name": "J.T. Miller",
-      "puckpedia_slug": "jt-miller",
-      "type": "skater",
-      "team": "NYR",
-      "teams_all": "NYR",
-      "position": "C",
-      "age": 33,
-      "gp": 21,
-      "goals": 4,
-      "assists": 12,
-      "points": 16,
-      "plus_minus": 0,
-      "pim": 31,
-      "ppp": 3,
-      "sog": 40,
-      "hits": 23
-    },
-    {
       "playerId": 8476906,
       "name": "Shayne Gostisbehere",
       "puckpedia_slug": "shayne-gostisbehere",
@@ -1749,25 +1768,6 @@
       "ppp": 7,
       "sog": 44,
       "hits": 67
-    },
-    {
-      "playerId": 8483476,
-      "name": "Jonathan Lekkerimaki",
-      "puckpedia_slug": "jonathan-lekkerimaki",
-      "type": "skater",
-      "team": "VAN",
-      "teams_all": "VAN",
-      "position": "R",
-      "age": 22,
-      "gp": 22,
-      "goals": 7,
-      "assists": 9,
-      "points": 16,
-      "plus_minus": -9,
-      "pim": 8,
-      "ppp": 7,
-      "sog": 38,
-      "hits": 22
     },
     {
       "playerId": 8484158,
@@ -2013,7 +2013,7 @@
       "plus_minus": -10,
       "pim": 8,
       "ppp": 8,
-      "sog": 22,
+      "sog": 23,
       "hits": 35
     },
     {
@@ -2063,15 +2063,15 @@
       "teams_all": "VAN",
       "position": "D",
       "age": 29,
-      "gp": 22,
+      "gp": 23,
       "goals": 1,
       "assists": 13,
       "points": 14,
       "plus_minus": -13,
-      "pim": 0,
+      "pim": 2,
       "ppp": 6,
-      "sog": 24,
-      "hits": 31
+      "sog": 28,
+      "hits": 33
     },
     {
       "playerId": 8480002,
@@ -2177,14 +2177,14 @@
       "teams_all": "NYR",
       "position": "L",
       "age": 25,
-      "gp": 21,
+      "gp": 22,
       "goals": 7,
       "assists": 7,
       "points": 14,
-      "plus_minus": 1,
-      "pim": 16,
+      "plus_minus": 2,
+      "pim": 18,
       "ppp": 1,
-      "sog": 37,
+      "sog": 39,
       "hits": 57
     },
     {
@@ -2766,15 +2766,15 @@
       "teams_all": "MTL",
       "position": "L",
       "age": 22,
-      "gp": 20,
+      "gp": 21,
       "goals": 2,
       "assists": 11,
       "points": 13,
-      "plus_minus": 1,
+      "plus_minus": 0,
       "pim": 18,
       "ppp": 4,
-      "sog": 47,
-      "hits": 18
+      "sog": 50,
+      "hits": 19
     },
     {
       "playerId": 8484860,
@@ -2967,6 +2967,25 @@
       "hits": 23
     },
     {
+      "playerId": 8478498,
+      "name": "Jake DeBrusk",
+      "puckpedia_slug": "jake-debrusk",
+      "type": "skater",
+      "team": "VAN",
+      "teams_all": "VAN",
+      "position": "L",
+      "age": 30,
+      "gp": 21,
+      "goals": 6,
+      "assists": 6,
+      "points": 12,
+      "plus_minus": -6,
+      "pim": 4,
+      "ppp": 5,
+      "sog": 51,
+      "hits": 23
+    },
+    {
       "playerId": 8479400,
       "name": "Pierre-Luc Dubois",
       "puckpedia_slug": "pierre-luc-dubois",
@@ -3005,6 +3024,25 @@
       "hits": 6
     },
     {
+      "playerId": 8480849,
+      "name": "Barrett Hayton",
+      "puckpedia_slug": "barrett-hayton",
+      "type": "skater",
+      "team": "UTA",
+      "teams_all": "UTA",
+      "position": "C",
+      "age": 26,
+      "gp": 22,
+      "goals": 4,
+      "assists": 8,
+      "points": 12,
+      "plus_minus": 6,
+      "pim": 6,
+      "ppp": 3,
+      "sog": 42,
+      "hits": 3
+    },
+    {
       "playerId": 8481024,
       "name": "Linus Karlsson",
       "puckpedia_slug": "linus-karlsson",
@@ -3013,15 +3051,15 @@
       "teams_all": "VAN",
       "position": "C",
       "age": 27,
-      "gp": 22,
+      "gp": 23,
       "goals": 6,
       "assists": 6,
       "points": 12,
       "plus_minus": 2,
-      "pim": 10,
+      "pim": 14,
       "ppp": 1,
-      "sog": 43,
-      "hits": 24
+      "sog": 44,
+      "hits": 26
     },
     {
       "playerId": 8481528,
@@ -3214,6 +3252,25 @@
       "hits": 12
     },
     {
+      "playerId": 8476389,
+      "name": "Vincent Trocheck",
+      "puckpedia_slug": "vincent-trocheck",
+      "type": "skater",
+      "team": "UTA",
+      "teams_all": "UTA",
+      "position": "C",
+      "age": 33,
+      "gp": 22,
+      "goals": 4,
+      "assists": 7,
+      "points": 11,
+      "plus_minus": 1,
+      "pim": 15,
+      "ppp": 2,
+      "sog": 42,
+      "hits": 55
+    },
+    {
       "playerId": 8476454,
       "name": "Ryan Nugent-Hopkins",
       "puckpedia_slug": "ryan-nugent-hopkins",
@@ -3298,15 +3355,15 @@
       "teams_all": "NYR",
       "position": "R",
       "age": 31,
-      "gp": 21,
+      "gp": 22,
       "goals": 7,
       "assists": 4,
       "points": 11,
-      "plus_minus": 1,
+      "plus_minus": 2,
       "pim": 5,
       "ppp": 3,
       "sog": 30,
-      "hits": 13
+      "hits": 14
     },
     {
       "playerId": 8477919,
@@ -3423,6 +3480,25 @@
       "hits": 28
     },
     {
+      "playerId": 8479977,
+      "name": "Kailer Yamamoto",
+      "puckpedia_slug": "kailer-yamamoto",
+      "type": "skater",
+      "team": "UTA",
+      "teams_all": "UTA",
+      "position": "R",
+      "age": 28,
+      "gp": 13,
+      "goals": 3,
+      "assists": 8,
+      "points": 11,
+      "plus_minus": 2,
+      "pim": 4,
+      "ppp": 4,
+      "sog": 28,
+      "hits": 22
+    },
+    {
       "playerId": 8480036,
       "name": "Miro Heiskanen",
       "puckpedia_slug": "miro-heiskanen",
@@ -3518,25 +3594,6 @@
       "hits": 25
     },
     {
-      "playerId": 8480849,
-      "name": "Barrett Hayton",
-      "puckpedia_slug": "barrett-hayton",
-      "type": "skater",
-      "team": "UTA",
-      "teams_all": "UTA",
-      "position": "C",
-      "age": 26,
-      "gp": 21,
-      "goals": 3,
-      "assists": 8,
-      "points": 11,
-      "plus_minus": 6,
-      "pim": 6,
-      "ppp": 3,
-      "sog": 39,
-      "hits": 3
-    },
-    {
       "playerId": 8481553,
       "name": "Bobby Brink",
       "puckpedia_slug": "bobby-brink",
@@ -3594,6 +3651,25 @@
       "hits": 12
     },
     {
+      "playerId": 8482157,
+      "name": "Will Cuylle",
+      "puckpedia_slug": "will-cuylle",
+      "type": "skater",
+      "team": "NYR",
+      "teams_all": "NYR",
+      "position": "L",
+      "age": 24,
+      "gp": 22,
+      "goals": 6,
+      "assists": 5,
+      "points": 11,
+      "plus_minus": -2,
+      "pim": 28,
+      "ppp": 2,
+      "sog": 45,
+      "hits": 83
+    },
+    {
       "playerId": 8483500,
       "name": "Noah Ostlund",
       "puckpedia_slug": "noah-ostlund",
@@ -3640,7 +3716,7 @@
       "teams_all": "NYR",
       "position": "R",
       "age": 21,
-      "gp": 21,
+      "gp": 22,
       "goals": 7,
       "assists": 4,
       "points": 11,
@@ -3784,23 +3860,23 @@
       "hits": 15
     },
     {
-      "playerId": 8476389,
-      "name": "Vincent Trocheck",
-      "puckpedia_slug": "vincent-trocheck",
+      "playerId": 8475314,
+      "name": "Anders Lee",
+      "puckpedia_slug": "anders-lee",
       "type": "skater",
       "team": "UTA",
       "teams_all": "UTA",
-      "position": "C",
-      "age": 33,
-      "gp": 21,
+      "position": "L",
+      "age": 36,
+      "gp": 22,
       "goals": 3,
       "assists": 7,
       "points": 10,
       "plus_minus": 1,
-      "pim": 11,
+      "pim": 4,
       "ppp": 1,
       "sog": 38,
-      "hits": 53
+      "hits": 21
     },
     {
       "playerId": 8476462,
@@ -3955,25 +4031,6 @@
       "hits": 4
     },
     {
-      "playerId": 8478498,
-      "name": "Jake DeBrusk",
-      "puckpedia_slug": "jake-debrusk",
-      "type": "skater",
-      "team": "VAN",
-      "teams_all": "VAN",
-      "position": "L",
-      "age": 30,
-      "gp": 20,
-      "goals": 5,
-      "assists": 5,
-      "points": 10,
-      "plus_minus": -6,
-      "pim": 2,
-      "ppp": 3,
-      "sog": 46,
-      "hits": 22
-    },
-    {
       "playerId": 8478975,
       "name": "Mason Marchment",
       "puckpedia_slug": "mason-marchment",
@@ -3991,25 +4048,6 @@
       "ppp": 3,
       "sog": 42,
       "hits": 30
-    },
-    {
-      "playerId": 8479977,
-      "name": "Kailer Yamamoto",
-      "puckpedia_slug": "kailer-yamamoto",
-      "type": "skater",
-      "team": "UTA",
-      "teams_all": "UTA",
-      "position": "R",
-      "age": 28,
-      "gp": 12,
-      "goals": 3,
-      "assists": 7,
-      "points": 10,
-      "plus_minus": 2,
-      "pim": 4,
-      "ppp": 4,
-      "sog": 24,
-      "hits": 22
     },
     {
       "playerId": 8480003,
@@ -4134,14 +4172,14 @@
       "teams_all": "MTL",
       "position": "C",
       "age": 25,
-      "gp": 20,
+      "gp": 21,
       "goals": 5,
       "assists": 5,
       "points": 10,
-      "plus_minus": -1,
+      "plus_minus": -3,
       "pim": 12,
       "ppp": 1,
-      "sog": 24,
+      "sog": 25,
       "hits": 19
     },
     {
@@ -4267,7 +4305,7 @@
       "teams_all": "VAN",
       "position": "L",
       "age": 22,
-      "gp": 21,
+      "gp": 22,
       "goals": 6,
       "assists": 4,
       "points": 10,
@@ -4275,7 +4313,7 @@
       "pim": 8,
       "ppp": 1,
       "sog": 29,
-      "hits": 28
+      "hits": 30
     },
     {
       "playerId": 8484142,
@@ -4351,25 +4389,6 @@
       "pim": 6,
       "ppp": 0,
       "sog": 22,
-      "hits": 21
-    },
-    {
-      "playerId": 8475314,
-      "name": "Anders Lee",
-      "puckpedia_slug": "anders-lee",
-      "type": "skater",
-      "team": "UTA",
-      "teams_all": "UTA",
-      "position": "L",
-      "age": 36,
-      "gp": 21,
-      "goals": 3,
-      "assists": 6,
-      "points": 9,
-      "plus_minus": 1,
-      "pim": 2,
-      "ppp": 1,
-      "sog": 37,
       "hits": 21
     },
     {
@@ -4484,7 +4503,7 @@
       "pim": 18,
       "ppp": 0,
       "sog": 36,
-      "hits": 25
+      "hits": 26
     },
     {
       "playerId": 8480188,
@@ -4563,6 +4582,25 @@
       "hits": 36
     },
     {
+      "playerId": 8480865,
+      "name": "Noah Dobson",
+      "puckpedia_slug": "noah-dobson",
+      "type": "skater",
+      "team": "MTL",
+      "teams_all": "MTL",
+      "position": "D",
+      "age": 26,
+      "gp": 21,
+      "goals": 0,
+      "assists": 9,
+      "points": 9,
+      "plus_minus": -3,
+      "pim": 16,
+      "ppp": 1,
+      "sog": 42,
+      "hits": 22
+    },
+    {
       "playerId": 8481580,
       "name": "Connor McMichael",
       "puckpedia_slug": "connor-mcmichael",
@@ -4639,25 +4677,6 @@
       "hits": 13
     },
     {
-      "playerId": 8482157,
-      "name": "Will Cuylle",
-      "puckpedia_slug": "will-cuylle",
-      "type": "skater",
-      "team": "NYR",
-      "teams_all": "NYR",
-      "position": "L",
-      "age": 24,
-      "gp": 21,
-      "goals": 4,
-      "assists": 5,
-      "points": 9,
-      "plus_minus": -4,
-      "pim": 26,
-      "ppp": 2,
-      "sog": 41,
-      "hits": 82
-    },
-    {
       "playerId": 8482482,
       "name": "Adam Wilsby",
       "puckpedia_slug": "adam-wilsby",
@@ -4723,15 +4742,15 @@
       "teams_all": "MTL",
       "position": "R",
       "age": 23,
-      "gp": 20,
+      "gp": 21,
       "goals": 6,
       "assists": 3,
       "points": 9,
-      "plus_minus": 1,
+      "plus_minus": 2,
       "pim": 4,
       "ppp": 3,
-      "sog": 32,
-      "hits": 31
+      "sog": 33,
+      "hits": 34
     },
     {
       "playerId": 8483506,
@@ -4902,7 +4921,7 @@
       "pim": 8,
       "ppp": 0,
       "sog": 25,
-      "hits": 35
+      "hits": 34
     },
     {
       "playerId": 8476331,
@@ -5027,12 +5046,12 @@
       "teams_all": "VAN",
       "position": "D",
       "age": 33,
-      "gp": 20,
+      "gp": 21,
       "goals": 2,
       "assists": 6,
       "points": 8,
       "plus_minus": -4,
-      "pim": 15,
+      "pim": 17,
       "ppp": 0,
       "sog": 15,
       "hits": 36
@@ -5055,6 +5074,25 @@
       "ppp": 0,
       "sog": 25,
       "hits": 36
+    },
+    {
+      "playerId": 8476479,
+      "name": "Phillip Danault",
+      "puckpedia_slug": "phillip-danault",
+      "type": "skater",
+      "team": "MTL",
+      "teams_all": "MTL",
+      "position": "C",
+      "age": 33,
+      "gp": 21,
+      "goals": 3,
+      "assists": 5,
+      "points": 8,
+      "plus_minus": 4,
+      "pim": 0,
+      "ppp": 0,
+      "sog": 34,
+      "hits": 12
     },
     {
       "playerId": 8476882,
@@ -5141,7 +5179,7 @@
       "teams_all": "MTL",
       "position": "C",
       "age": 30,
-      "gp": 20,
+      "gp": 21,
       "goals": 3,
       "assists": 5,
       "points": 8,
@@ -5149,7 +5187,7 @@
       "pim": 2,
       "ppp": 0,
       "sog": 16,
-      "hits": 15
+      "hits": 16
     },
     {
       "playerId": 8478472,
@@ -5179,7 +5217,7 @@
       "teams_all": "UTA",
       "position": "D",
       "age": 28,
-      "gp": 21,
+      "gp": 22,
       "goals": 2,
       "assists": 6,
       "points": 8,
@@ -5187,7 +5225,7 @@
       "pim": 22,
       "ppp": 0,
       "sog": 18,
-      "hits": 22
+      "hits": 24
     },
     {
       "playerId": 8479398,
@@ -5323,25 +5361,6 @@
       "hits": 24
     },
     {
-      "playerId": 8480865,
-      "name": "Noah Dobson",
-      "puckpedia_slug": "noah-dobson",
-      "type": "skater",
-      "team": "MTL",
-      "teams_all": "MTL",
-      "position": "D",
-      "age": 26,
-      "gp": 20,
-      "goals": 0,
-      "assists": 8,
-      "points": 8,
-      "plus_minus": -1,
-      "pim": 14,
-      "ppp": 1,
-      "sog": 41,
-      "hits": 21
-    },
-    {
       "playerId": 8481028,
       "name": "Martin Pospisil",
       "puckpedia_slug": "martin-pospisil",
@@ -5369,15 +5388,15 @@
       "teams_all": "VAN",
       "position": "L",
       "age": 27,
-      "gp": 21,
+      "gp": 22,
       "goals": 4,
       "assists": 4,
       "points": 8,
-      "plus_minus": -5,
+      "plus_minus": -4,
       "pim": 27,
       "ppp": 2,
-      "sog": 13,
-      "hits": 69
+      "sog": 15,
+      "hits": 75
     },
     {
       "playerId": 8482476,
@@ -5483,15 +5502,15 @@
       "teams_all": "VAN",
       "position": "C",
       "age": 26,
-      "gp": 22,
+      "gp": 23,
       "goals": 5,
       "assists": 3,
       "points": 8,
-      "plus_minus": -7,
+      "plus_minus": -8,
       "pim": 19,
       "ppp": 0,
       "sog": 24,
-      "hits": 12
+      "hits": 14
     },
     {
       "playerId": 8484768,
@@ -5587,25 +5606,6 @@
       "ppp": 0,
       "sog": 27,
       "hits": 31
-    },
-    {
-      "playerId": 8476479,
-      "name": "Phillip Danault",
-      "puckpedia_slug": "phillip-danault",
-      "type": "skater",
-      "team": "MTL",
-      "teams_all": "MTL",
-      "position": "C",
-      "age": 33,
-      "gp": 20,
-      "goals": 2,
-      "assists": 5,
-      "points": 7,
-      "plus_minus": 3,
-      "pim": 0,
-      "ppp": 0,
-      "sog": 29,
-      "hits": 12
     },
     {
       "playerId": 8476923,
@@ -5844,15 +5844,15 @@
       "teams_all": "UTA",
       "position": "L",
       "age": 29,
-      "gp": 21,
+      "gp": 22,
       "goals": 2,
       "assists": 5,
       "points": 7,
       "plus_minus": 3,
       "pim": 19,
       "ppp": 1,
-      "sog": 34,
-      "hits": 53
+      "sog": 38,
+      "hits": 55
     },
     {
       "playerId": 8478851,
@@ -5863,15 +5863,15 @@
       "teams_all": "MTL",
       "position": "D",
       "age": 30,
-      "gp": 20,
+      "gp": 21,
       "goals": 1,
       "assists": 6,
       "points": 7,
       "plus_minus": 6,
       "pim": 14,
       "ppp": 0,
-      "sog": 14,
-      "hits": 17
+      "sog": 16,
+      "hits": 19
     },
     {
       "playerId": 8478882,
@@ -5882,15 +5882,15 @@
       "teams_all": "NYR",
       "position": "D",
       "age": 30,
-      "gp": 21,
+      "gp": 22,
       "goals": 1,
       "assists": 6,
       "points": 7,
       "plus_minus": 7,
       "pim": 10,
       "ppp": 0,
-      "sog": 30,
-      "hits": 18
+      "sog": 31,
+      "hits": 20
     },
     {
       "playerId": 8480064,
@@ -5939,7 +5939,7 @@
       "teams_all": "UTA",
       "position": "C",
       "age": 26,
-      "gp": 21,
+      "gp": 22,
       "goals": 3,
       "assists": 4,
       "points": 7,
@@ -5947,7 +5947,7 @@
       "pim": 25,
       "ppp": 0,
       "sog": 24,
-      "hits": 83
+      "hits": 85
     },
     {
       "playerId": 8481523,
@@ -5958,11 +5958,11 @@
       "teams_all": "MTL",
       "position": "C",
       "age": 25,
-      "gp": 18,
+      "gp": 19,
       "goals": 2,
       "assists": 5,
       "points": 7,
-      "plus_minus": 4,
+      "plus_minus": 2,
       "pim": 10,
       "ppp": 1,
       "sog": 17,
@@ -6034,15 +6034,15 @@
       "teams_all": "VAN",
       "position": "C",
       "age": 25,
-      "gp": 20,
+      "gp": 21,
       "goals": 3,
       "assists": 4,
       "points": 7,
       "plus_minus": -8,
       "pim": 6,
       "ppp": 2,
-      "sog": 35,
-      "hits": 27
+      "sog": 36,
+      "hits": 28
     },
     {
       "playerId": 8482124,
@@ -6832,15 +6832,15 @@
       "teams_all": "NYR",
       "position": "R",
       "age": 27,
-      "gp": 21,
+      "gp": 22,
       "goals": 4,
       "assists": 2,
       "points": 6,
-      "plus_minus": 6,
+      "plus_minus": 7,
       "pim": 4,
       "ppp": 0,
       "sog": 24,
-      "hits": 36
+      "hits": 38
     },
     {
       "playerId": 8480220,
@@ -6927,15 +6927,15 @@
       "teams_all": "VAN",
       "position": "L",
       "age": 28,
-      "gp": 22,
+      "gp": 23,
       "goals": 3,
       "assists": 3,
       "points": 6,
-      "plus_minus": -8,
+      "plus_minus": -9,
       "pim": 30,
       "ppp": 0,
       "sog": 31,
-      "hits": 31
+      "hits": 32
     },
     {
       "playerId": 8482087,
@@ -6946,15 +6946,15 @@
       "teams_all": "MTL",
       "position": "D",
       "age": 24,
-      "gp": 16,
+      "gp": 17,
       "goals": 2,
       "assists": 4,
       "points": 6,
       "plus_minus": 7,
       "pim": 10,
       "ppp": 0,
-      "sog": 19,
-      "hits": 41
+      "sog": 20,
+      "hits": 43
     },
     {
       "playerId": 8482171,
@@ -7185,6 +7185,25 @@
       "hits": 26
     },
     {
+      "playerId": 8483690,
+      "name": "Noah Laba",
+      "puckpedia_slug": "noah-laba",
+      "type": "skater",
+      "team": "NYR",
+      "teams_all": "NYR",
+      "position": "C",
+      "age": 23,
+      "gp": 22,
+      "goals": 0,
+      "assists": 6,
+      "points": 6,
+      "plus_minus": -1,
+      "pim": 12,
+      "ppp": 0,
+      "sog": 19,
+      "hits": 45
+    },
+    {
       "playerId": 8484164,
       "name": "Dalibor Dvorsky",
       "puckpedia_slug": "dalibor-dvorsky",
@@ -7231,15 +7250,15 @@
       "teams_all": "UTA",
       "position": "D",
       "age": 21,
-      "gp": 21,
+      "gp": 22,
       "goals": 4,
       "assists": 2,
       "points": 6,
-      "plus_minus": -1,
+      "plus_minus": 0,
       "pim": 4,
       "ppp": 0,
-      "sog": 20,
-      "hits": 27
+      "sog": 23,
+      "hits": 30
     },
     {
       "playerId": 8471214,
@@ -7478,14 +7497,14 @@
       "teams_all": "UTA",
       "position": "D",
       "age": 32,
-      "gp": 21,
+      "gp": 22,
       "goals": 2,
       "assists": 3,
       "points": 5,
-      "plus_minus": -4,
-      "pim": 26,
+      "plus_minus": -3,
+      "pim": 28,
       "ppp": 0,
-      "sog": 37,
+      "sog": 40,
       "hits": 65
     },
     {
@@ -7525,6 +7544,25 @@
       "ppp": 1,
       "sog": 19,
       "hits": 8
+    },
+    {
+      "playerId": 8477969,
+      "name": "Marcus Pettersson",
+      "puckpedia_slug": "marcus-pettersson",
+      "type": "skater",
+      "team": "NYR",
+      "teams_all": "NYR",
+      "position": "D",
+      "age": 30,
+      "gp": 22,
+      "goals": 0,
+      "assists": 5,
+      "points": 5,
+      "plus_minus": 3,
+      "pim": 10,
+      "ppp": 0,
+      "sog": 15,
+      "hits": 28
     },
     {
       "playerId": 8478463,
@@ -7592,15 +7630,15 @@
       "teams_all": "UTA",
       "position": "C",
       "age": 30,
-      "gp": 21,
+      "gp": 22,
       "goals": 1,
       "assists": 4,
       "points": 5,
       "plus_minus": -1,
       "pim": 14,
       "ppp": 0,
-      "sog": 19,
-      "hits": 19
+      "sog": 20,
+      "hits": 20
     },
     {
       "playerId": 8478840,
@@ -7725,15 +7763,34 @@
       "teams_all": "MTL",
       "position": "L",
       "age": 27,
-      "gp": 20,
+      "gp": 21,
       "goals": 2,
       "assists": 3,
       "points": 5,
       "plus_minus": -1,
       "pim": 10,
       "ppp": 1,
-      "sog": 34,
-      "hits": 22
+      "sog": 35,
+      "hits": 23
+    },
+    {
+      "playerId": 8480078,
+      "name": "Filip Chytil",
+      "puckpedia_slug": "filip-chytil",
+      "type": "skater",
+      "team": "VAN",
+      "teams_all": "VAN",
+      "position": "C",
+      "age": 27,
+      "gp": 10,
+      "goals": 3,
+      "assists": 2,
+      "points": 5,
+      "plus_minus": 0,
+      "pim": 6,
+      "ppp": 0,
+      "sog": 23,
+      "hits": 3
     },
     {
       "playerId": 8480185,
@@ -8059,25 +8116,6 @@
       "hits": 22
     },
     {
-      "playerId": 8483690,
-      "name": "Noah Laba",
-      "puckpedia_slug": "noah-laba",
-      "type": "skater",
-      "team": "NYR",
-      "teams_all": "NYR",
-      "position": "C",
-      "age": 23,
-      "gp": 21,
-      "goals": 0,
-      "assists": 5,
-      "points": 5,
-      "plus_minus": -2,
-      "pim": 12,
-      "ppp": 0,
-      "sog": 18,
-      "hits": 44
-    },
-    {
       "playerId": 8484197,
       "name": "Oliver Moore",
       "puckpedia_slug": "oliver-moore",
@@ -8105,7 +8143,7 @@
       "teams_all": "VAN",
       "position": "D",
       "age": 20,
-      "gp": 22,
+      "gp": 23,
       "goals": 0,
       "assists": 5,
       "points": 5,
@@ -8113,7 +8151,7 @@
       "pim": 6,
       "ppp": 0,
       "sog": 18,
-      "hits": 3
+      "hits": 4
     },
     {
       "playerId": 8484911,
@@ -8287,25 +8325,6 @@
       "hits": 24
     },
     {
-      "playerId": 8477969,
-      "name": "Marcus Pettersson",
-      "puckpedia_slug": "marcus-pettersson",
-      "type": "skater",
-      "team": "NYR",
-      "teams_all": "NYR",
-      "position": "D",
-      "age": 30,
-      "gp": 21,
-      "goals": 0,
-      "assists": 4,
-      "points": 4,
-      "plus_minus": 2,
-      "pim": 10,
-      "ppp": 0,
-      "sog": 13,
-      "hits": 26
-    },
-    {
       "playerId": 8477998,
       "name": "Warren Foegele",
       "puckpedia_slug": "warren-foegele",
@@ -8399,25 +8418,6 @@
       "ppp": 0,
       "sog": 11,
       "hits": 24
-    },
-    {
-      "playerId": 8480078,
-      "name": "Filip Chytil",
-      "puckpedia_slug": "filip-chytil",
-      "type": "skater",
-      "team": "VAN",
-      "teams_all": "VAN",
-      "position": "C",
-      "age": 27,
-      "gp": 9,
-      "goals": 2,
-      "assists": 2,
-      "points": 4,
-      "plus_minus": -1,
-      "pim": 6,
-      "ppp": 0,
-      "sog": 20,
-      "hits": 3
     },
     {
       "playerId": 8480246,
@@ -8694,15 +8694,15 @@
       "teams_all": "MTL",
       "position": "D",
       "age": 25,
-      "gp": 19,
+      "gp": 20,
       "goals": 1,
       "assists": 3,
       "points": 4,
       "plus_minus": 1,
       "pim": 32,
       "ppp": 0,
-      "sog": 14,
-      "hits": 37
+      "sog": 17,
+      "hits": 41
     },
     {
       "playerId": 8483395,
@@ -8751,15 +8751,15 @@
       "teams_all": "VAN",
       "position": "D",
       "age": 22,
-      "gp": 22,
+      "gp": 23,
       "goals": 3,
       "assists": 1,
       "points": 4,
       "plus_minus": -3,
       "pim": 22,
       "ppp": 0,
-      "sog": 21,
-      "hits": 46
+      "sog": 23,
+      "hits": 50
     },
     {
       "playerId": 8483695,
@@ -8827,15 +8827,15 @@
       "teams_all": "VAN",
       "position": "D",
       "age": 21,
-      "gp": 18,
+      "gp": 19,
       "goals": 0,
       "assists": 4,
       "points": 4,
       "plus_minus": 0,
-      "pim": 6,
+      "pim": 10,
       "ppp": 0,
-      "sog": 16,
-      "hits": 10
+      "sog": 17,
+      "hits": 11
     },
     {
       "playerId": 8484241,
@@ -8865,15 +8865,15 @@
       "teams_all": "UTA",
       "position": "L",
       "age": 21,
-      "gp": 16,
+      "gp": 17,
       "goals": 2,
       "assists": 2,
       "points": 4,
       "plus_minus": 1,
-      "pim": 0,
+      "pim": 2,
       "ppp": 0,
       "sog": 17,
-      "hits": 23
+      "hits": 24
     },
     {
       "playerId": 8484806,
@@ -9063,7 +9063,7 @@
       "pim": 25,
       "ppp": 0,
       "sog": 6,
-      "hits": 56
+      "hits": 57
     },
     {
       "playerId": 8475848,
@@ -9074,14 +9074,14 @@
       "teams_all": "VAN",
       "position": "R",
       "age": 34,
-      "gp": 19,
+      "gp": 20,
       "goals": 0,
       "assists": 3,
       "points": 3,
-      "plus_minus": -6,
+      "plus_minus": -7,
       "pim": 10,
       "ppp": 0,
-      "sog": 24,
+      "sog": 26,
       "hits": 32
     },
     {
@@ -9176,7 +9176,7 @@
       "plus_minus": -3,
       "pim": 15,
       "ppp": 0,
-      "sog": 34,
+      "sog": 35,
       "hits": 43
     },
     {
@@ -9416,7 +9416,7 @@
       "teams_all": "UTA",
       "position": "L",
       "age": 30,
-      "gp": 12,
+      "gp": 13,
       "goals": 1,
       "assists": 2,
       "points": 3,
@@ -9424,7 +9424,7 @@
       "pim": 4,
       "ppp": 0,
       "sog": 28,
-      "hits": 30
+      "hits": 32
     },
     {
       "playerId": 8480281,
@@ -9538,7 +9538,7 @@
       "pim": 10,
       "ppp": 0,
       "sog": 12,
-      "hits": 23
+      "hits": 22
     },
     {
       "playerId": 8481563,
@@ -9720,15 +9720,15 @@
       "teams_all": "NYR",
       "position": "R",
       "age": 23,
-      "gp": 13,
+      "gp": 14,
       "goals": 2,
       "assists": 1,
       "points": 3,
-      "plus_minus": 2,
+      "plus_minus": 1,
       "pim": 2,
       "ppp": 0,
-      "sog": 9,
-      "hits": 23
+      "sog": 10,
+      "hits": 24
     },
     {
       "playerId": 8483424,
@@ -9739,15 +9739,15 @@
       "teams_all": "MTL",
       "position": "C",
       "age": 22,
-      "gp": 6,
+      "gp": 7,
       "goals": 1,
       "assists": 2,
       "points": 3,
       "plus_minus": 0,
-      "pim": 5,
+      "pim": 7,
       "ppp": 0,
       "sog": 6,
-      "hits": 12
+      "hits": 15
     },
     {
       "playerId": 8483455,
@@ -9834,15 +9834,15 @@
       "teams_all": "MTL",
       "position": "L",
       "age": 22,
-      "gp": 8,
+      "gp": 9,
       "goals": 1,
       "assists": 2,
       "points": 3,
       "plus_minus": -1,
-      "pim": 13,
+      "pim": 15,
       "ppp": 0,
-      "sog": 10,
-      "hits": 21
+      "sog": 11,
+      "hits": 26
     },
     {
       "playerId": 8484421,
@@ -10328,15 +10328,15 @@
       "teams_all": "NYR",
       "position": "C",
       "age": 29,
-      "gp": 2,
+      "gp": 3,
       "goals": 2,
       "assists": 0,
       "points": 2,
-      "plus_minus": 2,
+      "plus_minus": 1,
       "pim": 0,
       "ppp": 0,
-      "sog": 2,
-      "hits": 3
+      "sog": 3,
+      "hits": 5
     },
     {
       "playerId": 8478454,
@@ -10613,15 +10613,15 @@
       "teams_all": "UTA",
       "position": "D",
       "age": 26,
-      "gp": 2,
+      "gp": 3,
       "goals": 2,
       "assists": 0,
       "points": 2,
       "plus_minus": 0,
       "pim": 0,
       "ppp": 0,
-      "sog": 6,
-      "hits": 1
+      "sog": 8,
+      "hits": 2
     },
     {
       "playerId": 8482073,
@@ -10632,15 +10632,15 @@
       "teams_all": "NYR",
       "position": "D",
       "age": 25,
-      "gp": 21,
+      "gp": 22,
       "goals": 0,
       "assists": 2,
       "points": 2,
       "plus_minus": -3,
       "pim": 14,
       "ppp": 0,
-      "sog": 31,
-      "hits": 52
+      "sog": 33,
+      "hits": 56
     },
     {
       "playerId": 8482100,
@@ -10717,6 +10717,25 @@
       "ppp": 0,
       "sog": 10,
       "hits": 7
+    },
+    {
+      "playerId": 8482666,
+      "name": "Scott Morrow",
+      "puckpedia_slug": "scott-morrow",
+      "type": "skater",
+      "team": "NYR",
+      "teams_all": "NYR",
+      "position": "D",
+      "age": 24,
+      "gp": 8,
+      "goals": 1,
+      "assists": 1,
+      "points": 2,
+      "plus_minus": 4,
+      "pim": 2,
+      "ppp": 0,
+      "sog": 16,
+      "hits": 5
     },
     {
       "playerId": 8482667,
@@ -10803,14 +10822,14 @@
       "teams_all": "MTL",
       "position": "C",
       "age": 23,
-      "gp": 13,
+      "gp": 14,
       "goals": 1,
       "assists": 1,
       "points": 2,
-      "plus_minus": 5,
+      "plus_minus": 3,
       "pim": 6,
       "ppp": 0,
-      "sog": 16,
+      "sog": 17,
       "hits": 4
     },
     {
@@ -10916,8 +10935,8 @@
       "team": "MTL",
       "teams_all": "MTL",
       "position": "D",
-      "age": 22,
-      "gp": 13,
+      "age": 23,
+      "gp": 14,
       "goals": 1,
       "assists": 1,
       "points": 2,
@@ -10925,7 +10944,7 @@
       "pim": 2,
       "ppp": 0,
       "sog": 13,
-      "hits": 1
+      "hits": 2
     },
     {
       "playerId": 8483752,
@@ -12312,7 +12331,7 @@
       "pim": 0,
       "ppp": 0,
       "sog": 0,
-      "hits": 1
+      "hits": 2
     },
     {
       "playerId": 8482641,
@@ -12351,25 +12370,6 @@
       "ppp": 0,
       "sog": 19,
       "hits": 14
-    },
-    {
-      "playerId": 8482666,
-      "name": "Scott Morrow",
-      "puckpedia_slug": "scott-morrow",
-      "type": "skater",
-      "team": "NYR",
-      "teams_all": "NYR",
-      "position": "D",
-      "age": 24,
-      "gp": 7,
-      "goals": 0,
-      "assists": 1,
-      "points": 1,
-      "plus_minus": 3,
-      "pim": 2,
-      "ppp": 0,
-      "sog": 13,
-      "hits": 4
     },
     {
       "playerId": 8482691,
@@ -13178,15 +13178,15 @@
       "teams_all": "UTA",
       "position": "C",
       "age": 32,
-      "gp": 8,
+      "gp": 9,
       "goals": 0,
       "assists": 0,
       "points": 0,
       "plus_minus": 0,
       "pim": 19,
       "ppp": 0,
-      "sog": 5,
-      "hits": 33
+      "sog": 6,
+      "hits": 37
     },
     {
       "playerId": 8477335,
@@ -13596,7 +13596,7 @@
       "teams_all": "OTT,VAN",
       "position": "D",
       "age": 27,
-      "gp": 5,
+      "gp": 6,
       "goals": 0,
       "assists": 0,
       "points": 0,
@@ -13604,7 +13604,7 @@
       "pim": 2,
       "ppp": 0,
       "sog": 1,
-      "hits": 4
+      "hits": 6
     },
     {
       "playerId": 8480084,
@@ -13615,14 +13615,14 @@
       "teams_all": "UTA",
       "position": "D",
       "age": 31,
-      "gp": 8,
+      "gp": 9,
       "goals": 0,
       "assists": 0,
       "points": 0,
-      "plus_minus": 0,
+      "plus_minus": -1,
       "pim": 2,
       "ppp": 0,
-      "sog": 5,
+      "sog": 6,
       "hits": 4
     },
     {
@@ -13843,15 +13843,15 @@
       "teams_all": "NYR",
       "position": "D",
       "age": 25,
-      "gp": 4,
+      "gp": 5,
       "goals": 0,
       "assists": 0,
       "points": 0,
-      "plus_minus": 1,
-      "pim": 2,
+      "plus_minus": 2,
+      "pim": 6,
       "ppp": 0,
       "sog": 2,
-      "hits": 3
+      "hits": 4
     },
     {
       "playerId": 8481655,
@@ -13976,15 +13976,15 @@
       "teams_all": "NYR",
       "position": "C",
       "age": 24,
-      "gp": 5,
+      "gp": 6,
       "goals": 0,
       "assists": 0,
       "points": 0,
-      "plus_minus": 0,
+      "plus_minus": -1,
       "pim": 5,
       "ppp": 0,
-      "sog": 3,
-      "hits": 22
+      "sog": 4,
+      "hits": 24
     },
     {
       "playerId": 8482470,
@@ -14899,14 +14899,14 @@
       "teams_all": "MTL",
       "position": "G",
       "age": 21,
-      "gp": 12,
+      "gp": 13,
       "wins": 9,
-      "losses": 1,
+      "losses": 2,
       "ot_losses": 2,
-      "gaa": 2.12911,
-      "sv_pct": 0.92592,
+      "gaa": 2.20592,
+      "sv_pct": 0.92307,
       "shutouts": 2,
-      "saves": 325
+      "saves": 348
     },
     {
       "playerId": 8480981,
@@ -14958,9 +14958,9 @@
       "losses": 4,
       "ot_losses": 4,
       "gaa": 2.49362,
-      "sv_pct": 0.91684,
+      "sv_pct": 0.91721,
       "shutouts": 1,
-      "saves": 419
+      "saves": 421
     },
     {
       "playerId": 8478009,
@@ -15115,14 +15115,14 @@
       "teams_all": "UTA",
       "position": "G",
       "age": 30,
-      "gp": 15,
+      "gp": 16,
       "wins": 6,
-      "losses": 6,
+      "losses": 7,
       "ot_losses": 2,
-      "gaa": 3.14447,
-      "sv_pct": 0.87209,
+      "gaa": 3.14421,
+      "sv_pct": 0.87228,
       "shutouts": 2,
-      "saves": 300
+      "saves": 321
     },
     {
       "playerId": 8479394,
@@ -15372,9 +15372,9 @@
       "losses": 3,
       "ot_losses": 1,
       "gaa": 3.07671,
-      "sv_pct": 0.90157,
+      "sv_pct": 0.90196,
       "shutouts": 0,
-      "saves": 229
+      "saves": 230
     },
     {
       "playerId": 8478916,
@@ -15555,6 +15555,24 @@
       "sv_pct": 0.88126,
       "shutouts": 0,
       "saves": 334
+    },
+    {
+      "playerId": 8476914,
+      "name": "Joonas Korpisalo",
+      "puckpedia_slug": "joonas-korpisalo",
+      "type": "goalie",
+      "team": "NYR",
+      "teams_all": "NYR",
+      "position": "G",
+      "age": 32,
+      "gp": 3,
+      "wins": 3,
+      "losses": 0,
+      "ot_losses": 0,
+      "gaa": 1.67379,
+      "sv_pct": 0.93975,
+      "shutouts": 0,
+      "saves": 78
     },
     {
       "playerId": 8478024,
@@ -15755,24 +15773,6 @@
       "saves": 142
     },
     {
-      "playerId": 8476914,
-      "name": "Joonas Korpisalo",
-      "puckpedia_slug": "joonas-korpisalo",
-      "type": "goalie",
-      "team": "NYR",
-      "teams_all": "NYR",
-      "position": "G",
-      "age": 32,
-      "gp": 2,
-      "wins": 2,
-      "losses": 0,
-      "ot_losses": 0,
-      "gaa": 2.01285,
-      "sv_pct": 0.93103,
-      "shutouts": 0,
-      "saves": 54
-    },
-    {
       "playerId": 8479193,
       "name": "Casey DeSmith",
       "puckpedia_slug": "casey-desmith",
@@ -15951,6 +15951,24 @@
       "sv_pct": 0.86991,
       "shutouts": 0,
       "saves": 107
+    },
+    {
+      "playerId": 8484268,
+      "name": "Nikita Tolopilo",
+      "puckpedia_slug": "nikita-tolopilo",
+      "type": "goalie",
+      "team": "VAN",
+      "teams_all": "VAN",
+      "position": "G",
+      "age": 26,
+      "gp": 1,
+      "wins": 1,
+      "losses": 0,
+      "ot_losses": 0,
+      "gaa": 2.0,
+      "sv_pct": 0.94594,
+      "shutouts": 0,
+      "saves": 35
     },
     {
       "playerId": 8485545,
