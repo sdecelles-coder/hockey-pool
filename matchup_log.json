@@ -40,8 +40,8 @@
           "mattias samuelsson": {
             "name": "Mattias Samuelsson",
             "team": "mine",
-            "status": "ACTIVE",
-            "injured": false
+            "status": "DAY_TO_DAY",
+            "injured": true
           },
           "shayne gostisbehere": {
             "name": "Shayne Gostisbehere",
@@ -171,45 +171,52 @@
             "from": "ACTIVE",
             "to": "OUT",
             "date": "2026-11-16"
+          },
+          {
+            "name": "Mattias Samuelsson",
+            "team": "mine",
+            "from": "ACTIVE",
+            "to": "DAY_TO_DAY",
+            "date": "2026-11-19"
           }
         ],
-        "last_snapshot": "2026-11-18",
+        "last_snapshot": "2026-11-19",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
-              "me": 77.0,
+              "me": 78.0,
               "opp": 62.0,
               "winner": "mine"
             },
             "A": {
               "me": 136.0,
-              "opp": 112.0,
+              "opp": 114.0,
               "winner": "mine"
             },
             "+/-": {
-              "me": 84.0,
-              "opp": 13.0,
+              "me": 81.0,
+              "opp": 15.0,
               "winner": "mine"
             },
             "PIM": {
               "me": 159.0,
-              "opp": 139.0,
+              "opp": 141.0,
               "winner": "mine"
             },
             "PPP": {
               "me": 71.0,
-              "opp": 50.0,
+              "opp": 51.0,
               "winner": "mine"
             },
             "SOG": {
-              "me": 558.0,
-              "opp": 582.0,
+              "me": 566.0,
+              "opp": 591.0,
               "winner": "opp"
             },
             "HIT": {
-              "me": 203.0,
-              "opp": 242.0,
+              "me": 205.0,
+              "opp": 250.0,
               "winner": "opp"
             },
             "W": {
@@ -245,7 +252,7 @@
             },
             "PPP": {
               "me": 1.0,
-              "result": "WIN"
+              "result": "TIE"
             },
             "SO": {
               "me": 0.0,
@@ -260,7 +267,7 @@
               "result": "LOSS"
             },
             "G": {
-              "me": 6.0,
+              "me": 7.0,
               "result": "WIN"
             },
             "A": {
@@ -268,25 +275,25 @@
               "result": "LOSS"
             },
             "+/-": {
-              "me": 7.0,
-              "result": "WIN"
+              "me": 4.0,
+              "result": "TIE"
             },
             "PIM": {
               "me": 2.0,
               "result": "LOSS"
             },
             "SOG": {
-              "me": 16.0,
+              "me": 24.0,
               "result": "LOSS"
             },
             "HIT": {
-              "me": 6.0,
-              "result": "TIE"
+              "me": 9.0,
+              "result": "LOSS"
             }
           },
-          "my_wins": 3,
-          "opp_wins": 5,
-          "ties": 3,
+          "my_wins": 1,
+          "opp_wins": 6,
+          "ties": 4,
           "winner": "opp"
         }
       },
@@ -1216,5 +1223,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-18T17:59:59.370210+00:00"
+  "updated_at": "2026-11-19T18:12:58.078107+00:00"
 }
