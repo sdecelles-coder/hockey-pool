@@ -40,8 +40,8 @@
           "mattias samuelsson": {
             "name": "Mattias Samuelsson",
             "team": "mine",
-            "status": "DAY_TO_DAY",
-            "injured": true
+            "status": "ACTIVE",
+            "injured": false
           },
           "shayne gostisbehere": {
             "name": "Shayne Gostisbehere",
@@ -180,47 +180,47 @@
             "date": "2026-11-19"
           }
         ],
-        "last_snapshot": "2026-11-19",
+        "last_snapshot": "2026-11-20",
         "dataset": "live",
         "prediction": {
           "cats": {
             "G": {
-              "me": 78.0,
-              "opp": 62.0,
+              "me": 80.0,
+              "opp": 63.0,
               "winner": "mine"
             },
             "A": {
-              "me": 136.0,
-              "opp": 114.0,
+              "me": 138.0,
+              "opp": 115.0,
               "winner": "mine"
             },
             "+/-": {
-              "me": 81.0,
-              "opp": 15.0,
+              "me": 84.0,
+              "opp": 13.0,
               "winner": "mine"
             },
             "PIM": {
               "me": 159.0,
-              "opp": 141.0,
+              "opp": 147.0,
               "winner": "mine"
             },
             "PPP": {
-              "me": 71.0,
-              "opp": 51.0,
+              "me": 72.0,
+              "opp": 52.0,
               "winner": "mine"
             },
             "SOG": {
-              "me": 566.0,
-              "opp": 591.0,
+              "me": 581.0,
+              "opp": 604.0,
               "winner": "opp"
             },
             "HIT": {
-              "me": 205.0,
-              "opp": 250.0,
+              "me": 209.0,
+              "opp": 252.0,
               "winner": "opp"
             },
             "W": {
-              "me": 18.0,
+              "me": 20.0,
               "opp": 16.0,
               "winner": "mine"
             },
@@ -230,12 +230,12 @@
               "winner": "mine"
             },
             "GAA": {
-              "me": 2.491,
+              "me": 2.431,
               "opp": 2.111,
               "winner": "opp"
             },
             "SV%": {
-              "me": 0.9057,
+              "me": 0.9082,
               "opp": 0.9126,
               "winner": "opp"
             }
@@ -247,11 +247,11 @@
         "actual_live": {
           "cats": {
             "W": {
-              "me": 1.0,
-              "result": "TIE"
+              "me": 3.0,
+              "result": "WIN"
             },
             "PPP": {
-              "me": 1.0,
+              "me": 2.0,
               "result": "TIE"
             },
             "SO": {
@@ -259,41 +259,41 @@
               "result": "TIE"
             },
             "GAA": {
-              "me": 2.0,
+              "me": 1.66666667,
               "result": "LOSS"
             },
             "SV%": {
-              "me": 0.92592593,
+              "me": 0.94047619,
               "result": "LOSS"
             },
             "G": {
-              "me": 7.0,
+              "me": 9.0,
               "result": "WIN"
             },
             "A": {
-              "me": 2.0,
+              "me": 4.0,
               "result": "LOSS"
             },
             "+/-": {
-              "me": 4.0,
-              "result": "TIE"
+              "me": 7.0,
+              "result": "WIN"
             },
             "PIM": {
               "me": 2.0,
               "result": "LOSS"
             },
             "SOG": {
-              "me": 24.0,
+              "me": 39.0,
               "result": "LOSS"
             },
             "HIT": {
-              "me": 9.0,
+              "me": 13.0,
               "result": "LOSS"
             }
           },
-          "my_wins": 1,
+          "my_wins": 3,
           "opp_wins": 6,
-          "ties": 4,
+          "ties": 2,
           "winner": "opp"
         }
       },
@@ -1223,5 +1223,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T18:12:58.078107+00:00"
+  "updated_at": "2026-11-20T17:45:16.005391+00:00"
 }
