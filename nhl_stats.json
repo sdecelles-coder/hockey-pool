@@ -1,6 +1,6 @@
 {
   "season": "20262027",
-  "updated_at": "2026-11-20T17:45:14.711038+00:00",
+  "updated_at": "2026-11-21T16:44:54.298805+00:00",
   "players": [
     {
       "playerId": 8478402,
@@ -2887,7 +2887,7 @@
       "plus_minus": 5,
       "pim": 22,
       "ppp": 3,
-      "sog": 48,
+      "sog": 47,
       "hits": 45
     },
     {
@@ -3552,7 +3552,7 @@
       "plus_minus": -3,
       "pim": 0,
       "ppp": 2,
-      "sog": 48,
+      "sog": 47,
       "hits": 15
     },
     {
@@ -5452,7 +5452,7 @@
       "plus_minus": -4,
       "pim": 2,
       "ppp": 0,
-      "sog": 22,
+      "sog": 23,
       "hits": 42
     },
     {
@@ -6318,7 +6318,7 @@
       "team": "NYR",
       "teams_all": "NYR",
       "position": "D",
-      "age": 30,
+      "age": 31,
       "gp": 22,
       "goals": 1,
       "assists": 6,
@@ -7010,7 +7010,7 @@
       "plus_minus": 7,
       "pim": 4,
       "ppp": 2,
-      "sog": 22,
+      "sog": 23,
       "hits": 9
     },
     {
@@ -7390,7 +7390,7 @@
       "plus_minus": -3,
       "pim": 4,
       "ppp": 2,
-      "sog": 48,
+      "sog": 49,
       "hits": 39
     },
     {
@@ -8967,7 +8967,7 @@
       "plus_minus": -1,
       "pim": 4,
       "ppp": 0,
-      "sog": 6,
+      "sog": 7,
       "hits": 18
     },
     {
@@ -10221,7 +10221,7 @@
       "plus_minus": -7,
       "pim": 15,
       "ppp": 2,
-      "sog": 22,
+      "sog": 23,
       "hits": 34
     },
     {
@@ -10981,7 +10981,7 @@
       "plus_minus": 0,
       "pim": 2,
       "ppp": 0,
-      "sog": 6,
+      "sog": 7,
       "hits": 4
     },
     {
@@ -13633,7 +13633,7 @@
       "team": "UTA",
       "teams_all": "UTA",
       "position": "D",
-      "age": 31,
+      "age": 32,
       "gp": 10,
       "goals": 0,
       "assists": 0,
@@ -15488,9 +15488,9 @@
       "losses": 6,
       "ot_losses": 1,
       "gaa": 3.42712,
-      "sv_pct": 0.87679,
+      "sv_pct": 0.87643,
       "shutouts": 0,
-      "saves": 306
+      "saves": 305
     },
     {
       "playerId": 8482076,
@@ -15506,9 +15506,9 @@
       "losses": 3,
       "ot_losses": 0,
       "gaa": 2.62427,
-      "sv_pct": 0.89005,
+      "sv_pct": 0.89062,
       "shutouts": 0,
-      "saves": 170
+      "saves": 171
     },
     {
       "playerId": 8482445,
@@ -15536,7 +15536,7 @@
       "team": "UTA",
       "teams_all": "UTA",
       "position": "G",
-      "age": 23,
+      "age": 24,
       "gp": 9,
       "wins": 5,
       "losses": 2,
@@ -15830,9 +15830,9 @@
       "losses": 4,
       "ot_losses": 0,
       "gaa": 3.47353,
-      "sv_pct": 0.86419,
+      "sv_pct": 0.86503,
       "shutouts": 0,
-      "saves": 140
+      "saves": 141
     },
     {
       "playerId": 8480193,
@@ -15902,9 +15902,9 @@
       "losses": 10,
       "ot_losses": 1,
       "gaa": 3.53104,
-      "sv_pct": 0.88888,
+      "sv_pct": 0.88911,
       "shutouts": 0,
-      "saves": 440
+      "saves": 441
     },
     {
       "playerId": 8473575,
@@ -15938,9 +15938,9 @@
       "losses": 3,
       "ot_losses": 2,
       "gaa": 3.38114,
-      "sv_pct": 0.88172,
+      "sv_pct": 0.88297,
       "shutouts": 1,
-      "saves": 164
+      "saves": 166
     },
     {
       "playerId": 8476412,
