@@ -173,7 +173,7 @@
             "date": "2026-11-23"
           }
         ],
-        "last_snapshot": "2026-11-23",
+        "last_snapshot": "2026-11-24",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -183,13 +183,13 @@
               "winner": "opp"
             },
             "A": {
-              "me": 144.0,
-              "opp": 119.0,
+              "me": 147.0,
+              "opp": 124.0,
               "winner": "mine"
             },
             "+/-": {
-              "me": 84.0,
-              "opp": -1.0,
+              "me": 87.0,
+              "opp": 2.0,
               "winner": "mine"
             },
             "PIM": {
@@ -198,18 +198,18 @@
               "winner": "mine"
             },
             "PPP": {
-              "me": 73.0,
+              "me": 74.0,
               "opp": 82.0,
               "winner": "opp"
             },
             "SOG": {
-              "me": 612.0,
-              "opp": 609.0,
-              "winner": "mine"
+              "me": 617.0,
+              "opp": 619.0,
+              "winner": "opp"
             },
             "HIT": {
               "me": 222.0,
-              "opp": 175.0,
+              "opp": 177.0,
               "winner": "mine"
             },
             "W": {
@@ -233,8 +233,8 @@
               "winner": "mine"
             }
           },
-          "my_wins": 9,
-          "opp_wins": 2,
+          "my_wins": 8,
+          "opp_wins": 3,
           "predicted_winner": "mine"
         },
         "actual_live": {
@@ -244,8 +244,8 @@
               "result": "TIE"
             },
             "PPP": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 1.0,
+              "result": "WIN"
             },
             "SO": {
               "me": 0.0,
@@ -264,11 +264,11 @@
               "result": "TIE"
             },
             "A": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 3.0,
+              "result": "LOSS"
             },
             "+/-": {
-              "me": 0.0,
+              "me": 3.0,
               "result": "TIE"
             },
             "PIM": {
@@ -276,18 +276,18 @@
               "result": "TIE"
             },
             "SOG": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 5.0,
+              "result": "LOSS"
             },
             "HIT": {
               "me": 0.0,
-              "result": "TIE"
+              "result": "LOSS"
             }
           },
-          "my_wins": 0,
-          "opp_wins": 0,
-          "ties": 11,
-          "winner": "tie"
+          "my_wins": 1,
+          "opp_wins": 3,
+          "ties": 7,
+          "winner": "opp"
         }
       },
       "history": [
@@ -1353,5 +1353,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T21:16:07.060703+00:00"
+  "updated_at": "2026-11-24T20:07:25.092577+00:00"
 }
