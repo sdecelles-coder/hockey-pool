@@ -118,8 +118,8 @@
           "mattias samuelsson": {
             "name": "Mattias Samuelsson",
             "team": "mine",
-            "status": "ACTIVE",
-            "injured": false
+            "status": "DAY_TO_DAY",
+            "injured": true
           },
           "shayne gostisbehere": {
             "name": "Shayne Gostisbehere",
@@ -171,9 +171,16 @@
             "from": "ACTIVE",
             "to": "INJURY_RESERVE",
             "date": "2026-11-23"
+          },
+          {
+            "name": "Mattias Samuelsson",
+            "team": "mine",
+            "from": "ACTIVE",
+            "to": "DAY_TO_DAY",
+            "date": "2026-11-25"
           }
         ],
-        "last_snapshot": "2026-11-24",
+        "last_snapshot": "2026-11-25",
         "dataset": "live",
         "prediction": {
           "cats": {
@@ -189,11 +196,11 @@
             },
             "+/-": {
               "me": 87.0,
-              "opp": 2.0,
+              "opp": 1.0,
               "winner": "mine"
             },
             "PIM": {
-              "me": 163.0,
+              "me": 167.0,
               "opp": 97.0,
               "winner": "mine"
             },
@@ -203,8 +210,8 @@
               "winner": "opp"
             },
             "SOG": {
-              "me": 617.0,
-              "opp": 619.0,
+              "me": 618.0,
+              "opp": 621.0,
               "winner": "opp"
             },
             "HIT": {
@@ -269,14 +276,14 @@
             },
             "+/-": {
               "me": 3.0,
-              "result": "TIE"
+              "result": "WIN"
             },
             "PIM": {
-              "me": 0.0,
-              "result": "TIE"
+              "me": 4.0,
+              "result": "WIN"
             },
             "SOG": {
-              "me": 5.0,
+              "me": 6.0,
               "result": "LOSS"
             },
             "HIT": {
@@ -284,10 +291,10 @@
               "result": "LOSS"
             }
           },
-          "my_wins": 1,
+          "my_wins": 3,
           "opp_wins": 3,
-          "ties": 7,
-          "winner": "opp"
+          "ties": 5,
+          "winner": "tie"
         }
       },
       "history": [
@@ -1353,5 +1360,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T20:07:25.092577+00:00"
+  "updated_at": "2026-11-25T19:12:18.732820+00:00"
 }
